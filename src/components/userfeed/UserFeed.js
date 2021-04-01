@@ -14,10 +14,8 @@ import {
 import  {Link}  from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faThumbsUp, faCommentDots } from "@fortawesome/free-solid-svg-icons";
-import { faThumbsUp as faRegularThumbsUp, faCommentDots as faRegularCommentDots} from "@fortawesome/free-regular-svg-icons";
+import { faThumbsUp as faRegularThumbsUp} from "@fortawesome/free-regular-svg-icons";
 import { RestMethod } from '../../enums'
-import { reducer } from '../user/reducer'
-import { defaultPostState as defaultState } from '../utility/state-info' 
 
 
 const UserFeed = React.memo(() => {
@@ -30,21 +28,9 @@ const UserFeed = React.memo(() => {
   
 
 
-    const [posts, setPosts, postsRef] = useState([])
-  
-  const [pageInfo, setPageInfo, pageInfoRef] = useState({
-    currentPageNo: 0,
-    noOfPages: 0
-    
-    })
-
-    
-
-    const [isBusyGetPosts, setIsBusyGetPosts, IsBusyGetPostsRef] = useState(true);
-
+  const [pagePosts, setPosts, postsRef] = useState({currentPageNo: 0, noOfPages: 0, dataList: []})
 
   
-
   const jwtToken = cookie.load('jwt')
   const currentUser = cookie.load('current_user')
 
@@ -66,9 +52,8 @@ const UserFeed = React.memo(() => {
                       
                       if (response.status === 200) {
     
-                        setPosts(body.dataList);
-                        setPageInfo({...pageInfo, currentPageNo: body.currentPageNo, noOfPages: body.noOfPages})
-                        setIsBusyGetPosts(false);
+                        setPosts(body);
+
                       } else {
                         const { error } = body;
                         console.log(error);
@@ -87,12 +72,12 @@ const UserFeed = React.memo(() => {
     return (
       <div className="col-md-8 my-3 mx-auto">
 
-        {!IsBusyGetPostsRef.current ? (
-          postsRef.current.map((post, index) => {
+        {postsRef.current.dataList.length > 0 ? (
+          postsRef.current.dataList.map((post, index) => {
 
             return (
               
-              <Post key={post.id} post={post} index={index} setPosts={setPosts} />
+              <Post key={post.id} post={post} setPosts={setPosts} />
               
             );
           })
@@ -133,7 +118,7 @@ function UserDetailsPopup(props) {
 }
 
 
-const Post = React.memo(({ post, index, setPosts}) => {
+const Post = React.memo(({ post, setPosts}) => {
 
     const jwtToken = cookie.load("jwt");
     const currentUser = cookie.load("current_user");
@@ -280,12 +265,14 @@ const Post = React.memo(({ post, index, setPosts}) => {
                 else {
                   setComments({ ...commentsRef.current, [postProp]: { ...commentsRef.current[`post${postId}`], dataList: commentsRef.current[`post${postId}`].dataList.filter((comment) => comment.id !== itemId) } })
                   setPosts(posts => {
-                    return posts.map(post => {
+                    let dataList = posts.dataList.map(post => {
                       if(post.id === postId)
                         return { ...post, noOfComments: post.noOfComments - 1 }
                       else
                         return post
                     })
+                    
+                    return {...posts, dataList: dataList}
                   })
                 }
                   
@@ -357,7 +344,7 @@ const Post = React.memo(({ post, index, setPosts}) => {
         }
     };
 
-    const handleLikeUnlikePost = useCallback((e, post, index, action) => {
+    const handleLikeUnlikePost = useCallback((e, post, action) => {
       const likePost = {
         owner: currentUser,
         likedAtTime: new Date().toISOString(),
@@ -382,13 +369,17 @@ const Post = React.memo(({ post, index, setPosts}) => {
               const postLikedByCurrentUser = action === "like" ? true : false;
 
               setPosts((posts) => {
-                return posts.map((iterPost) => {
+                
+                let dataList =  posts.dataList.map((iterPost) => {
                   if (iterPost.id === post.id) {
                     return { ...iterPost, postLikedByCurrentUser };
                   } else {
                     return iterPost;
                   }
                 });
+
+                return {...posts, dataList: dataList}
+
               });
             } else {
               const { error } = body;
@@ -417,7 +408,7 @@ const Post = React.memo(({ post, index, setPosts}) => {
                         <UserDetailsPopup owner={post.owner} />
                       </Card.Subtitle>
                       <Card.Text>{post.postBody}</Card.Text>
-                      <Button variant="primary">submit</Button>
+                      
                     </Card.Body>
                   </Card>
                   <Accordion>
@@ -434,7 +425,7 @@ const Post = React.memo(({ post, index, setPosts}) => {
                         {post.postLikedByCurrentUser === false ? (
                           <FontAwesomeIcon
                             onClick={(e) =>
-                              handleLikeUnlikePost(e, post, index, "like")
+                              handleLikeUnlikePost(e, post, "like")
                             }
                             icon={faRegularThumbsUp}
                             style={{
@@ -446,7 +437,7 @@ const Post = React.memo(({ post, index, setPosts}) => {
                         ) : (
                           <FontAwesomeIcon
                             onClick={(e) =>
-                              handleLikeUnlikePost(e, post, index, "unlike")
+                              handleLikeUnlikePost(e, post, "unlike")
                             }
                             icon={faThumbsUp}
                             style={{
@@ -497,7 +488,7 @@ const Post = React.memo(({ post, index, setPosts}) => {
                                       key={index2}
                                       postId={ post.id }
                                       comment={comment}
-                                      index2={index2}
+                     
                                       handleCommentCUD={ handleCommentCUD }
                                     />
                               
@@ -512,7 +503,8 @@ const Post = React.memo(({ post, index, setPosts}) => {
 }
 )
 
-const Comment = React.memo(({ postId, comment, index2, handleCommentCUD }) => {
+
+const Comment = React.memo(({ postId, comment, handleCommentCUD }) => {
 
   const jwtToken = cookie.load("jwt");
   const currentUser = cookie.load("current_user");
@@ -551,6 +543,7 @@ const Comment = React.memo(({ postId, comment, index2, handleCommentCUD }) => {
           {/* </Card.Body> */}
         </Card.Body>
       </Card>
+
 
     </div>
   );
