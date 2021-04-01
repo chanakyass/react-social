@@ -1,0 +1,60 @@
+import { RestMethod } from '../../enums'
+export function reducer(state, action)
+{
+  console.log('Entering reducer')
+  const { type, preprocessed, status, payload } = action
+
+  if (type === 'RESET') {
+    return payload
+  }
+
+  else {
+  
+    if (preprocessed === false) {
+
+      console.log('entering switch')
+      console.log('not preprocessed')
+      const fieldErrors = payload;
+      console.log(fieldErrors)
+      return {
+        ...state,
+        hasError: true,
+        preprocessingState: {
+          ...state.preprocessingState,
+          isSuccess: false,
+          failureDetails: {
+            ...state.failureDetails,
+            failureMessage: "Please check the errors",
+            fieldErrors: fieldErrors,
+          },
+        },
+      };
+    }
+    
+    else if (preprocessed) {
+      if (status === 200) {
+        return { ...state, hasError: false, preprocessingState: { ...state.preprocessingState, isSuccess: true }, postprocessingState: { ...state.postprocessingState, isSuccess: true, successDetails: { ...state.successDetails, successMessage: payload.message, resourceId: payload.resourceId } } }
+      }
+      else {
+        return {
+          ...state,
+          hasError: true,
+          preprocessingState: {
+            ...state.preprocessingState,
+            isSuccess: true,
+          },
+          postprocessingState: {
+            ...state.postprocessingState,
+            isSuccess: false,
+            failureDetails: {
+              ...state.failureDetails,
+              failureMessage: payload.message,
+              details: payload.details,
+            },
+          },
+        };
+      }
+    }
+  }
+
+}
