@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react'
+import React, { useEffect, useCallback, useState as useStateSab } from 'react'
 import { useParams } from "react-router-dom";
 import useState from 'react-usestateref'
 import cookie from 'react-cookies'
@@ -23,10 +23,6 @@ const UserFeed = React.memo(() => {
     useEffect(() => {
         loadUserFeed()
     }, [])
-  
-
-  
-
 
   const [pagePosts, setPosts, postsRef] = useState({currentPageNo: 0, noOfPages: 0, dataList: []})
 
@@ -123,7 +119,7 @@ const Post = React.memo(({ post, setPosts}) => {
     const jwtToken = cookie.load("jwt");
     const currentUser = cookie.load("current_user");
 
-  const [comments, setComments, commentsRef] = useState({});
+  const [comments, setComments] = useStateSab({});
 
   const [commentContent, setCommentContent, commentContentRef] = useState('');
   const [postContent, setPostContent, postContentRef] = useState('')
@@ -222,9 +218,9 @@ const Post = React.memo(({ post, setPosts}) => {
                 response.json().then((body) => {
                   if (response.status === 200) {
                     if (commentId == null) {
-                      setComments({ ...commentsRef.current, [postProp]: body });
+                      setComments({ ...comments, [postProp]: body });
                     } else {
-                      setComments({ ...commentsRef.current, [commentProp]: body });
+                      setComments({ ...comments, [commentProp]: body });
                     }
                   } else {
                     console.log("error has occured");
@@ -258,12 +254,12 @@ const Post = React.memo(({ post, setPosts}) => {
             response.json().then((body) => {
               if (response.status === 200) {
                 if (commentId) {
-                  setComments({ ...commentsRef.current, [commentProp]: { ...commentsRef.current[`comment${commentId}`], dataList: commentsRef.current[`comment${commentId}`].dataList.filter((comment) => comment.id !== itemId) } })
+                  setComments({ ...comments, [commentProp]: { ...comments[`comment${commentId}`], dataList: comments[`comment${commentId}`].dataList.filter((comment) => comment.id !== itemId) } })
 
                   
                 }
                 else {
-                  setComments({ ...commentsRef.current, [postProp]: { ...commentsRef.current[`post${postId}`], dataList: commentsRef.current[`post${postId}`].dataList.filter((comment) => comment.id !== itemId) } })
+                  setComments({ ...comments, [postProp]: { ...comments[`post${postId}`], dataList: comments[`post${postId}`].dataList.filter((comment) => comment.id !== itemId) } })
                   setPosts(posts => {
                     let dataList = posts.dataList.map(post => {
                       if(post.id === postId)
@@ -300,13 +296,13 @@ const Post = React.memo(({ post, setPosts}) => {
     if (
       (commentId &&
         
-        (!commentsRef.current[commentProp] ||
-        (commentsRef.current[commentProp] &&
-        commentsRef.current[commentProp].currentPageNo !== pageNo))) ||
+        (!comments[commentProp] ||
+        (comments[commentProp] &&
+        comments[commentProp].currentPageNo !== pageNo))) ||
       (postId &&
-        (!commentsRef.current[postProp] ||
-        (commentsRef.current[postProp] &&
-        commentsRef.current[postProp].currentPageNo !== pageNo)))
+        (!comments[postProp] ||
+        (comments[postProp] &&
+        comments[postProp].currentPageNo !== pageNo)))
     )
     {
             const requestOptions = {
@@ -476,8 +472,8 @@ const Post = React.memo(({ post, setPosts}) => {
                               <input type='textarea' id={`commentOn${post.id}`} name={`commentOn${post.id}`} onChange={(e) => setCommentContent(e.target.value)} />
                               <button id={`submitCommentOn${post.id}`} name={`submitCommentOn${post.id}`} onClick={(e) => handleCommentCUD(e, RestMethod.POST, null, post.id, null) }>comment</button>
                               </div>
-                            {commentsRef.current[`post${post.id}`.trim()] &&
-                              commentsRef.current[
+                            {comments[`post${post.id}`.trim()] &&
+                              comments[
                                 `post${post.id}`
                               ].dataList.map((comment, index2) => {
                                 return (
