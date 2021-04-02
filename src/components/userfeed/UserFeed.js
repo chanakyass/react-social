@@ -129,7 +129,7 @@ const Post = React.memo(({ post, setPosts}) => {
   const [postContent, setPostContent, postContentRef] = useState('')
 
 
-  const handleCommentCUD = useCallback((e, method, commentId, postId, itemId) => {
+  const handleCommentCUD = (e, method, commentId, postId, itemId) => {
 
     const postProp = `post${postId}`.trim();
     const commentProp = `comment${commentId}`.trim();
@@ -289,7 +289,7 @@ const Post = React.memo(({ post, setPosts}) => {
           });
       }
     }
-  }, [])
+  }
 
 
 
@@ -344,7 +344,7 @@ const Post = React.memo(({ post, setPosts}) => {
         }
     };
 
-    const handleLikeUnlikePost = useCallback((e, post, action) => {
+    const handleLikeUnlikePost = (e, post, action) => {
       const likePost = {
         owner: currentUser,
         likedAtTime: new Date().toISOString(),
@@ -393,7 +393,7 @@ const Post = React.memo(({ post, setPosts}) => {
           console.log(error);
           history.push("/error");
         });
-    }, []);
+    };
                 return <div>
                   <Card
                     className="mt-5"
