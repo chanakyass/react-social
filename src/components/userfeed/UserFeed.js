@@ -1,6 +1,6 @@
-import React, { useEffect, useCallback, useState as useStateSab } from 'react'
+import React, { useEffect, useCallback, useState } from 'react'
 import { useParams } from "react-router-dom";
-import useState from 'react-usestateref'
+
 import cookie from 'react-cookies'
 import history from '../../app-history'
 import cleanEmpty from '../utility/cleanup-objects'
@@ -68,8 +68,8 @@ const UserFeed = React.memo(() => {
     return (
       <div className="col-md-8 my-3 mx-auto">
 
-        {postsRef.current.dataList.length > 0 ? (
-          postsRef.current.dataList.map((post, index) => {
+        {pagePosts.dataList.length > 0 ? (
+          pagePosts.dataList.map((post, index) => {
 
             return (
               
@@ -101,7 +101,6 @@ function UserDetailsPopup(props) {
           <Popover id={"popover-positioned-top"}>
                 <Popover.Title as="h3">{ owner.name }</Popover.Title>
             <Popover.Content>
-              <strong>Holy guacamole!</strong> Check this info.
             </Popover.Content>
           </Popover>
         }
@@ -119,10 +118,10 @@ const Post = React.memo(({ post, setPosts}) => {
     const jwtToken = cookie.load("jwt");
     const currentUser = cookie.load("current_user");
 
-  const [comments, setComments] = useStateSab({});
+  const [comments, setComments] = useState({});
 
-  const [commentContent, setCommentContent, commentContentRef] = useState('');
-  const [postContent, setPostContent, postContentRef] = useState('')
+  const [commentContent, setCommentContent] = useState('');
+  const [postContent, setPostContent] = useState('')
 
 
   const handleCommentCUD = (e, method, commentId, postId, itemId) => {
@@ -132,8 +131,7 @@ const Post = React.memo(({ post, setPosts}) => {
 
     switch (method) {
       case RestMethod.POST: {
-        if (commentContentRef
-          .current === '') {
+        if (commentContent === '') {
           //raise error
         }
         else {
@@ -141,7 +139,7 @@ const Post = React.memo(({ post, setPosts}) => {
           const commentForDispatch = {
             commentedOn: { id: postId },
             commentedAtTime: new Date().toISOString,
-            commentContent: commentContentRef.current,
+            commentContent: commentContent,
             owner: currentUser
             
           }
@@ -187,13 +185,13 @@ const Post = React.memo(({ post, setPosts}) => {
       }
       break
       case RestMethod.PUT: {
-          if (commentContentRef.current === "") {
+          if (commentContent === "") {
             //raise error
           } else {
             const commentForDispatch = {
               commentedOn: { id: postId },
               commentedAtTime: new Date().toISOString,
-              commentContent: commentContentRef.current,
+              commentContent: commentContent,
               owner: currentUser
             };
 
@@ -528,8 +526,6 @@ const Comment = React.memo(({ postId, comment, handleCommentCUD }) => {
             </button>
           )}
         </Card.Header>
-        {console.log("render ", comment.id)}
-
         <Card.Body>
           {/* <Card.Body> */}
           <Card.Subtitle>
