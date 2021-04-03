@@ -1,46 +1,130 @@
-const handleGetComments = (e, postId, commentId, pageNo) => {
-  const postProp = `post${postId}`.trim();
-  const commentProp = `comment${commentId}`.trim();
-  if (
-    (commentId &&
-      (!commentsRef.current[commentProp] ||
-        (commentsRef.current[commentProp] &&
-          commentsRef.current[commentProp].currentPageNo !== pageNo))) ||
-    (postId &&
-      (!commentsRef.current[postProp] ||
-        (commentsRef.current[postProp] &&
-          commentsRef.current[postProp].currentPageNo !== pageNo)))
-  ) {
+
+import cookie from "react-cookies";
+import history from "../../app-history";
+import { RestMethod } from '../../enums'
+
+const jwtToken = cookie.load("jwt");
+const currentUser = cookie.load("current_user");
+    
+
+export const commentsCUD = async (method, commentId, postId, itemId, commentContent) => {
+
+  let commentForDispatch = {
+    commentedOn: { id: postId },
+    commentedAtTime: new Date().toISOString,
+    commentContent: commentContent,
+    owner: currentUser,
+  };
+
+  if (commentId) {
+    commentForDispatch = { ...commentForDispatch, parentComment: { id: commentId } };
+  }
+
+  let requestOptions = {
+    method: method,
+    headers: {
+      Authorization: `Bearer ${jwtToken}`,
+      "Content-Type": "application/json",
+    }
+  };
+
+  let url = null;
+  
+  switch (method) {
+    case RestMethod.POST:
+      {
+        requestOptions.body = JSON.stringify({ ...commentForDispatch });
+        url = `http://localhost:8080/api/v1/resource/comment`;
+        
+      }
+      break;
+    case RestMethod.PUT:
+      {
+        commentForDispatch = { ...commentForDispatch, id: itemId };
+        requestOptions.body = JSON.stringify({ ...commentForDispatch });
+        url = `http://localhost:8080/api/v1/resource/comment`;
+
+        
+      }
+      break;
+    case RestMethod.DELETE: {
+
+      url = `http://localhost:8080/api/v1/resource/comment/${itemId}`;
+
+    }
+  }
+  try {
+    let response = await fetch(
+      url,
+      requestOptions
+    );
+
+    let body = await response.json();
+
+    return body;
+  }
+  catch (err) {
+    console.log(err);
+    history.push('/error');
+  }
+};
+
+export const loadComments = async (postId, commentId, pageNo) => {
+
     const requestOptions = {
       method: "GET",
       headers: {
         Authorization: `Bearer ${jwtToken}`,
         "Content-Type": "application/json",
       },
-    };
+  };
+  let url = null;
+  if(commentId)
+     url = `http://localhost:8080/api/v1/resource/comment/${commentId}/replies/${pageNo}`;
+  else
+      url = `http://localhost:8080/api/v1/resource/post/${postId}/comments/${pageNo}`;
 
-    fetch(
-      `http://localhost:8080/api/v1/resource/post/${postId}/comments/${pageNo}`,
-      requestOptions
-    )
-      .then((response) =>
-        response.json().then((body) => {
-          if (response.status === 200) {
-            if (commentId == null) {
-              setComments({ ...comments, [postProp]: body });
-            } else {
-              setComments({ ...comments, [commentProp]: body });
-            }
-          } else {
-            const { error } = body;
-            console.log(error);
-            history.push("/error");
-          }
-        })
+    try {
+      const response = await fetch(
+       url,
+        requestOptions
       )
-      .catch((error) => {
-        console.log(error);
-        history.push("/error");
-      });
+      
+      const body = await response.json()
+      return body;
+    }
+    catch (err) {
+      history.push('/error')
+    }
+
+  
+};
+
+export const likeUnlikeCommentCUD = async (comment, action) => {
+  const likeComment = {
+    owner: currentUser,
+    likedAtTime: new Date().toISOString(),
+    likedComment: { id: comment.id },
+  };
+
+  const requestOptions = {
+    method: action === "like" ? "POST" : "DELETE",
+    headers: {
+      Authorization: `Bearer ${jwtToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ ...likeComment }),
+  };
+
+  try {
+    const response = await fetch(
+      `http://localhost:8080/api/v1/resource/comment/${comment.id}/${action}`,
+      requestOptions
+    );
+    const body = await response.json();
+    return body;
+  } catch (err) {
+    console.log(err);
+    history.push("/error");
   }
 };
