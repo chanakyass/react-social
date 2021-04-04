@@ -1,7 +1,7 @@
 import cookie from "react-cookies";
 import history from "../../app-history";
 import React, { useEffect, useState, useRef } from "react";
-import { commentsCUD, likeUnlikeCommentCUD, loadComments } from '../comments/comment-services'
+import { commentsCUD, likeUnlikeCommentCUD, loadComments } from './comment-services'
 import cleanEmpty from "../utility/cleanup-objects";
 import { Card, Button, Accordion, Form } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -26,6 +26,8 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
 
   let reactionBarRef = useRef(null)
   let replyBarRef = useRef(null)
+  let updateCommentRef = useRef(null)
+  let commentContentRef = useRef(null)
 
   const handleReplyCUD = async (e, method, commentId, postId, itemId) => {
     const commentProp = `comment${commentId}`.trim();
@@ -90,6 +92,10 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
                 }
                 replyBarRef.current.style.display = "none";
                 reactionBarRef.current.style.display = "inline-block";
+
+                commentContentRef.current.style.display = 'inline-block'
+                updateCommentRef.current.style.display = 'none'
+
                 setNoOfReplies((noOfReplies) => noOfReplies + 1);
                 
             }
@@ -176,77 +182,54 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
         style={{ maxWidth: "100%", border: "none" }}
         bg="light"
       >
-        <Card.Header className="bg-transparent" style={{ border: "none" }}>
-          {comment.owner.id === currentUser.id && (
-            <button
-              // data-dismiss="alert"
-              // data-target={`#commentCardEdit${comment.id}`}
-              type="button"
-              className="close"
-              aria-label="Edit"
-              onClick={(e) => {
-                !parentCommentId
-                  ? handleCommentCUD(e, RestMethod.DELETE, postId, comment.id)
-                  : handleReplyCUD(
-                      e,
-                      RestMethod.PUT,
-                      parentCommentId,
-                      postId,
-                      comment.id
-                    );
-              }}
-            >
-              <span aria-hidden="true">
-                <FontAwesomeIcon
-                  onClick={(e) => handleLikeUnlikeComment(e, comment, "unlike")}
-                  icon={faWindowClose}
-                  style={{
-                    marginLeft: "1rem",
-                    marginRight: "1rem",
-                    cursor: "pointer",
-                  }}
-                ></FontAwesomeIcon>
-              </span>
-            </button>
-          )}
-          {comment.owner.id === currentUser.id && (
-            <button
-              data-dismiss="alert"
-              data-target={`#commentCardClose${comment.id}`}
-              type="button"
-              className="close"
-              aria-label="Close"
-              onClick={(e) => {
-                !parentCommentId
-                  ? handleCommentCUD(e, RestMethod.DELETE, postId, comment.id)
-                  : handleReplyCUD(
-                      e,
-                      RestMethod.DELETE,
-                      parentCommentId,
-                      postId,
-                      comment.id
-                    );
-              }}
-            >
-              <span aria-hidden="true">
-                <FontAwesomeIcon
-                  onClick={(e) => handleLikeUnlikeComment(e, comment, "unlike")}
-                  icon={faEdit}
-                  style={{
-                    marginLeft: "1rem",
-                    marginRight: "1rem",
-                    cursor: "pointer",
-                  }}
-                ></FontAwesomeIcon>
-              </span>
-            </button>
-          )}
-        </Card.Header>
+        <Card.Header
+          className="bg-transparent"
+          style={{ border: "none" }}
+        ></Card.Header>
         <Card.Body>
           <Card.Subtitle>
             <UserDetailsPopup owner={comment.owner} />
           </Card.Subtitle>
-          <Card.Text>{comment.commentContent}</Card.Text>
+          <Card.Text>
+            <div ref={commentContentRef} style={{ display: "inline-block" }}>
+              {comment.commentContent}
+            </div>
+            <div ref={updateCommentRef} style={{ display: "none" }}>
+              <Form.Group controlId={`updateCommentBoxFor${comment.id}`}>
+                <Form.Control
+                  as="textarea"
+                  rows={3}
+                  cols={100}
+                  id={`updateOn${comment.id}`}
+                  name={`updateOn${comment.id}`}
+                  onChange={(e) => setReplyContent(e.target.value)}
+                  value={replyContent}
+                />
+              </Form.Group>
+              <Form.Group controlId={`updateCommentBoxFor${comment.id}`}>
+                <Button
+                  type="button"
+                  id={`submitUpdateOn${comment.id}`}
+                  name={`submitUpdateOn${comment.id}`}
+                  onClick={(e) => {
+                    !parentCommentId
+                      ? handleCommentCUD(e, RestMethod.PUT, postId, comment.id)
+                      : handleReplyCUD(
+                          e,
+                          RestMethod.PUT,
+                          parentCommentId,
+                          postId,
+                          comment.id
+                      );
+                    updateCommentRef.current.style.display = 'none'
+                    commentContentRef.current.style.display = 'inline-block'
+                  }}
+                >
+                  update
+                </Button>
+              </Form.Group>
+            </div>
+          </Card.Text>
         </Card.Body>
       </Card>
       <Accordion>
@@ -318,6 +301,47 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
                   cursor: "pointer",
                 }}
               ></FontAwesomeIcon>
+              {comment.owner.id === currentUser.id && (
+                <FontAwesomeIcon
+                  icon={faEdit}
+                  style={{
+                    marginLeft: "1rem",
+                    marginRight: "1rem",
+                    cursor: "pointer",
+                  }}
+                  onClick={(e) => {
+                    setReplyContent(comment.commentContent);
+                    updateCommentRef.current.style.display = 'inline-block'
+                    commentContentRef.current.style.display = 'none'
+                  }}
+                ></FontAwesomeIcon>
+              )}
+              {comment.owner.id === currentUser.id && (
+                <FontAwesomeIcon
+                  onClick={(e) => {
+                    !parentCommentId
+                      ? handleCommentCUD(
+                          e,
+                          RestMethod.DELETE,
+                          postId,
+                          comment.id
+                        )
+                      : handleReplyCUD(
+                          e,
+                          RestMethod.DELETE,
+                          parentCommentId,
+                          postId,
+                          comment.id
+                        );
+                  }}
+                  icon={faWindowClose}
+                  style={{
+                    marginLeft: "1rem",
+                    marginRight: "1rem",
+                    cursor: "pointer",
+                  }}
+                ></FontAwesomeIcon>
+              )}
             </div>
             <div ref={replyBarRef} style={{ display: "none" }}>
               <Form.Group controlId={`replyBoxFor${comment.id}`}>
