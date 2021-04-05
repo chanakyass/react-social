@@ -12,33 +12,75 @@ import {
 import { Post } from '../post/Post'
 import  {Link}  from 'react-router-dom'
 import { RestMethod } from '../../enums'
+import { ErrorAlert } from '../ErrorAlert'
 
 
 const UserFeed = React.memo(() => {
 
+  console.log('render')
+  
+  let  location  = history.location
+  let showAlert = false;
+  let alertMessage = null
+  if(location && location.state)
+  {
+    showAlert = (location.state.showAlert)
+    alertMessage = location.state.alertMessage
+  }
+
+  console.log(history.location)
 
 
   const [pagePosts, setPosts] = useState({ currentPageNo: 0, noOfPages: 0, dataList: [] })
 
+  const changeHistory = () => {
+    console.log('changeHistory called')
+    history.replace({state: null})
+  }
+
   useEffect(() => {
-     (async () => {
-       const body = await loadUserFeed();
-       if ('error' in body)
-       {
-         console.log(body.error)
-         history.push('/error')
-       }
-       else
-         setPosts(body);
+    window.onbeforeunload = function () {
+      console.log('entering onbeforeunload')
+        changeHistory()
+    };
+    (async () => {
+      try {
+        const body = await loadUserFeed();
+        if ('error' in body) {
+          console.log(body.error)
+          history.push('/error')
+        }
+        else
+          setPosts(body);
+        // if (history.location && history.location.state && history.location.state.showAlert) {
+        //   let stateCopy = history.location.state
+        //   console.log(stateCopy)
+        //   delete stateCopy.showAlert
+        //   delete stateCopy.alertMessage;
+        //   history.replace({ state: stateCopy });
+        // }
+        
+
+      }
+
+      catch (err) {
+        console.log(err);
+        history.push('/error')
+      }
+
+      
        
          
     })()
+    return () => (window.onbeforeunload = null);
   }, [])
 
   const jwtToken = cookie.load('jwt')
   const currentUser = cookie.load('current_user')
 
-    return (
+  return (
+    <>
+      {showAlert === true && <ErrorAlert alertMessage={alertMessage} />}
       <div className="col-md-8 my-3 mx-auto">
 
   
@@ -56,6 +98,7 @@ const UserFeed = React.memo(() => {
           <>loading</>
         )}
       </div>
+    </>
     );
     
 }

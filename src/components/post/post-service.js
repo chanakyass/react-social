@@ -1,11 +1,11 @@
 import cookie from "react-cookies";
 import history from "../../app-history";
 
-    const jwtToken = cookie.load("jwt");
-    const currentUser = cookie.load("current_user");
+
 
 export const loadUserFeed = async () => {
 
+    const jwtToken = cookie.load("jwt");
 
   const requestOptions = {
     method: "GET",
@@ -33,6 +33,8 @@ export const loadUserFeed = async () => {
 };
 
 export const likeUnlikeCUD = async (post, action) => {
+      const jwtToken = cookie.load("jwt");
+      const currentUser = cookie.load("current_user");
   const likePost = {
     owner: currentUser,
     likedAtTime: new Date().toISOString(),

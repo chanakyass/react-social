@@ -1,25 +1,33 @@
 import { Navbar, Nav, Form, FormControl, Button } from "react-bootstrap";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+ faSignOutAlt
+} from "@fortawesome/free-solid-svg-icons";
 import cookie from "react-cookies";
+import history from '../../app-history'
 const NavBar = () => {
 
   const loggedInUser = cookie.load("current_user");
+
+  const logout =  (e) => {
+
+
+    
+    cookie.remove('jwt')
+    cookie.remove('current_user')
+    history.push('/login')
+  }
 
     return (
       <>
         {
           <Navbar bg="light" expand="lg">
-            <Navbar.Brand href="#home">
-              Citizen Sane
-            </Navbar.Brand>
+            <Navbar.Brand href="#home">Citizen Sane</Navbar.Brand>
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="basic-navbar-nav">
               <Nav className="mr-auto">
-                <Nav.Link href="/">
-                  Home
-                </Nav.Link>
-                <Nav.Link
-                  href={`/profile/${loggedInUser.id}`}
-                >
+                <Nav.Link href="/">Home</Nav.Link>
+                <Nav.Link href={`/profile/${loggedInUser.id}`}>
                   My Profile
                 </Nav.Link>
                 {/* <NavDropdown title="Dropdown" id="basic-nav-dropdown">
@@ -35,15 +43,31 @@ const NavBar = () => {
                   Separated link
                 </NavDropdown.Item>
               </NavDropdown> */}
+                {/* <Nav.Button
+                  href={`/profile/${loggedInUser.id}`}
+                >
+                  My Profile
+                </Nav.Button> */}
               </Nav>
-              <Form inline>
+              {/* <Form inline>
                 <FormControl
                   type="text"
                   placeholder="Search"
                   className="mr-sm-2"
-                />
-                <Button variant="outline-success">Search</Button>
-              </Form>
+                /> */}
+              
+                
+                <FontAwesomeIcon
+                  onClick={(e) => logout(e)}
+                  icon={faSignOutAlt}
+                  style={{
+                    marginLeft: "1rem",
+                    marginRight: "1rem",
+                    cursor: "pointer",
+                  }}
+                ></FontAwesomeIcon>
+              
+              {/* </Form> */}
             </Navbar.Collapse>
           </Navbar>
         }

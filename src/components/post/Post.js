@@ -33,6 +33,7 @@ export const Post = React.memo(({ post, setPosts }) => {
 
   const reactionBarRef = useRef(null)
   const replyBarRef = useRef(null)
+  const commentsDotRef = useRef(null)
 
   const deleteNestedComments = (commentId, listOfNestedComments) => {
     listOfNestedComments.push(commentId);
@@ -45,24 +46,32 @@ export const Post = React.memo(({ post, setPosts }) => {
     }
   }
 
-  const handleCommentCUD = async (e, method, postId, itemId) => {
+  const handleCommentCUD = async (e, method, commentObj) => {
+
+    let postId = commentObj.postId;
+    let itemId = commentObj.commentId;
+    let commentContent = commentObj.commentContent;
+
     const postProp = `post${postId}`.trim();
 
-    const responseBody = await commentsCUD(
-      method,
-      null,
-      postId,
-      itemId,
-      commentContent
-    );
+    e.preventDefault();
 
     switch (method) {
       case RestMethod.POST:
       case RestMethod.PUT:
         {
-          if (commentContent === "") {
+           
+          
+          if (commentContent === '') {
             //raise error
           } else {
+                const responseBody = await commentsCUD(
+                  method,
+                  null,
+                  postId,
+                  itemId,
+                  commentContent
+                );
             if ("error" in responseBody) {
               const { error } = responseBody;
               console.log(error);
@@ -79,6 +88,9 @@ export const Post = React.memo(({ post, setPosts }) => {
                     commentedAtTime: new Date().toISOString,
                     commentContent: commentContent,
                     owner: currentUser,
+                    commentLikedByCurrentUser: false,
+                    noOfLikes: 0,
+                    noOfReplies: 0,
                   };
 
                 let newDataList = (method === RestMethod.POST) ?
@@ -96,11 +108,16 @@ export const Post = React.memo(({ post, setPosts }) => {
                   }
                 });
               }
+
                 replyBarRef.current.style.display = "none";
                 reactionBarRef.current.style.display = "inline-block";
                 //setNoOfReplies((noOfReplies) => noOfReplies + 1);
               if (method === RestMethod.POST)
-                  setNoOfComments(noOfComments => noOfComments + 1)
+                setNoOfComments(noOfComments => noOfComments + 1)
+              
+              if (!comments || !comments[postProp]) {
+                commentsDotRef.current.focus()
+              }
    
             }
           }
@@ -108,6 +125,13 @@ export const Post = React.memo(({ post, setPosts }) => {
         break;
 
       case RestMethod.DELETE: {
+            const responseBody = await commentsCUD(
+              method,
+              null,
+              postId,
+              itemId,
+              null
+            );
         if ("error" in responseBody) {
           const { error } = responseBody;
           console.log(error);
@@ -124,15 +148,6 @@ export const Post = React.memo(({ post, setPosts }) => {
               },
             });
 
-            // setPosts((posts) => {
-            //   let dataList = posts.dataList.map((post) => {
-            //     if (post.id === postId)
-            //       return { ...post, noOfComments: post.noOfComments - 1 };
-            //     else return post;
-            //   });
-
-            //   return { ...posts, dataList: dataList };
-            // });
           
           setNoOfComments((noOfComments) => noOfComments - 1);
           
@@ -160,7 +175,8 @@ export const Post = React.memo(({ post, setPosts }) => {
         history.push("/error");
       } else {
 
-          setComments({ ...comments, [postProp]: responseBody });
+        setComments({ ...comments, [postProp]: responseBody });
+        
         
       }
     }
@@ -242,6 +258,7 @@ export const Post = React.memo(({ post, setPosts }) => {
                     variant="link"
                     eventKey={`post${post.id}`}
                     onClick={(e) => handleGetComments(e, post.id, 0)}
+                    ref = {commentsDotRef}
                   >
                     <FontAwesomeIcon
                       icon={faCommentDots}
@@ -279,11 +296,11 @@ export const Post = React.memo(({ post, setPosts }) => {
               </Form.Group>
               <Form.Group controlId={`replyBoxFor${post.id}`}>
                 <Button
-                  type="button"
+                  type="submit"
                   id={`submitCommentOn${post.id}`}
                   name={`submitCommentOn${post.id}`}
                   onClick={(e) =>
-                    handleCommentCUD(e, RestMethod.POST, post.id, null)
+                    handleCommentCUD(e, RestMethod.POST, {commentId: null, postId: post.id, commentContent: commentContent} )
                   }
                 >
                   reply
@@ -298,6 +315,7 @@ export const Post = React.memo(({ post, setPosts }) => {
                 {comments[`post${post.id}`.trim()] &&
                   comments[`post${post.id}`].dataList.map((comment, index2) => {
                     return (
+                      //postId, parentCommentId, comment, handleCommentCUD, setParentComments, setCommentContent, commentContent, setNoOfRepliesInParent
                       <Comment
                         key={`comment${comment.id}`}
                         postId={post.id}
@@ -305,7 +323,7 @@ export const Post = React.memo(({ post, setPosts }) => {
                         comment={{ ...comment }}
                         handleCommentCUD={handleCommentCUD}
                         setParentComments={setComments}
-                        setNoOfReplies={null}
+                        setNoOfRepliesInParent={null}
                       />
                     );
                   })}

@@ -13,7 +13,6 @@ import { UserDetailsPopup } from "../UserDetailsPopup";
 export const Comment = React.memo(({ postId, parentCommentId, comment, handleCommentCUD, setParentComments, setNoOfRepliesInParent}) => {
   const jwtToken = cookie.load("jwt");
   const currentUser = cookie.load("current_user");
-  console.log('no of replies ',comment.noOfReplies);
 
   const [noOfReplies, setNoOfReplies] = useState(comment.noOfReplies);
   // const noOfRepliesRef = useRef(noOfReplies);
@@ -28,27 +27,45 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
   let replyBarRef = useRef(null)
   let updateCommentRef = useRef(null)
   let commentContentRef = useRef(null)
+  let repliesDotRef = useRef(null)
 
-  const handleReplyCUD = async (e, method, commentId, postId, itemId) => {
+  const handleReplyCUD = async (e, method, replyObj) => {
+
+
+    let commentId = replyObj.parentCommentId;
+    let postId = replyObj.postId;
+    let itemId = replyObj.commentId
+    
+    let replyContent = replyObj.replyContent;
+
     const commentProp = `comment${commentId}`.trim();
 
+    e.preventDefault();
 
-      const responseBody = await commentsCUD(
-        method,
-        commentId,
-        postId,
-        itemId,
-        replyContent
-      );
+
+
+
 
       switch (method) {
         case RestMethod.POST:
-        case RestMethod.PUT:
+        
           {
+
             
-            if (replyContent === "") {
+            if (
+              !replyContent ||
+              replyContent === undefined ||
+              replyContent === ""
+            ) {
               //raise error
             } else {
+              const responseBody = await commentsCUD(
+                method,
+                commentId,
+                postId,
+                itemId,
+                replyContent
+              );
               if ("error" in responseBody) {
                 const { error } = responseBody;
                 console.log(error);
@@ -56,55 +73,91 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
               } else {
                 const { data } = responseBody;
 
-              
                 if (replies && replies[commentProp]) {
-                
                   let newComment = {
-                  id: data.id,
-                  commentedOn: { id: postId },
-                  parentComment: { id: commentId },
-                  commentedAtTime: new Date().toISOString,
-                  commentContent: replyContent,
-                  owner: currentUser
+                    id: data.id,
+                    commentedOn: { id: postId },
+                    parentComment: { id: commentId },
+                    commentedAtTime: new Date().toISOString,
+                    commentContent: replyContent,
+                    owner: currentUser,
+                    commentLikedByCurrentUser: false,
+                    noOfLikes: 0,
+                    noOfReplies: 0,
+                  };
 
-                };
-
-                let newDataList =
-                  method === RestMethod.POST
-                    ? [...replies[commentProp].dataList, newComment]
-                    : replies[commentProp].dataList.map((reply) => {
-                      if (reply.id === itemId) return newComment;
-                      else return comment;
-                    });
-                  
-                
-
-                setReplies({
-                  ...replies,
-                  [commentProp]: {
-                    ...replies[commentProp],
-                    dataList: newDataList,
-                  },
-                });
-                  
-
-
+                  let newDataList = [
+                    ...replies[commentProp].dataList,
+                    newComment,
+                  ];
+                  setReplies({
+                    ...replies,
+                    [commentProp]: {
+                      ...replies[commentProp],
+                      dataList: newDataList,
+                    },
+                  });
                 }
+
                 replyBarRef.current.style.display = "none";
                 reactionBarRef.current.style.display = "inline-block";
 
-                commentContentRef.current.style.display = 'inline-block'
-                updateCommentRef.current.style.display = 'none'
+                commentContentRef.current.style.display = "inline-block";
+                updateCommentRef.current.style.display = "none";
 
-                setNoOfReplies((noOfReplies) => noOfReplies + 1);
-                
-            }
+                setNoOfReplies(noOfReplies + 1);
 
+                if (!replies || !replies[commentProp]) {
+                  repliesDotRef.current.click();
+                }
+              }
             }
           }
           break;
+        case RestMethod.PUT: {
+
+          if (replyContent === '' || replyContent === undefined || replyContent === null) {
+            alert('comment cant be empty');
+          }
+          else {
+                  const responseBody = await commentsCUD(
+                  method,
+                  commentId,
+                  postId,
+                  itemId,
+                  replyContent
+                );
+            if ('error' in responseBody) {
+              let { error } = responseBody;
+              console.log(error)
+              history.push('/error')
+            }
+            else {
+              setParentComments((comments) => {
+                return {
+                  ...comments,
+                  [commentProp]: {
+                    ...comments[commentProp],
+                    dataList: comments[commentProp].dataList.map((reply) => {
+                      if (reply.id === itemId) return {...reply, commentContent: replyContent, modifiedAtTime: new Date().toISOString};
+                      else return reply;
+                    }),
+                  },
+                };
+              });
+            }
+          }
+        }
+          break;
 
         case RestMethod.DELETE: {
+                const responseBody = await commentsCUD(
+                  method,
+                  commentId,
+                  postId,
+                  itemId,
+                  replyContent
+                );
           if ("error" in responseBody) {
             const { error } = responseBody;
             console.log(error);
@@ -171,6 +224,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
           history.push("/error");
         } else {
           setReplies({ ...replies, [commentProp]: responseBody });
+          
         }
       }
     };
@@ -203,7 +257,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
                   id={`updateOn${comment.id}`}
                   name={`updateOn${comment.id}`}
                   onChange={(e) => setReplyContent(e.target.value)}
-                  value={replyContent}
+                  //value={(parentCommentId)?replyContent: commentContent}
                 />
               </Form.Group>
               <Form.Group controlId={`updateCommentBoxFor${comment.id}`}>
@@ -213,13 +267,17 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
                   name={`submitUpdateOn${comment.id}`}
                   onClick={(e) => {
                     !parentCommentId
-                      ? handleCommentCUD(e, RestMethod.PUT, postId, comment.id)
+                      ? handleCommentCUD(e, RestMethod.PUT, {postId: postId, commentId: comment.id, commentContent: replyContent} )
                       : handleReplyCUD(
                           e,
                           RestMethod.PUT,
-                          parentCommentId,
-                          postId,
-                          comment.id
+                          {
+                            parentCommentId: parentCommentId,
+                            postId: postId,
+                            commentId: comment.id,
+                            replyContent: replyContent
+                          }
+
                       );
                     updateCommentRef.current.style.display = 'none'
                     commentContentRef.current.style.display = 'inline-block'
@@ -274,6 +332,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
                     variant="link"
                     eventKey={`comment${comment.id}`}
                     onClick={(e) => handleGetReplies(e, comment.id, 0)}
+                    ref={ repliesDotRef }
                   >
                     <FontAwesomeIcon
                       icon={faRegularCommentDots}
@@ -310,7 +369,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
                     cursor: "pointer",
                   }}
                   onClick={(e) => {
-                    setReplyContent(comment.commentContent);
+                    setReplyContent(comment.commentContent)
                     updateCommentRef.current.style.display = 'inline-block'
                     commentContentRef.current.style.display = 'none'
                   }}
@@ -323,15 +382,20 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
                       ? handleCommentCUD(
                           e,
                           RestMethod.DELETE,
-                          postId,
-                          comment.id
+                          {
+                            postId: postId,
+                            commentId: comment.id,
+                          }
                         )
                       : handleReplyCUD(
                           e,
                           RestMethod.DELETE,
-                          parentCommentId,
-                          postId,
-                          comment.id
+                          {
+                            parentCommentId: parentCommentId,
+                            postId: postId,
+                            commentId: comment.id
+                          }
+
                         );
                   }}
                   icon={faWindowClose}
@@ -344,6 +408,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
               )}
             </div>
             <div ref={replyBarRef} style={{ display: "none" }}>
+        
               <Form.Group controlId={`replyBoxFor${comment.id}`}>
                 <Form.Control
                   as="textarea"
@@ -356,41 +421,28 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
               </Form.Group>
               <Form.Group controlId={`replyBoxFor${comment.id}`}>
                 <Button
-                  type="button"
+                  type="submit"
                   id={`submitReplyOn${comment.id}`}
                   name={`submitReplyOn${comment.id}`}
                   onClick={(e) => {
                     handleReplyCUD(
                       e,
                       RestMethod.POST,
-                      comment.id,
-                      postId,
-                      null
+                      {
+                        parentCommentId: comment.id,
+                        postId: postId,
+                        commentId: null,
+                        replyContent: replyContent
+                      }
+
                     );
                   }}
                 >
                   reply
                 </Button>
-              </Form.Group>
+                </Form.Group>
+                
             </div>
-
-            {/* <div ref={replyBarRef} style={{ display: "none" }}>
-              <input
-                type="textarea"
-                id={`replyOn${comment.id}`}
-                name={`replyOn${comment.id}`}
-                onChange={(e) => setReplyContent(e.target.value)}
-              />
-              <button
-                id={`submitReplyOn${comment.id}`}
-                name={`submitReplyOn${comment.id}`}
-                onClick={(e) => {
-                  handleReplyCUD(e, RestMethod.POST, comment.id, postId, null);
-                }}
-              >
-                reply
-              </button>
-            </div> */}
           </Card.Header>
 
           {noOfReplies > 0 ? (

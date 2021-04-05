@@ -4,6 +4,7 @@ const preprocessingState = {
     fieldErrors: {
       idError: "",
       nameError: "",
+      profileNameError: '',
       emailError: "",
       passwordError: "",
       DOBError: "",
@@ -38,6 +39,11 @@ export const isValid = (userDetails, fieldErrors) => {
     fieldErrors.nameError = "Field can't be empty";
     returnValue = false;
   }
+
+    if (userDetails.profileName === "") {
+      fieldErrors.profileNameError = "Field can't be empty";
+      returnValue = false;
+    }
   if (userDetails.email === "") {
     fieldErrors.emailError = "Field can't be empty";
     returnValue = false;
@@ -49,7 +55,7 @@ export const isValid = (userDetails, fieldErrors) => {
     }
   }
   // Also need a regex for email
-  if (userDetails.password) {
+  if (userDetails.password === '') {
     if (userDetails.password === "") {
       fieldErrors.passwordError = "Field can't be empty";
       returnValue = false;
