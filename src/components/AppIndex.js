@@ -24,7 +24,7 @@ console.log('AppIndex')
 
             {/* <div className="col-md-8 mx-auto"> */}
                 <Route exact path="/" component={UserFeed} />
-            {/* </div> */}
+          {/* </div> */}
         {/* </div> */}
         </Switch>
       </Router>

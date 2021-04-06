@@ -16,8 +16,8 @@ export function UserDetailsPopup(props) {
         </Popover>
       }
     >
-      <cite>
-        <Link to={`/profile/${owner.id}`}>{owner.name}</Link>
+      <cite >
+        <Link className='text-secondary' to={`/profile/${owner.id}`}>{owner.name}</Link>
       </cite>
     </OverlayTrigger>
   );

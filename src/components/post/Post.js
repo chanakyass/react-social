@@ -1,7 +1,7 @@
 import cookie from "react-cookies";
 import history from "../../app-history";
 import React, { useEffect, useState, useRef } from "react";
-import { likeUnlikeCUD } from "./post-service";
+import { likeUnlikeCUD, postsCUD } from "./post-service";
 import { loadComments, commentsCUD } from "../comments/comment-services";
 import cleanEmpty from "../utility/cleanup-objects";
 import {
@@ -12,7 +12,7 @@ import {
 } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faThumbsUp, faCommentDots, faReply } from "@fortawesome/free-solid-svg-icons";
-import { faThumbsUp as faRegularThumbsUp } from "@fortawesome/free-regular-svg-icons";
+import { faThumbsUp as faRegularThumbsUp, faEdit, faWindowClose } from "@fortawesome/free-regular-svg-icons";
 import { RestMethod } from "../../enums";
 import { UserDetailsPopup } from '../UserDetailsPopup'
 import { Comment } from '../comments/Comment'
@@ -43,6 +43,85 @@ export const Post = React.memo(({ post, setPosts }) => {
           
           deleteNestedComments(comment.id)
         })
+    }
+  }
+
+  const handlePostUD = async (e, method, postObj) => {
+    e.preventDefault();
+    const postId = postObj.id;
+    const postHeading = postObj.postHeading
+    const postBody = postObj.postBody;
+
+    switch (method) {
+      case RestMethod.PUT:
+        {
+          if (
+            postContent === "" ||
+            postContent === undefined ||
+            postContent === null
+          ) {
+            alert("comment cant be empty");
+          } else {
+            const responseBody = await postsCUD(
+              method,
+              postId,
+              postHeading,
+              postBody
+            );
+            if ("error" in responseBody) {
+              let { error } = responseBody;
+              console.log(error);
+              history.push("/error");
+            } else {
+              setPosts((posts) => {
+                return {
+                ...posts,
+                dataList: posts.dataList.map(listPost => {
+                  let newPost = listPost;
+                  if (listPost.id === postId) {
+                    if (postHeading !== '') {
+                      newPost = { ...newPost, postHeading: postHeading };
+                    }
+                    if (postBody !== '') {
+                      newPost = { ...newPost, postBody: postBody };
+                    }
+
+                    newPost = { ...newPost, modifiedAtTime: new Date().toISOString() }
+                    return newPost;
+                  }
+                  else {
+                    return listPost;
+                  }
+                })
+              }})
+            }
+          }
+        }
+        break;
+
+      case RestMethod.DELETE: {
+        const responseBody = await postsCUD(
+          method,
+          
+          postId,
+          null,
+          null
+        );
+        if ("error" in responseBody) {
+          const { error } = responseBody;
+          console.log(error);
+          history.push("/error");
+        } else {
+
+          setPosts((posts) => {
+            return {
+              ...posts,
+              dataList: posts.dataList.filter(iterPost => iterPost.id === postId)
+            };
+          });
+
+        }
+      }
     }
   }
 
@@ -115,9 +194,7 @@ export const Post = React.memo(({ post, setPosts }) => {
               if (method === RestMethod.POST)
                 setNoOfComments(noOfComments => noOfComments + 1)
               
-              if (!comments || !comments[postProp]) {
-                commentsDotRef.current.focus()
-              }
+
    
             }
           }
@@ -206,7 +283,7 @@ export const Post = React.memo(({ post, setPosts }) => {
   };
   return (
     <div>
-      <Card className="mt-5" style={{ maxWidth: "80%", borderBottom: "none" }}>
+      <Card className="mt-2" style={{ maxWidth: "80%", borderBottom: "none" }}>
         {/* <Card.Img variant="top" src="holder.js/100px180" /> */}
         {console.log(post.id)}
 
@@ -232,6 +309,7 @@ export const Post = React.memo(({ post, setPosts }) => {
             <div ref={reactionBarRef} style={{ display: "inline-block" }}>
               {post.postLikedByCurrentUser === false ? (
                 <FontAwesomeIcon
+                  color="gray"
                   onClick={(e) => handleLikeUnlikePost(e, post, "like")}
                   icon={faRegularThumbsUp}
                   style={{
@@ -242,6 +320,7 @@ export const Post = React.memo(({ post, setPosts }) => {
                 ></FontAwesomeIcon>
               ) : (
                 <FontAwesomeIcon
+                  color="gray"
                   onClick={(e) => handleLikeUnlikePost(e, post, "unlike")}
                   icon={faThumbsUp}
                   style={{
@@ -258,10 +337,11 @@ export const Post = React.memo(({ post, setPosts }) => {
                     variant="link"
                     eventKey={`post${post.id}`}
                     onClick={(e) => handleGetComments(e, post.id, 0)}
-                    ref = {commentsDotRef}
+                    ref={commentsDotRef}
                   >
                     <FontAwesomeIcon
                       icon={faCommentDots}
+                      color="gray"
                       style={{
                         marginLeft: "1rem",
                         marginRight: "1rem",
@@ -275,6 +355,7 @@ export const Post = React.memo(({ post, setPosts }) => {
                   replyBarRef.current.style.display = "inline-block";
                   reactionBarRef.current.style.display = "none";
                 }}
+                color="gray"
                 icon={faReply}
                 style={{
                   marginLeft: "1rem",
@@ -282,6 +363,35 @@ export const Post = React.memo(({ post, setPosts }) => {
                   cursor: "pointer",
                 }}
               ></FontAwesomeIcon>
+
+              {post.owner.id === currentUser.id && (
+                <FontAwesomeIcon
+                  icon={faEdit}
+                  color='gray'
+                  style={{
+                    marginLeft: "1rem",
+                    marginRight: "1rem",
+                    cursor: "pointer",
+                  }}
+                  onClick={(e) => {
+                    
+                  }}
+                ></FontAwesomeIcon>
+              )}
+              {post.owner.id === currentUser.id && (
+                <FontAwesomeIcon
+                  onClick={(e) => {
+                    
+                  }}
+                  color='gray'
+                  icon={faWindowClose}
+                  style={{
+                    marginLeft: "1rem",
+                    marginRight: "1rem",
+                    cursor: "pointer",
+                  }}
+                ></FontAwesomeIcon>
+              )}
             </div>
             <div ref={replyBarRef} style={{ display: "none" }}>
               <Form.Group controlId={`commentBoxFor${post.id}`}>
@@ -300,7 +410,11 @@ export const Post = React.memo(({ post, setPosts }) => {
                   id={`submitCommentOn${post.id}`}
                   name={`submitCommentOn${post.id}`}
                   onClick={(e) =>
-                    handleCommentCUD(e, RestMethod.POST, {commentId: null, postId: post.id, commentContent: commentContent} )
+                    handleCommentCUD(e, RestMethod.POST, {
+                      commentId: null,
+                      postId: post.id,
+                      commentContent: commentContent,
+                    })
                   }
                 >
                   reply

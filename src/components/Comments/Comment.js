@@ -42,16 +42,11 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
 
     e.preventDefault();
 
-
-
-
-
       switch (method) {
         case RestMethod.POST:
         
           {
 
-            
             if (
               !replyContent ||
               replyContent === undefined ||
@@ -72,6 +67,8 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
                 history.push("/error");
               } else {
                 const { data } = responseBody;
+
+                console.log(currentUser)
 
                 if (replies && replies[commentProp]) {
                   let newComment = {
@@ -242,6 +239,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
         ></Card.Header>
         <Card.Body>
           <Card.Subtitle>
+            { console.log(comment.owner)}
             <UserDetailsPopup owner={comment.owner} />
           </Card.Subtitle>
           <Card.Text>
@@ -267,20 +265,19 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
                   name={`submitUpdateOn${comment.id}`}
                   onClick={(e) => {
                     !parentCommentId
-                      ? handleCommentCUD(e, RestMethod.PUT, {postId: postId, commentId: comment.id, commentContent: replyContent} )
-                      : handleReplyCUD(
-                          e,
-                          RestMethod.PUT,
-                          {
-                            parentCommentId: parentCommentId,
-                            postId: postId,
-                            commentId: comment.id,
-                            replyContent: replyContent
-                          }
-
-                      );
-                    updateCommentRef.current.style.display = 'none'
-                    commentContentRef.current.style.display = 'inline-block'
+                      ? handleCommentCUD(e, RestMethod.PUT, {
+                          postId: postId,
+                          commentId: comment.id,
+                          commentContent: replyContent,
+                        })
+                      : handleReplyCUD(e, RestMethod.PUT, {
+                          parentCommentId: parentCommentId,
+                          postId: postId,
+                          commentId: comment.id,
+                          replyContent: replyContent,
+                        });
+                    updateCommentRef.current.style.display = "none";
+                    commentContentRef.current.style.display = "inline-block";
                   }}
                 >
                   update
@@ -307,6 +304,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
               {!isCommentLiked || isCommentLiked === false ? (
                 <FontAwesomeIcon
                   onClick={(e) => handleLikeUnlikeComment(e, comment, "like")}
+       
                   icon={faRegularThumbsUp}
                   style={{
                     marginLeft: "1rem",
@@ -318,6 +316,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
                 <FontAwesomeIcon
                   onClick={(e) => handleLikeUnlikeComment(e, comment, "unlike")}
                   icon={faThumbsUp}
+     
                   style={{
                     marginLeft: "1rem",
                     marginRight: "1rem",
@@ -332,11 +331,11 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
                     variant="link"
                     eventKey={`comment${comment.id}`}
                     onClick={(e) => handleGetReplies(e, comment.id, 0)}
-                    ref={ repliesDotRef }
+                    ref={repliesDotRef}
                   >
                     <FontAwesomeIcon
                       icon={faRegularCommentDots}
-                      color={"black"}
+                      color='black'
                       style={{
                         marginLeft: "1rem",
                         marginRight: "1rem",
@@ -354,6 +353,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
                   reactionBarRef.current.style.display = "none";
                 }}
                 icon={faReply}
+    
                 style={{
                   marginLeft: "1rem",
                   marginRight: "1rem",
@@ -369,9 +369,9 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
                     cursor: "pointer",
                   }}
                   onClick={(e) => {
-                    setReplyContent(comment.commentContent)
-                    updateCommentRef.current.style.display = 'inline-block'
-                    commentContentRef.current.style.display = 'none'
+                    setReplyContent(comment.commentContent);
+                    updateCommentRef.current.style.display = "inline-block";
+                    commentContentRef.current.style.display = "none";
                   }}
                 ></FontAwesomeIcon>
               )}
@@ -379,24 +379,15 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
                 <FontAwesomeIcon
                   onClick={(e) => {
                     !parentCommentId
-                      ? handleCommentCUD(
-                          e,
-                          RestMethod.DELETE,
-                          {
-                            postId: postId,
-                            commentId: comment.id,
-                          }
-                        )
-                      : handleReplyCUD(
-                          e,
-                          RestMethod.DELETE,
-                          {
-                            parentCommentId: parentCommentId,
-                            postId: postId,
-                            commentId: comment.id
-                          }
-
-                        );
+                      ? handleCommentCUD(e, RestMethod.DELETE, {
+                          postId: postId,
+                          commentId: comment.id,
+                        })
+                      : handleReplyCUD(e, RestMethod.DELETE, {
+                          parentCommentId: parentCommentId,
+                          postId: postId,
+                          commentId: comment.id,
+                        });
                   }}
                   icon={faWindowClose}
                   style={{
@@ -408,7 +399,6 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
               )}
             </div>
             <div ref={replyBarRef} style={{ display: "none" }}>
-        
               <Form.Group controlId={`replyBoxFor${comment.id}`}>
                 <Form.Control
                   as="textarea"
@@ -425,23 +415,17 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
                   id={`submitReplyOn${comment.id}`}
                   name={`submitReplyOn${comment.id}`}
                   onClick={(e) => {
-                    handleReplyCUD(
-                      e,
-                      RestMethod.POST,
-                      {
-                        parentCommentId: comment.id,
-                        postId: postId,
-                        commentId: null,
-                        replyContent: replyContent
-                      }
-
-                    );
+                    handleReplyCUD(e, RestMethod.POST, {
+                      parentCommentId: comment.id,
+                      postId: postId,
+                      commentId: null,
+                      replyContent: replyContent,
+                    });
                   }}
                 >
                   reply
                 </Button>
-                </Form.Group>
-                
+              </Form.Group>
             </div>
           </Card.Header>
 

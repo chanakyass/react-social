@@ -141,10 +141,10 @@ const Login = () => {
   
 
   return (
-    <>
+    
       <div style={{ height: "60rem" }}>
         <div className="row h-100">
-          <div className="col-md-4 mx-auto my-auto rounded shadow">
+          <div className="col-md-4 mx-auto my-auto rounded shadow bg-white">
             <div className="col-md-4 mx-auto mt-3">
               <h3>Citizen Sane</h3>
             </div>
@@ -206,22 +206,38 @@ const Login = () => {
                 </Form.Control.Feedback>
               </Form.Group>
 
-
               <Form.Group as={Col} md={12}>
                 <Button className="my-3" type="submit">
                   Submit
                 </Button>
               </Form.Group>
 
+              <Form.Group as={Col} md={12}>
+                <button
+                  className="my-3"
+                  type="submit"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    margin: "none",
+                    textDecoration: "underline",
+                    color: "dodgerblue",
+                  }}
+                  onClick={() => history.push("/register")}
+                >
+                  Register yourself
+                </button>
+              </Form.Group>
             </Form>
             <div className="col-md-8 mx-auto my-3 text-danger">
               {state.postprocessingState.failureDetails.failureMessage}
               {state.postprocessingState.failureDetails.details}
             </div>
           </div>
-        </div>
       </div>
-    </>
+      </div>
+     
+    
   );
   
 };

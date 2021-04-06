@@ -16,7 +16,7 @@ const UserRegister = () => {
     email: "",
     profileName: "",
     password: "",
-    DOB: "",
+    dob: "",
     userSummary: "",
     grantedAuthoritiesList: [
       {
@@ -212,11 +212,11 @@ const UserRegister = () => {
   //   </>
   // );
 
-  return <>
-    
+  return (
+    <>
       <div style={{ height: "60rem" }}>
         <div className="row h-100">
-          <div className="col-md-4 mx-auto my-auto rounded shadow">
+          <div className="col-md-4 mx-auto my-auto rounded shadow bg-white">
             <div className="col-md-4 mx-auto mt-3">
               <h3>Citizen Sane</h3>
             </div>
@@ -226,7 +226,7 @@ const UserRegister = () => {
               //validated={state.hasError}
               onSubmit={submitHandler}
 
-            //style={{  borderBlockColor: 'blue' }}
+              //style={{  borderBlockColor: 'blue' }}
             >
               <div className="col-md-12 my-4 mx-auto">
                 <h5>Register</h5>
@@ -248,7 +248,10 @@ const UserRegister = () => {
                   onChange={changePerson}
                 />
                 <Form.Control.Feedback type="invalid">
-                  {state.preprocessingState.failureDetails.fieldErrors.nameError}
+                  {
+                    state.preprocessingState.failureDetails.fieldErrors
+                      .nameError
+                  }
                 </Form.Control.Feedback>
               </Form.Group>
 
@@ -269,9 +272,12 @@ const UserRegister = () => {
                 />
                 <Form.Text className="text-muted">
                   We'll never share your email with anyone else.
-              </Form.Text>
+                </Form.Text>
                 <Form.Control.Feedback type="invalid">
-                  {state.preprocessingState.failureDetails.fieldErrors.emailError}
+                  {
+                    state.preprocessingState.failureDetails.fieldErrors
+                      .emailError
+                  }
                 </Form.Control.Feedback>
               </Form.Group>
 
@@ -325,10 +331,10 @@ const UserRegister = () => {
               <Form.Group as={Col} md={12} controlId="formDOB">
                 <Form.Label>Date of Birth</Form.Label>
                 <Form.Control
-                  id="DOB"
-                  name="DOB"
+                  id="dob"
+                  name="dob"
                   type="date"
-                  value={user.DOB}
+                  value={user.dob ? new Date(user.dob).toISOString().substr(0, 10): ''}
                   onChange={changePerson}
                   isInvalid={
                     state.hasError &&
@@ -356,7 +362,7 @@ const UserRegister = () => {
               <Form.Group as={Col} md={12}>
                 <Button className="my-3" type="submit">
                   Submit
-              </Button>
+                </Button>
               </Form.Group>
 
               <Form.Control.Feedback type="invalid">
@@ -366,8 +372,6 @@ const UserRegister = () => {
               <Form.Control.Feedback type="invalid">
                 {state.postprocessingState.failureDetails.details}
               </Form.Control.Feedback>
-
-
             </Form>
             <div className="col-md-8 mx-auto my-3 text-danger">
               {state.postprocessingState.failureDetails.failureMessage}
@@ -375,8 +379,9 @@ const UserRegister = () => {
             </div>
           </div>
         </div>
-      </div> 
+      </div>
     </>
+  );
   
 };
 
