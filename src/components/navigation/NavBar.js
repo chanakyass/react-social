@@ -5,84 +5,84 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import cookie from "react-cookies";
 import history from '../../app-history'
-import { useState } from 'react'
+import React, { useState } from 'react'
 
-const NavBar = ({setAddPostButtonClicked}) => {
+const NavBar = React.memo(({ setAddPostButtonClicked }) => {
 
   const loggedInUser = cookie.load("current_user");
 
   const [logoutRequired, setLogoutRequired] = useState(false)
 
-  const logout =   (e) => {
+  const logout = (e) => {
 
-     cookie.remove('jwt', {path: '/'})
-     cookie.remove('current_user', {path: '/'})
+    cookie.remove('jwt', { path: '/' })
+    cookie.remove('current_user', { path: '/' })
     setTimeout(() => history.push("/login"), 800);
     
     
   }
 
-    return (
-      <>
-        {
-          <Navbar style={{ position: "sticky"}}bg="light" fixed='top' expand="lg">
-            <Navbar.Brand  href="/">Citizen Sane</Navbar.Brand>
-            <Navbar.Toggle aria-controls="basic-navbar-nav" />
-            <Navbar.Collapse id="basic-navbar-nav">
-              <Nav className="ml-auto">
-                {/* <Nav.Link href="/">Home</Nav.Link> */}
-                <Form className="my-auto" inline>
-                  <FormControl
-                    type="text"
-                    placeholder="Search"
-                    className="mr-sm-2"
-                  />
-                  <Button variant='light' >Search</Button>
-                </Form>
-                <div >
-                  <Button  variant="light" onClick={(e) => {setAddPostButtonClicked(true)}}>
-                    Add a post
+  return (
+    <>
+      {
+        <Navbar style={{ position: "sticky" }} bg="light" fixed='top' expand="lg">
+          <Navbar.Brand href="/">Citizen Sane</Navbar.Brand>
+          <Navbar.Toggle aria-controls="basic-navbar-nav" />
+          <Navbar.Collapse id="basic-navbar-nav">
+            <Nav className="ml-auto">
+              {/* <Nav.Link href="/">Home</Nav.Link> */}
+              <Form className="my-auto" inline>
+                <FormControl
+                  type="text"
+                  placeholder="Search"
+                  className="mr-sm-2"
+                />
+                <Button variant='light' >Search</Button>
+              </Form>
+              <div >
+                <Button variant="light" onClick={(e) => { setAddPostButtonClicked(true) }}>
+                  Add a post
                   </Button>
-                </div>
+              </div>
 
 
            
 
-                <DropdownButton
-                  variant="light"
-                  className="my-auto mr-4"
-                  menuAlign="right"
-                  title={ loggedInUser.profileName }
-                >
-                  <Dropdown.Item href={`/profile/${loggedInUser.id}`}>
-                    <div>{loggedInUser.name}</div>
-                    <div>
-                      <small>View your profile information</small>
-                    </div>
+              <DropdownButton
+                variant="light"
+                className="my-auto mr-4"
+                menuAlign="right"
+                title={loggedInUser.profileName}
+              >
+                <Dropdown.Item href={`/profile/${loggedInUser.id}`}>
+                  <div>{loggedInUser.name}</div>
+                  <div>
+                    <small>View your profile information</small>
+                  </div>
+                </Dropdown.Item>
+                <Dropdown.Divider />
+                <Dropdown.Item href="#" >
+                  Give feedback
                   </Dropdown.Item>
-                  <Dropdown.Divider />
-                  <Dropdown.Item href="#" >
-                    Give feedback
+                <Dropdown.Item href="#" onClick={(e) => logout(e)}>
+                  Logout
                   </Dropdown.Item>
-                  <Dropdown.Item href="#" onClick={(e) => logout(e)}>
-                    Logout
-                  </Dropdown.Item>
-                </DropdownButton>
+              </DropdownButton>
 
-                {/* <Nav.Button
+              {/* <Nav.Button
                   href={`/profile/${loggedInUser.id}`}
                 >
                   My Profile
                 </Nav.Button> */}
-              </Nav>
-              {/* <Form inline>
+            </Nav>
+            {/* <Form inline>
                 <FormControl
                   type="text"
                   placeholder="Search"
                   className="mr-sm-2"
                 /> */}
 
-              {/* <FontAwesomeIcon
+            {/* <FontAwesomeIcon
                 onClick={(e) => logout(e)}
                 icon={faSignOutAlt}
                 style={{
@@ -92,13 +92,13 @@ const NavBar = ({setAddPostButtonClicked}) => {
                 }}
               ></FontAwesomeIcon> */}
 
-              {/* </Form> */}
-            </Navbar.Collapse>
-          </Navbar>
-        }
-      </>
-    );
+            {/* </Form> */}
+          </Navbar.Collapse>
+        </Navbar>
+      }
+    </>
+  );
     
-}
+});
 
 export default NavBar

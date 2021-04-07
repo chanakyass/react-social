@@ -4,7 +4,7 @@ import {RestMethod} from '../../enums'
 
 
 
-export const loadUserFeed = async () => {
+export const loadUserFeed = async (pageNo) => {
 
     const jwtToken = cookie.load("jwt");
     const currentUser = cookie.load("current_user");
@@ -19,7 +19,7 @@ export const loadUserFeed = async () => {
     try {
 
         const response = await fetch(
-            `http://localhost:8080/api/v1/resource/posts/${0}`,
+            `http://localhost:8080/api/v1/resource/posts/${pageNo}`,
             requestOptions
         );
 

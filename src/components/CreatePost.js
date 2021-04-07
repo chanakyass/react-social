@@ -2,35 +2,49 @@ import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import Parser from "html-react-parser";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { Button, Modal } from "react-bootstrap";
+import { Button, Modal, InputGroup, FormControl } from "react-bootstrap";
 import { postsCUD } from "./post/post-service";
 import { RestMethod } from "../enums";
 import cookie from "react-cookies";
 import history from "../app-history";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-export const CreatePost = ({
-  setAddPostButtonClicked,
-  addPostButtonClicked,
+export const CreatePost = React.memo(({
+  setShow,
+    show,
+  method,
   setPosts,
+    post
 }) => {
-  const [post, setPost] = useState({ postHeading: "", postBody: "" });
+  const [editorPost, setEditorPost] = useState({ id: null, postHeading: "", postBody: "" });
   const jwtToken = cookie.load("jwt");
-  const currentUser = cookie.load("current_user");
+    const currentUser = cookie.load("current_user");
+    
+    useEffect(() => {
+        if (post) {
+            setEditorPost({ id: post.id,  postHeading: post.postHeading, postBody: post.postBody });
+        }
+    }, [])
 
   console.log("CreatePost entered");
 
-  const handleClose = (e) => setAddPostButtonClicked(false);
+  const handleClose = (e) => setShow(false);
 
-  const handleCreatePost = async (e, post) => {
-    const { postHeading, postBody } = post;
+    const handlePostCU = async (e, method, editorPost) => {
+        const postId = editorPost.id;
+        const postHeading = editorPost.postHeading.trim();
+        const postBody = editorPost.postBody.trim();
+
+
+
     if (postHeading === "" || postBody === "") {
       //error
     } else {
+    
       const responseBody = await postsCUD(
         RestMethod.POST,
-        null,
+        postId,
         postHeading,
         postBody
       );
@@ -38,76 +52,127 @@ export const CreatePost = ({
       if ("error" in responseBody) {
         const { error } = responseBody;
 
-        console.log(error);
-
-        history.push("/error");
+          console.log(error);
+          handleClose(e);
+          history.push("/error");
+          
       } else {
-        const { data } = responseBody;
+          const { data } = responseBody;
+          
+        switch (method) {
+            case RestMethod.POST: {
+                setPosts((posts) => {
+                    return {
+                        ...posts,
+                        dataList: [
+                            {
+                                id: data.resourceId,
+                                postHeading: postHeading,
+                                postBody: postBody,
+                                postedAtTime: new Date().toISOString(),
+                                owner: currentUser,
+                                noOfComments: 0,
+                                noOfLikes: 0
+                            },
+                            ...posts.dataList,
+                        ],
+                    };
+                });
+            }
+            break;
+            case RestMethod.PUT: {
+                setPosts((posts) => {
+                return {
+                ...posts,
+                dataList: posts.dataList.map(listPost => {
+                  let newPost = listPost;
+                  if (listPost.id === postId) {
+                    if (postHeading !== '') {
+                      newPost = { ...newPost, postHeading: postHeading };
+                    }
+                    if (postBody !== '') {
+                      newPost = { ...newPost, postBody: postBody };
+                    }
 
-        setPosts((posts) => {
-          return {
-            ...posts,
-            dataList: [
-              {
-                id: data.resourceId,
-                postHeading: postHeading,
-                postBody: postBody,
-                postedAtTime: new Date().toISOString(),
-                owner: currentUser,
-              },
-              ...posts.dataList,
-            ],
-          };
-        });
+                    newPost = { ...newPost, modifiedAtTime: new Date().toISOString() }
+                    return newPost;
+                  }
+                  else {
+                    return listPost;
+                  }
+                })
+              }});
+            }
+        }
+
+
       }
     }
     handleClose(e);
+    setEditorPost({ id: null, postHeading: '', postBody: '' });
   };
 
   return (
     <>
-      
-        <Modal size="lg" show={addPostButtonClicked} onHide={handleClose} centered>
-          <Modal.Header closeButton>
-            <Modal.Title>Modal heading</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <div className="row">
-              <div className=" mx-auto">
-                <CKEditor
-                  editor={ClassicEditor}
-                  data={post.postBody}
-                  onReady={(editor) => {
-                    // You can store the "editor" and use when it is needed.
-                    console.log("Editor is ready to use!", editor);
-                  }}
-                  onChange={(event, editor) => {
-                    const data = editor.getData();
-                    setPost({ ...post, postBody: data });
-                  }}
-                  onBlur={(event, editor) => {
-                    console.log("Blur.", editor);
-                  }}
-                  onFocus={(event, editor) => {
-                    console.log("Focus.", editor);
-                  }}
+      <Modal
+        size="lg"
+        show={show}
+        onHide={handleClose}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title></Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="row">
+            <div className='col-md-10 mx-auto'>
+              <InputGroup>
+                <InputGroup.Prepend>
+                  <InputGroup.Text id="basic-addon1">@</InputGroup.Text>
+                </InputGroup.Prepend>
+                <FormControl
+                  placeholder="PostHeading"
+                  aria-label="PostHeading"
+                  aria-describedby="basic-addon1"
+                  onChange={(e) => setEditorPost({...editorPost, postHeading: e.target.value})}
+                  value={editorPost.postHeading}
                 />
-              </div>
+              </InputGroup>
             </div>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={handleClose}>
-              Close
-            </Button>
-            <Button
-              variant="primary"
-              onClick={(e, post) => handleCreatePost(e, post)}
-            >
-              Create Post
-            </Button>
-          </Modal.Footer>
-        </Modal>
-      
+            <div className=" mx-auto">
+              <CKEditor
+                editor={ClassicEditor}
+                data={editorPost.postBody}
+                onReady={(editor) => {
+                  // You can store the "editor" and use when it is needed.
+                  console.log("Editor is ready to use!", editor);
+                }}
+                onChange={(event, editor) => {
+                  const data = editor.getData();
+                  setEditorPost({ ...editorPost, postBody: data });
+                }}
+                onBlur={(event, editor) => {
+                  console.log("Blur.", editor);
+                }}
+                onFocus={(event, editor) => {
+                  console.log("Focus.", editor);
+                }}
+              />
+            </div>
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleClose}>
+            Close
+          </Button>
+          <Button
+            variant="primary"
+            onClick={(e) => handlePostCU(e, method, editorPost)}
+          >
+            {post !== null && post !== undefined ? 'Update post': 'Create post'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
-};
+});

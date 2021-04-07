@@ -23,7 +23,7 @@ function userExists() {
 function App() {
   console.log('App')
   return (
-    <div className='social-container social-special-gray'>
+    <div className='social-special-gray'>
     <Router history={history}>
       <Switch>
         <Route exact path="/login"  render={() => userExists()? <Redirect to={{pathname: '/', state: {showAlert: true, alertMessage: 'You are logged in'}}} />: <Login/>} />

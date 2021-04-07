@@ -12,13 +12,17 @@ export function UserDetailsPopup(props) {
       overlay={
         <Popover id={"popover-positioned-top"}>
           <Popover.Title as="h3">{owner.name}</Popover.Title>
-          <Popover.Content>{ owner.userSummary}</Popover.Content>
+          <Popover.Content>{owner.userSummary}</Popover.Content>
         </Popover>
       }
     >
-      <cite >
-        <Link className='text-secondary' to={`/profile/${owner.id}`}>{owner.name}</Link>
-      </cite>
+      <div style={{display: 'inline-block', paddingBottom: '0.80em'}}>
+        <cite>
+          <Link className="text-secondary" to={`/profile/${owner.id}`}>
+            {owner.name}
+          </Link>
+        </cite>
+      </div>
     </OverlayTrigger>
   );
 }

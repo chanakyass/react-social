@@ -47,18 +47,12 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
     };
     (async () => {
       try {
-        const body = await loadUserFeed();
+        const body = await loadUserFeed(0);
         if ("error" in body) {
           console.log(body.error);
           history.push("/error");
         } else setPosts(body);
-        // if (history.location && history.location.state && history.location.state.showAlert) {
-        //   let stateCopy = history.location.state
-        //   console.log(stateCopy)
-        //   delete stateCopy.showAlert
-        //   delete stateCopy.alertMessage;
-        //   history.replace({ state: stateCopy });
-        // }
+
       } catch (err) {
         console.log(err);
         history.push("/error");
@@ -67,14 +61,36 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
     return () => (window.onbeforeunload = null);
   }, []);
 
+  const handleScroll = async (e) => {
+     const bottom = (e.target.scrollHeight - e.target.scrollTop) === e.target.clientHeight;
+    if (bottom) {
+      try {
+        if (pagePosts.currentPageNo < pagePosts.noOfPages) {
+          const body = await loadUserFeed(pagePosts.currentPageNo + 1);
+          if ("error" in body) {
+            console.log(body.error);
+            history.push("/error");
+          } else {
+            const { dataList, currentPageNo, noOfPages } = body;
+            setPosts({ ...pagePosts, dataList: [...pagePosts.dataList, ...dataList], currentPageNo: currentPageNo, noOfPages: noOfPages });
+           
+          }
+        }
+       } catch (err) {
+         console.log(err);
+         history.push("/error");
+       }
+    }
+  }
+
   const jwtToken = cookie.load("jwt");
   const currentUser = cookie.load("current_user");
 
   return (
-    <>
+    <div onScroll = {handleScroll} className='social-container'>
       {showAlert === true && <ErrorAlert alertMessage={alertMessage} />}
       {console.log('addPostButtonClicked ', addPostButtonClicked)}
-      <CreatePost setAddPostButtonClicked={ setAddPostButtonClicked} addPostButtonClicked={addPostButtonClicked} setPosts={setPosts} />
+      <CreatePost setShow={ setAddPostButtonClicked} show={addPostButtonClicked} method={RestMethod.POST} setPosts={setPosts} post={null}  />
       <div className="col-md-8 my-3 mx-auto">
         {pagePosts.dataList && pagePosts.dataList.length > 0 ? (
           pagePosts.dataList.map((post, index) => {
@@ -86,7 +102,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
           <>loading</>
         )}
       </div>
-    </>
+    </div>
   );
 });
 

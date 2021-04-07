@@ -24,7 +24,7 @@ code {
 
 .social-container{
 
-  height: 100vh;
+  height: 94vh;
  /* width: 100vh; */
   overflow-y: scroll;
   scroll-snap-type: y mandatory;
@@ -33,4 +33,5 @@ code {
 
 .social-special-gray{
   background-color: rgb(241, 241, 241);
+
 }

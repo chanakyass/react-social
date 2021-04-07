@@ -17,12 +17,15 @@ import { faThumbsUp as faRegularThumbsUp, faEdit, faWindowClose } from "@fortawe
 import { RestMethod } from "../../enums";
 import { UserDetailsPopup } from '../UserDetailsPopup'
 import { Comment } from '../comments/Comment'
+import { CreatePost } from "../CreatePost";
 
 export const Post = React.memo(({ post, setPosts }) => {
   const jwtToken = cookie.load("jwt");
   const currentUser = cookie.load("current_user");
 
   const [comments, setComments] = useState({});
+
+  const [showPostModal, setShowPostModal] = useState(false)
 
   const commentsRef = useRef(null)
   commentsRef.current = comments
@@ -47,83 +50,27 @@ export const Post = React.memo(({ post, setPosts }) => {
     }
   }
 
-  const handlePostUD = async (e, method, postObj) => {
+  const handlePostDelete = async (e, postId) => {
     e.preventDefault();
-    const postId = postObj.id;
-    const postHeading = postObj.postHeading
-    const postBody = postObj.postBody;
+    const responseBody = await postsCUD(
+      RestMethod.DELETE,
+      postId,
+      null,
+      null
+    );
+    if ("error" in responseBody) {
+      const { error } = responseBody;
+      console.log(error);
+      history.push("/error");
+    } else {
 
-    switch (method) {
-      case RestMethod.PUT:
-        {
-          if (
-            postContent === "" ||
-            postContent === undefined ||
-            postContent === null
-          ) {
-            alert("comment cant be empty");
-          } else {
-            const responseBody = await postsCUD(
-              method,
-              postId,
-              postHeading,
-              postBody
-            );
-            if ("error" in responseBody) {
-              let { error } = responseBody;
-              console.log(error);
-              history.push("/error");
-            } else {
-              setPosts((posts) => {
-                return {
-                ...posts,
-                dataList: posts.dataList.map(listPost => {
-                  let newPost = listPost;
-                  if (listPost.id === postId) {
-                    if (postHeading !== '') {
-                      newPost = { ...newPost, postHeading: postHeading };
-                    }
-                    if (postBody !== '') {
-                      newPost = { ...newPost, postBody: postBody };
-                    }
-
-                    newPost = { ...newPost, modifiedAtTime: new Date().toISOString() }
-                    return newPost;
-                  }
-                  else {
-                    return listPost;
-                  }
-                })
-              }})
-            }
-          }
-        }
-        break;
-
-      case RestMethod.DELETE: {
-        const responseBody = await postsCUD(
-          method,
-          
-          postId,
-          null,
-          null
-        );
-        if ("error" in responseBody) {
-          const { error } = responseBody;
-          console.log(error);
-          history.push("/error");
-        } else {
-
-          setPosts((posts) => {
-            return {
-              ...posts,
-              dataList: posts.dataList.filter(iterPost => iterPost.id === postId)
-            };
-          });
-
-        }
-      }
-    }
+      setPosts((posts) => {
+        return {
+          ...posts,
+          dataList: posts.dataList.filter(iterPost => iterPost.id !== postId)
+        };
+      });
+    }   
   }
 
   const handleCommentCUD = async (e, method, commentObj) => {
@@ -284,6 +231,7 @@ export const Post = React.memo(({ post, setPosts }) => {
   };
   return (
     <div>
+      <CreatePost setShow={setShowPostModal} show={showPostModal} method={ RestMethod.PUT } setPosts={setPosts} post={post} />
       <Card className="mt-2" style={{ maxWidth: "80%", borderBottom: "none" }}>
         {/* <Card.Img variant="top" src="holder.js/100px180" /> */}
         
@@ -308,7 +256,9 @@ export const Post = React.memo(({ post, setPosts }) => {
             }}
           >
             <div ref={reactionBarRef} style={{ display: "inline-block" }}>
-              {post.postLikedByCurrentUser === false ? (
+              {
+                post.owner.id !== currentUser.id &&
+                (post.postLikedByCurrentUser === false || post.postLikedByCurrentUser === undefined || post.postLikedByCurrentUser === null ? (
                 <FontAwesomeIcon
                   color="gray"
                   onClick={(e) => handleLikeUnlikePost(e, post, "like")}
@@ -330,7 +280,8 @@ export const Post = React.memo(({ post, setPosts }) => {
                     cursor: "pointer",
                   }}
                 ></FontAwesomeIcon>
-              )}
+                ))
+              }
               {noOfComments > 0 && (
                 <>
                   <Accordion.Toggle
@@ -375,14 +326,14 @@ export const Post = React.memo(({ post, setPosts }) => {
                     cursor: "pointer",
                   }}
                   onClick={(e) => {
-                    
+                    setShowPostModal(true);
                   }}
                 ></FontAwesomeIcon>
               )}
               {post.owner.id === currentUser.id && (
                 <FontAwesomeIcon
                   onClick={(e) => {
-                    
+                    handlePostDelete(e, post.id);
                   }}
                   color='gray'
                   icon={faWindowClose}

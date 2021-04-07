@@ -301,7 +301,8 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
             }
           >
             <div ref={reactionBarRef} style={{ display: "inline-block" }}>
-              {!isCommentLiked || isCommentLiked === false ? (
+              { comment.owner.id !== currentUser.id &&
+                (isCommentLiked === undefined || isCommentLiked === null || isCommentLiked === false ? (
                 <FontAwesomeIcon
                   onClick={(e) => handleLikeUnlikeComment(e, comment, "like")}
        
@@ -323,7 +324,8 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
                     cursor: "pointer",
                   }}
                 ></FontAwesomeIcon>
-              )}
+                ))
+              }
               {noOfReplies > 0 ? (
                 <>
                   <Accordion.Toggle
