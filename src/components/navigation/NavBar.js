@@ -7,7 +7,7 @@ import cookie from "react-cookies";
 import history from '../../app-history'
 import { useState } from 'react'
 
-const NavBar = () => {
+const NavBar = ({setAddPostButtonClicked}) => {
 
   const loggedInUser = cookie.load("current_user");
 
@@ -40,7 +40,7 @@ const NavBar = () => {
                   <Button variant='light' >Search</Button>
                 </Form>
                 <div >
-                  <Button variant="light" onClick={(e) => {}}>
+                  <Button  variant="light" onClick={(e) => {setAddPostButtonClicked(true)}}>
                     Add a post
                   </Button>
                 </div>

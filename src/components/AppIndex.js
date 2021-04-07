@@ -4,28 +4,22 @@ import ErrorPage from "./error/ErrorPage";
 import UserFeed from "./userfeed/UserFeed";
 import NavBar from './navigation/NavBar'
 import history from '../app-history'
+import { useState } from 'react';
 
 import { Router, Route, Switch } from "react-router";
 
 
 const AppIndex = () => {
-console.log('AppIndex')
+
+  const [addPostButtonClicked, setAddPostButtonClicked] = useState(false);
   return (
     <>
       <Router history={history}>
-        <NavBar />
+        <NavBar setAddPostButtonClicked={ setAddPostButtonClicked } />
         <Switch>
-        {/* <div className='row'> */}
-          {/* <div className="col-md-8 my-3 mx-auto"> */}
-            <Route exact path="/profile/:id" component={User} />
-          {/* </div> */}
-
+          <Route exact path="/profile/:id" component={User} />
           <Route exact path="/error" component={ErrorPage} />
-
-            {/* <div className="col-md-8 mx-auto"> */}
-                <Route exact path="/" component={UserFeed} />
-          {/* </div> */}
-        {/* </div> */}
+          <Route exact path="/" render={() => <UserFeed setAddPostButtonClicked={ setAddPostButtonClicked } addPostButtonClicked={addPostButtonClicked} />}/>
         </Switch>
       </Router>
     </>

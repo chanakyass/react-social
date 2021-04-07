@@ -3,6 +3,7 @@ import history from "../../app-history";
 import React, { useEffect, useState, useRef } from "react";
 import { likeUnlikeCUD, postsCUD } from "./post-service";
 import { loadComments, commentsCUD } from "../comments/comment-services";
+import Parser from "html-react-parser";
 import cleanEmpty from "../utility/cleanup-objects";
 import {
   Card,
@@ -285,14 +286,14 @@ export const Post = React.memo(({ post, setPosts }) => {
     <div>
       <Card className="mt-2" style={{ maxWidth: "80%", borderBottom: "none" }}>
         {/* <Card.Img variant="top" src="holder.js/100px180" /> */}
-        {console.log(post.id)}
+        
 
         <Card.Body>
           <Card.Title>{post.postHeading}</Card.Title>
           <Card.Subtitle>
             <UserDetailsPopup owner={post.owner} />
           </Card.Subtitle>
-          <Card.Text>{post.postBody}</Card.Text>
+          <Card.Text>{Parser(post.postBody)}</Card.Text>
         </Card.Body>
       </Card>
       <Accordion>

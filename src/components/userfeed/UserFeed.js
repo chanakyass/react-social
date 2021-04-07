@@ -10,48 +10,48 @@ import {
   Popover
 } from "react-bootstrap";
 import { Post } from '../post/Post'
+import { CreatePost } from '../CreatePost';
 import  {Link}  from 'react-router-dom'
 import { RestMethod } from '../../enums'
 import { ErrorAlert } from '../ErrorAlert'
 
 
-const UserFeed = React.memo(() => {
+const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) => {
+  console.log("render");
 
-  console.log('render')
-  
-  let  location  = history.location
+  let location = history.location;
   let showAlert = false;
-  let alertMessage = null
-  if(location && location.state)
-  {
-    showAlert = (location.state.showAlert)
-    alertMessage = location.state.alertMessage
+  let alertMessage = null;
+  if (location && location.state) {
+    showAlert = location.state.showAlert;
+    alertMessage = location.state.alertMessage;
   }
 
-  console.log(history.location)
+  
 
-
-  const [pagePosts, setPosts] = useState({ currentPageNo: 0, noOfPages: 0, dataList: [] })
+  const [pagePosts, setPosts] = useState({
+    currentPageNo: 0,
+    noOfPages: 0,
+    dataList: [],
+  });
 
   const changeHistory = () => {
-    console.log('changeHistory called')
-    history.replace({state: null})
-  }
+    console.log("changeHistory called");
+    history.replace({ state: null });
+  };
 
   useEffect(() => {
     window.onbeforeunload = function () {
-      console.log('entering onbeforeunload')
-        changeHistory()
+      console.log("entering onbeforeunload");
+      changeHistory();
     };
     (async () => {
       try {
         const body = await loadUserFeed();
-        if ('error' in body) {
-          console.log(body.error)
-          history.push('/error')
-        }
-        else
-          setPosts(body);
+        if ("error" in body) {
+          console.log(body.error);
+          history.push("/error");
+        } else setPosts(body);
         // if (history.location && history.location.state && history.location.state.showAlert) {
         //   let stateCopy = history.location.state
         //   console.log(stateCopy)
@@ -59,39 +59,27 @@ const UserFeed = React.memo(() => {
         //   delete stateCopy.alertMessage;
         //   history.replace({ state: stateCopy });
         // }
-        
-
-      }
-
-      catch (err) {
+      } catch (err) {
         console.log(err);
-        history.push('/error')
+        history.push("/error");
       }
-
-      
-       
-         
-    })()
+    })();
     return () => (window.onbeforeunload = null);
-  }, [])
+  }, []);
 
-  const jwtToken = cookie.load('jwt')
-  const currentUser = cookie.load('current_user')
+  const jwtToken = cookie.load("jwt");
+  const currentUser = cookie.load("current_user");
 
   return (
     <>
       {showAlert === true && <ErrorAlert alertMessage={alertMessage} />}
+      {console.log('addPostButtonClicked ', addPostButtonClicked)}
+      <CreatePost setAddPostButtonClicked={ setAddPostButtonClicked} addPostButtonClicked={addPostButtonClicked} setPosts={setPosts} />
       <div className="col-md-8 my-3 mx-auto">
-
-  
-
         {pagePosts.dataList && pagePosts.dataList.length > 0 ? (
           pagePosts.dataList.map((post, index) => {
-
             return (
-              
               <Post key={`post${post.id}`} post={post} setPosts={setPosts} />
-              
             );
           })
         ) : (
@@ -99,9 +87,7 @@ const UserFeed = React.memo(() => {
         )}
       </div>
     </>
-    );
-    
-}
-)
+  );
+});
 
 export default UserFeed
