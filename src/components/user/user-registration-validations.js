@@ -55,20 +55,20 @@ export const isValid = (userDetails, fieldErrors) => {
     }
   }
   // Also need a regex for email
-  if (userDetails.password === '') {
-    if (userDetails.password === "") {
-      fieldErrors.passwordError = "Field can't be empty";
+
+  if (userDetails.password === "") {
+    fieldErrors.passwordError = "Field can't be empty";
+    returnValue = false;
+  } else {
+    const re = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,16}$/;
+    if (!re.test(String(userDetails.password))) {
+      fieldErrors.passwordError = "Incorrect password format";
       returnValue = false;
-    } else {
-      const re = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,16}$/;
-      if (!re.test(String(userDetails.password))) {
-        fieldErrors.passwordError = "Incorrect password format";
-        returnValue = false;
-      }
     }
   }
+  
 
-  if (userDetails.DOB === "") {
+  if (userDetails.dob === "") {
     fieldErrors.DOBError = "Field can't be empty";
     returnValue = false;
   }

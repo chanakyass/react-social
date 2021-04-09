@@ -67,7 +67,7 @@ export const postsCUD = async (
       break;
     case RestMethod.PUT:
       {
-        requestOptions.body = JSON.stringify( { ...postForDispatch, id: postId, modifiedAtTime: moment.utc().toISOString()} );
+        requestOptions.body = JSON.stringify({ ...postForDispatch, id: postId, modifiedAtTime: moment.utc().toISOString() });
         url = `http://localhost:8080/api/v1/resource/post`;
       }
       break;
