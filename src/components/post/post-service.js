@@ -1,12 +1,14 @@
 import cookie from "react-cookies";
 import history from "../../app-history";
+import moment from 'moment'
+import {RestMethod} from '../../enums'
+
+
+
+export const loadUserFeed = async (pageNo) => {
 
     const jwtToken = cookie.load("jwt");
     const currentUser = cookie.load("current_user");
-
-export const loadUserFeed = async () => {
-
-
   const requestOptions = {
     method: "GET",
     headers: {
@@ -18,7 +20,7 @@ export const loadUserFeed = async () => {
     try {
 
         const response = await fetch(
-            `http://localhost:8080/api/v1/resource/posts/${0}`,
+            `http://localhost:8080/api/v1/resource/posts/${pageNo}`,
             requestOptions
         );
 
@@ -32,10 +34,65 @@ export const loadUserFeed = async () => {
 
 };
 
+export const postsCUD = async (
+  method,
+  postId,
+  postHeading,
+  postBody
+) => {
+  const jwtToken = cookie.load("jwt");
+  const currentUser = cookie.load("current_user");
+  let postForDispatch = {
+    postHeading: postHeading,
+    postBody: postBody,
+    owner: currentUser,
+  };
+
+  let requestOptions = {
+    method: method,
+    headers: {
+      Authorization: `Bearer ${jwtToken}`,
+      "Content-Type": "application/json",
+    },
+  };
+
+  let url = null;
+
+  switch (method) {
+    case RestMethod.POST:
+      {
+        requestOptions.body = JSON.stringify({ ...postForDispatch, postedAtTime: moment.utc().toISOString() });
+        url = `http://localhost:8080/api/v1/resource/post`;
+      }
+      break;
+    case RestMethod.PUT:
+      {
+        requestOptions.body = JSON.stringify( { ...postForDispatch, id: postId, modifiedAtTime: moment.utc().toISOString()} );
+        url = `http://localhost:8080/api/v1/resource/post`;
+      }
+      break;
+    case RestMethod.DELETE: {
+      url = `http://localhost:8080/api/v1/resource/post/${postId}`;
+    }
+  }
+  try {
+    let response = await fetch(url, requestOptions);
+
+    let body = await response.json();
+
+    return body;
+  } catch (err) {
+    console.log(err);
+    history.push("/error");
+  }
+};
+
 export const likeUnlikeCUD = async (post, action) => {
+      const jwtToken = cookie.load("jwt");
+      const currentUser = cookie.load("current_user");
   const likePost = {
     owner: currentUser,
-    likedAtTime: new Date().toISOString(),
+    likedAtTime: moment.utc().toISOString(),
     likedPost: { id: post.id },
   };
 

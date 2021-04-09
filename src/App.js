@@ -11,6 +11,7 @@ import {
 import { Redirect } from 'react-router'
 import Cookies from "universal-cookie";
 import AppIndex from './components/AppIndex';
+import { ErrorAlert } from './components/ErrorAlert';
 
 function userExists() {
     const cookies = new Cookies();
@@ -22,10 +23,11 @@ function userExists() {
 function App() {
   console.log('App')
   return (
+    <div className='social-special-gray'>
     <Router history={history}>
       <Switch>
-        <Route exact path="/login" component={Login} />
-        <Route exact path="/register" component={UserRegister} />
+        <Route exact path="/login"  render={() => userExists()? <Redirect to={{pathname: '/', state: {showAlert: true, alertMessage: 'You are logged in'}}} />: <Login/>} />
+        <Route exact path="/register" render={() => userExists()? <Redirect to={{pathname: '/', state: {showAlert: true, alertMessage: 'You are logged in'}}} />: <UserRegister/>}  />
         {/* <Route
           exact
           path="/profile/:id"
@@ -44,7 +46,8 @@ function App() {
         <Route exact path='*' render={ ()=> !userExists()?<Redirect to={{pathname: '/login'}} /> : <AppIndex/>}/>
     
       </Switch>
-    </Router>
+      </Router>
+      </div>
   );
 }
 

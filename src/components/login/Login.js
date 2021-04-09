@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import cookie from "react-cookies";
 import { RestMethod } from "../../enums.js";
 import  history  from '../../app-history'
-import {  Link, withRouter } from 'react-router-dom'
+import { Link, withRouter } from 'react-router-dom'
+import { Form, Col, Button } from 'react-bootstrap'
 
 const Login = () => {
 
@@ -101,6 +102,13 @@ const Login = () => {
                           hasError: true,
                           preprocessingState: {
                             ...state.preprocessingState,
+                            failureDetails: {
+                              ...state.preprocessingState.failureDetails,
+                              fieldErrors: {
+                                usernameError: '',
+                                passwordError: ''
+                              }
+                            },
                             isSuccess: true
                             
                           },
@@ -130,53 +138,108 @@ const Login = () => {
           });
         }
     }
+  
+
   return (
-    <>
-      <div>
-        <form>
-          <div>
-            <label htmlFor="username">username</label>
-            <input id='username' name='username' type="text" value={creds.username} onChange={changeDefaults} />
-            <span id="error-username" name="error-username">
-              {!state.preprocessingState.isSuccess &&
-                state.preprocessingState.failureDetails.fieldErrors.usernameError}
-            </span>
+    
+      <div style={{ height: "60rem" }}>
+        <div className="row h-100">
+          <div className="col-md-4 mx-auto my-auto rounded shadow bg-white">
+            <div className="col-md-4 mx-auto mt-3">
+              <h3>Citizen Sane</h3>
+            </div>
+            <Form
+              //className='my-75'
+              noValidate
+              //validated={state.hasError}
+              onSubmit={submitHandler}
+
+              //style={{  borderBlockColor: 'blue' }}
+            >
+              <div className="col-md-12 my-4 mx-auto">
+                <h5>Login</h5>
+              </div>
+
+              <Form.Group as={Col} md={12} controlId="formUsername">
+                <Form.Label>Username</Form.Label>
+                <Form.Control
+                  id="username"
+                  name="username"
+                  type="email"
+                  placeholder="Enter the email id you logged in with"
+                  value={creds.username}
+                  isInvalid={
+                    state.hasError &&
+                    state.preprocessingState.failureDetails.fieldErrors
+                      .usernameError !== ""
+                  }
+                  onChange={changeDefaults}
+                />
+                <Form.Control.Feedback type="invalid">
+                  {
+                    state.preprocessingState.failureDetails.fieldErrors
+                      .usernameError
+                  }
+                </Form.Control.Feedback>
+              </Form.Group>
+
+              <Form.Group as={Col} md={12} controlId="formPassword">
+                <Form.Label>Password</Form.Label>
+                <Form.Control
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="Password"
+                  value={creds.password}
+                  onChange={changeDefaults}
+                  isInvalid={
+                    state.hasError &&
+                    state.preprocessingState.failureDetails.fieldErrors
+                      .passwordError !== ""
+                  }
+                />
+                <Form.Control.Feedback type="invalid">
+                  {
+                    state.preprocessingState.failureDetails.fieldErrors
+                      .passwordError
+                  }
+                </Form.Control.Feedback>
+              </Form.Group>
+
+              <Form.Group as={Col} md={12}>
+                <Button variant='secondary' className="my-3" type="submit">
+                  Submit
+                </Button>
+              </Form.Group>
+
+              <Form.Group as={Col} md={12}>
+                <button
+                  className="my-3 link-button"
+                  type="submit"
+                  // style={{
+                  //   background: "none",
+                  //   border: "none",
+                  //   margin: "none",
+                  //   textDecoration: "underline",
+                  //   color: "dodgerblue",
+                  // }}
+                  onClick={() => history.push("/register")}
+                >
+                  Register yourself
+                </button>
+              </Form.Group>
+            </Form>
+            <div className="col-md-8 mx-auto my-3 text-danger">
+              {state.postprocessingState.failureDetails.failureMessage}
+              {state.postprocessingState.failureDetails.details}
+            </div>
           </div>
-          <div>
-            <label htmlFor="password">Password</label>
-            <input
-              id='password'
-              name='password'
-              type="password"
-              value={creds.password}
-              onChange={changeDefaults}
-            />
-            <span id="error-password" name="error-password">
-              {!state.preprocessingState.isSuccess &&
-                state.preprocessingState.failureDetails.fieldErrors.passwordError}
-            </span>
-          </div>
-          <div>
-            <button id='login' name='login' type='submit' onClick={submitHandler}>
-                login
-            </button>
-          </div>
-          <div>
-            <Link to={`/register`}>register</Link>
-          </div>
-      <div>
-        <h1>
-          {state.hasError &&
-            state.postprocessingState.failureDetails.failureMessage}
-        </h1>
-        <h5>
-          {state.hasError && state.postprocessingState.failureDetails.details}
-        </h5>
       </div>
-        </form>
       </div>
-    </>
+     
+    
   );
+  
 };
 
 const isValid = (creds, fieldErrors) => {

@@ -36,11 +36,23 @@ export function reducer(state, action)
         return { ...state, hasError: false, preprocessingState: { ...state.preprocessingState, isSuccess: true }, postprocessingState: { ...state.postprocessingState, isSuccess: true, successDetails: { ...state.successDetails, successMessage: payload.message, resourceId: payload.resourceId } } }
       }
       else {
+    const fieldErrors = {
+      nameError: "",
+      profileNameError: "",
+      emailError: "",
+      passwordError: "",
+      DOBError: "",
+      userSummaryError: "",
+    };
         return {
           ...state,
           hasError: true,
           preprocessingState: {
             ...state.preprocessingState,
+            failureDetails: {
+              ...state.preprocessingState.failureDetails,
+              fieldErrors: fieldErrors
+            },
             isSuccess: true,
           },
           postprocessingState: {

@@ -1,17 +1,18 @@
 
 import cookie from "react-cookies";
 import history from "../../app-history";
+import moment from 'moment';
 import { RestMethod } from '../../enums'
 
-const jwtToken = cookie.load("jwt");
-const currentUser = cookie.load("current_user");
+
     
 
 export const commentsCUD = async (method, commentId, postId, itemId, commentContent) => {
 
+  const jwtToken = cookie.load("jwt");
+  const currentUser = cookie.load("current_user");
   let commentForDispatch = {
     commentedOn: { id: postId },
-    commentedAtTime: new Date().toISOString,
     commentContent: commentContent,
     owner: currentUser,
   };
@@ -33,14 +34,15 @@ export const commentsCUD = async (method, commentId, postId, itemId, commentCont
   switch (method) {
     case RestMethod.POST:
       {
-        requestOptions.body = JSON.stringify({ ...commentForDispatch });
+
+        requestOptions.body = JSON.stringify({ ...commentForDispatch, commentedAtTime: moment.utc().toISOString() });
         url = `http://localhost:8080/api/v1/resource/comment`;
         
       }
       break;
     case RestMethod.PUT:
       {
-        commentForDispatch = { ...commentForDispatch, id: itemId };
+        commentForDispatch = { ...commentForDispatch, id: itemId, modifiedAtTime: moment.utc().toISOString() };
         requestOptions.body = JSON.stringify({ ...commentForDispatch });
         url = `http://localhost:8080/api/v1/resource/comment`;
 
@@ -71,6 +73,8 @@ export const commentsCUD = async (method, commentId, postId, itemId, commentCont
 
 export const loadComments = async (postId, commentId, pageNo) => {
 
+  const jwtToken = cookie.load("jwt");
+  const currentUser = cookie.load("current_user");
     const requestOptions = {
       method: "GET",
       headers: {
@@ -101,9 +105,11 @@ export const loadComments = async (postId, commentId, pageNo) => {
 };
 
 export const likeUnlikeCommentCUD = async (comment, action) => {
+  const jwtToken = cookie.load("jwt");
+  const currentUser = cookie.load("current_user");
   const likeComment = {
     owner: currentUser,
-    likedAtTime: new Date().toISOString(),
+    likedAtTime: moment.utc().toISOString(),
     likedComment: { id: comment.id },
   };
 

@@ -36,3 +36,20 @@
     transform: rotate(360deg);
   }
 }
+
+.ck-editor__editable_inline {
+  min-height: 500px;
+  max-height: 500px;
+      scroll-snap-type: y mandatory; 
+   overflow-y: auto;
+
+}
+
+.link-button {
+background:none;
+text-decoration: underline;
+color: gray;
+border: none;
+padding:0%;
+}
+
