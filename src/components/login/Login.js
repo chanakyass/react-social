@@ -207,22 +207,22 @@ const Login = () => {
               </Form.Group>
 
               <Form.Group as={Col} md={12}>
-                <Button className="my-3" type="submit">
+                <Button variant='secondary' className="my-3" type="submit">
                   Submit
                 </Button>
               </Form.Group>
 
               <Form.Group as={Col} md={12}>
                 <button
-                  className="my-3"
+                  className="my-3 link-button"
                   type="submit"
-                  style={{
-                    background: "none",
-                    border: "none",
-                    margin: "none",
-                    textDecoration: "underline",
-                    color: "dodgerblue",
-                  }}
+                  // style={{
+                  //   background: "none",
+                  //   border: "none",
+                  //   margin: "none",
+                  //   textDecoration: "underline",
+                  //   color: "dodgerblue",
+                  // }}
                   onClick={() => history.push("/register")}
                 >
                   Register yourself

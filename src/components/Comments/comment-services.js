@@ -1,6 +1,7 @@
 
 import cookie from "react-cookies";
 import history from "../../app-history";
+import moment from 'moment';
 import { RestMethod } from '../../enums'
 
 
@@ -34,14 +35,14 @@ export const commentsCUD = async (method, commentId, postId, itemId, commentCont
     case RestMethod.POST:
       {
 
-        requestOptions.body = JSON.stringify({ ...commentForDispatch, commentedAtTime: new Date().toISOString });
+        requestOptions.body = JSON.stringify({ ...commentForDispatch, commentedAtTime: moment.utc().toISOString() });
         url = `http://localhost:8080/api/v1/resource/comment`;
         
       }
       break;
     case RestMethod.PUT:
       {
-        commentForDispatch = { ...commentForDispatch, id: itemId, modifiedAtTime: new Date().toISOString, };
+        commentForDispatch = { ...commentForDispatch, id: itemId, modifiedAtTime: moment.utc().toISOString() };
         requestOptions.body = JSON.stringify({ ...commentForDispatch });
         url = `http://localhost:8080/api/v1/resource/comment`;
 
@@ -108,7 +109,7 @@ export const likeUnlikeCommentCUD = async (comment, action) => {
   const currentUser = cookie.load("current_user");
   const likeComment = {
     owner: currentUser,
-    likedAtTime: new Date().toISOString(),
+    likedAtTime: moment.utc().toISOString(),
     likedComment: { id: comment.id },
   };
 

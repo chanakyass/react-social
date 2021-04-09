@@ -7,6 +7,7 @@ import { postsCUD } from "./post/post-service";
 import { RestMethod } from "../enums";
 import cookie from "react-cookies";
 import history from "../app-history";
+import moment from 'moment';
 
 import React, { useState, useEffect } from "react";
 
@@ -22,10 +23,10 @@ export const CreatePost = React.memo(({
     const currentUser = cookie.load("current_user");
     
     useEffect(() => {
-        if (post) {
+        if (post && show === true) {
             setEditorPost({ id: post.id,  postHeading: post.postHeading, postBody: post.postBody });
         }
-    }, [])
+    }, [show])
 
   console.log("CreatePost entered");
 
@@ -34,7 +35,9 @@ export const CreatePost = React.memo(({
     const handlePostCU = async (e, method, editorPost) => {
         const postId = editorPost.id;
         const postHeading = editorPost.postHeading.trim();
-        const postBody = editorPost.postBody.trim();
+      const postBody = editorPost.postBody.trim();
+      
+      console.log(editorPost.postBody)
 
 
 
@@ -43,7 +46,7 @@ export const CreatePost = React.memo(({
     } else {
     
       const responseBody = await postsCUD(
-        RestMethod.POST,
+        method,
         postId,
         postHeading,
         postBody
@@ -60,22 +63,24 @@ export const CreatePost = React.memo(({
           const { data } = responseBody;
           
         switch (method) {
-            case RestMethod.POST: {
+          case RestMethod.POST: {
+            console.log('post getting executed');
                 setPosts((posts) => {
                     return {
-                        ...posts,
-                        dataList: [
-                            {
-                                id: data.resourceId,
-                                postHeading: postHeading,
-                                postBody: postBody,
-                                postedAtTime: new Date().toISOString(),
-                                owner: currentUser,
-                                noOfComments: 0,
-                                noOfLikes: 0
-                            },
-                            ...posts.dataList,
-                        ],
+                      ...posts,
+                      dataList: [
+                        {
+                          id: data.resourceId,
+                          owner: currentUser,
+                          postHeading: postHeading,
+                          postBody: postBody,
+                          postedAtTime: moment.utc().toISOString(),
+                          modifiedAtTime: null,
+                          noOfComments: 0,
+                          noOfLikes: 0,
+                        },
+                        ...posts.dataList,
+                      ],
                     };
                 });
             }
@@ -94,7 +99,7 @@ export const CreatePost = React.memo(({
                       newPost = { ...newPost, postBody: postBody };
                     }
 
-                    newPost = { ...newPost, modifiedAtTime: new Date().toISOString() }
+                    newPost = { ...newPost, modifiedAtTime: moment.utc().toISOString() }
                     return newPost;
                   }
                   else {
@@ -145,6 +150,8 @@ export const CreatePost = React.memo(({
                 data={editorPost.postBody}
                 onReady={(editor) => {
                   // You can store the "editor" and use when it is needed.
+                  if(post)
+                    editor.setData(post.postBody);
                   console.log("Editor is ready to use!", editor);
                 }}
                 onChange={(event, editor) => {
@@ -169,7 +176,7 @@ export const CreatePost = React.memo(({
             variant="primary"
             onClick={(e) => handlePostCU(e, method, editorPost)}
           >
-            {post !== null && post !== undefined ? 'Update post': 'Create post'}
+            {method === RestMethod.PUT ? 'Update post': 'Create post'}
           </Button>
         </Modal.Footer>
       </Modal>

@@ -2,7 +2,7 @@ import { OverlayTrigger, Popover } from 'react-bootstrap'
 import { Link } from 'react-router-dom'
 
 export function UserDetailsPopup(props) {
-  const { owner } = props;
+  const { owner, dateString } = props;
 
   return (
     <OverlayTrigger
@@ -16,7 +16,7 @@ export function UserDetailsPopup(props) {
         </Popover>
       }
     >
-      <div style={{display: 'inline-block', paddingBottom: '0.80em'}}>
+      <div style={ {display: 'inline-block'}} >
         <cite>
           <Link className="text-secondary" to={`/profile/${owner.id}`}>
             {owner.name}

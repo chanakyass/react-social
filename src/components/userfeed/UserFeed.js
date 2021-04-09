@@ -30,8 +30,8 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
   
 
   const [pagePosts, setPosts] = useState({
-    currentPageNo: 0,
-    noOfPages: 0,
+    currentPageNo: -1,
+    noOfPages: -1,
     dataList: [],
   });
 
@@ -89,17 +89,17 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
   return (
     <div onScroll = {handleScroll} className='social-container'>
       {showAlert === true && <ErrorAlert alertMessage={alertMessage} />}
-      {console.log('addPostButtonClicked ', addPostButtonClicked)}
-      <CreatePost setShow={ setAddPostButtonClicked} show={addPostButtonClicked} method={RestMethod.POST} setPosts={setPosts} post={null}  />
+      {addPostButtonClicked === true && <CreatePost setShow={ setAddPostButtonClicked} show={addPostButtonClicked} method={RestMethod.POST} setPosts={setPosts} post={null}  />}
       <div className="col-md-8 my-3 mx-auto">
         {pagePosts.dataList && pagePosts.dataList.length > 0 ? (
           pagePosts.dataList.map((post, index) => {
+            console.log(post);
             return (
               <Post key={`post${post.id}`} post={post} setPosts={setPosts} />
             );
           })
         ) : (
-          <>loading</>
+          pagePosts.currentPageNo === -1 && <>loading</> 
         )}
       </div>
     </div>
