@@ -66,7 +66,6 @@ const Login = () => {
         passwordError: ''
         
       }
-      console.log("Enetered handler");
         if (isValid(creds, fieldErrors))  {
             fetch(
               "http://localhost:8080/api/v1/public/login",
@@ -88,12 +87,8 @@ const Login = () => {
                       cookie.save('jwt', jwt, { path: '/', expires: expires })
                       cookie.save('current_user', data, { path: '/', expires: expires })
                       
-                      //console.log(cookie.load('jwt'))
-                      console.log(data)
-
-                      
-    
-                        history.push('/')
+                    
+                      history.push('/')
                     }
                     else {
                     const { error } = body

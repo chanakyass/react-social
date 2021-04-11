@@ -3,15 +3,8 @@ import React, { useEffect, useState } from 'react'
 import cookie from 'react-cookies'
 import history from '../../app-history'
 import { loadUserFeed } from '../post/post-service'
-import cleanEmpty from '../utility/cleanup-objects'
-import {
-  Card,
-  OverlayTrigger,
-  Popover
-} from "react-bootstrap";
 import { Post } from '../post/Post'
 import { CreatePost } from '../CreatePost';
-import  {Link}  from 'react-router-dom'
 import { RestMethod } from '../../enums'
 import { ErrorAlert } from '../ErrorAlert'
 
@@ -41,10 +34,12 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
   };
 
   useEffect(() => {
-    window.onbeforeunload = function () {
+   if(showAlert === true) { window.onbeforeunload = function () {
       console.log("entering onbeforeunload");
       changeHistory();
     };
+   }
+
     (async () => {
       try {
         const body = await loadUserFeed(0);
@@ -58,7 +53,9 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
         history.push("/error");
       }
     })();
-    return () => (window.onbeforeunload = null);
+    if (showAlert === true) {
+      return () => (window.onbeforeunload = null);
+    }
   }, []);
 
   const handleScroll = async (e) => {
@@ -83,9 +80,6 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
     }
   }
 
-  const jwtToken = cookie.load("jwt");
-  const currentUser = cookie.load("current_user");
-
   return (
     <div onScroll = {handleScroll} className='social-container'>
       {showAlert === true && <ErrorAlert alertMessage={alertMessage} />}
@@ -93,7 +87,6 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
       <div className="col-md-8 my-3 mx-auto">
         {pagePosts.dataList && pagePosts.dataList.length > 0 ? (
           pagePosts.dataList.map((post, index) => {
-            console.log(post);
             return (
               <Post key={`post${post.id}`} post={post} setPosts={setPosts} />
             );

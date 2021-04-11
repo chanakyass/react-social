@@ -1,7 +1,6 @@
 import { RestMethod } from '../../enums'
 export function reducer(state, action)
 {
-  console.log('Entering reducer')
   const { type, preprocessed, status, payload } = action
 
   if (type === 'RESET') {

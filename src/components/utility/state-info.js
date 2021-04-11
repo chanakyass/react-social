@@ -5,6 +5,7 @@ const preprocessingState = {
       idError: "",
       nameError: "",
       emailError: "",
+      profileNameError: '',
       passwordError: "",
       DOBError: "",
       userSummaryError: "",

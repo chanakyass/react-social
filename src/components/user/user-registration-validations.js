@@ -1,3 +1,5 @@
+import { RestMethod } from "../../enums";
+
 const preprocessingState = {
   isSuccess: false,
   failureDetails: {
@@ -31,7 +33,7 @@ export let defaultState = {
   postprocessingState: postprocessingState,
 };
 
-export const isValid = (userDetails, fieldErrors) => {
+export const isValid = (userDetails, fieldErrors, method) => {
   let returnValue = true;
 
 
@@ -43,8 +45,10 @@ export const isValid = (userDetails, fieldErrors) => {
     if (userDetails.profileName === "") {
       fieldErrors.profileNameError = "Field can't be empty";
       returnValue = false;
-    }
-  if (userDetails.email === "") {
+  }
+  
+  if(method === RestMethod.POST){
+    if (userDetails.email === "") {
     fieldErrors.emailError = "Field can't be empty";
     returnValue = false;
   } else {
@@ -53,10 +57,12 @@ export const isValid = (userDetails, fieldErrors) => {
       fieldErrors.emailError = "Incorrect email format";
       returnValue = false;
     }
+    }
   }
   // Also need a regex for email
 
-  if (userDetails.password === "") {
+  if(method === RestMethod.POST){
+    if (userDetails.password === "") {
     fieldErrors.passwordError = "Field can't be empty";
     returnValue = false;
   } else {
@@ -64,6 +70,7 @@ export const isValid = (userDetails, fieldErrors) => {
     if (!re.test(String(userDetails.password))) {
       fieldErrors.passwordError = "Incorrect password format";
       returnValue = false;
+    }
     }
   }
   

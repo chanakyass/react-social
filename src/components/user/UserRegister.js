@@ -1,13 +1,11 @@
-import React, { useState, useReducer, useEffect } from "react";
+import React, { useState, useReducer } from "react";
 import { withRouter } from 'react-router-dom'
 import { reducer } from "./reducer";
 import { RestMethod } from '../../enums.js';
 import { isValid } from './user-registration-validations'
 import { defaultState } from '../user/user-registration-validations'
 import history from '../../app-history'
-import { Col, Form, Button, InputGroup } from 'react-bootstrap'
-import cookie from "react-cookies";
-import {ErrorAlert} from '../ErrorAlert'
+import { Col, Form, Button } from 'react-bootstrap';
 
 const UserRegister = () => {
   const defaultUser = {
@@ -25,8 +23,6 @@ const UserRegister = () => {
     ],
   };
 
-      const jwtToken = cookie.load("jwt");
-      const currentUser = cookie.load("current_user");
 
   const [user, setUser] = useState(defaultUser);
 
@@ -59,7 +55,7 @@ const UserRegister = () => {
       DOBError: "",
       userSummaryError: ''
     };
-            if (isValid(user, fieldErrors)) {
+            if (isValid(user, fieldErrors, RestMethod.POST)) {
             fetch(
               "http://localhost:8080/api/v1/public/register",
               requestOptions
@@ -97,121 +93,6 @@ const UserRegister = () => {
     
   };
 
-  // return (
-  //   <>
-  //       <form>
-  //         <div>
-  //           <label htmlFor="name">Name</label>
-  //           <input
-  //             type="text"
-  //             name="name"
-  //             id="name"
-  //             value={user.name}
-  //             onChange={changePerson}
-  //           />
-  //           <span id="error-name" name="error-name">
-  //             {!state.preprocessingState.isSuccess &&
-  //               state.preprocessingState.failureDetails.fieldErrors.nameError}
-  //           </span>
-  //         </div>
-  //         <div>
-  //           <label htmlFor="email">Email</label>
-  //           <input
-  //             type="text"
-  //             name="email"
-  //             id="email"
-  //             value={user.email}
-  //             onChange={changePerson}
-  //           />
-  //           <span id="error-email" name="error-email">
-  //             {!state.preprocessingState.isSuccess &&
-  //               state.preprocessingState.failureDetails.fieldErrors.emailError}
-  //           </span>
-  //         </div>
-  //         <div>
-  //           <label htmlFor="profileName">Profile Name</label>
-  //           <input
-  //             type="text"
-  //             name="profileName"
-  //             id="profileName"
-  //             value={user.profileName}
-  //             onChange={changePerson}
-  //           />
-  //           <span id="error-profileName" name="error-profileName">
-  //             {!state.preprocessingState.isSuccess &&
-  //               state.preprocessingState.failureDetails.fieldErrors
-  //                 .profileNameError}
-  //           </span>
-  //         </div>
-  //           <div>
-  //             <label htmlFor="pass">Password</label>
-  //             <input
-  //               type="password"
-  //               name="password"
-  //               id="password"
-  //               value={user.password}
-  //               onChange={changePerson}
-  //             />
-  //             <span id="error-pass" name="error-pass">
-  //               {!state.preprocessingState.isSuccess &&
-  //                 state.preprocessingState.failureDetails.fieldErrors
-  //                   .passwordError}
-  //             </span>
-  //       </div>
-  //         <div>
-  //           <label htmlFor="DOB">Date of birth</label>
-  //           <input
-  //             type="date"
-  //             name="DOB"
-  //             id="DOB"
-  //             value={user.DOB}
-  //             onChange={changePerson}
-  //           />
-  //           <span id="error-date" name="error-date">
-  //             {!state.preprocessingState.isSuccess &&
-  //               state.preprocessingState.failureDetails.fieldErrors.DOBError}
-  //           </span>
-  //         </div>
-  //         <div>
-  //           <label htmlFor="summary">Summary</label>
-  //           <input
-  //             type="textarea"
-  //             name="userSummary"
-  //             id="userSummary"
-  //             value={user.userSummary}
-  //             onChange={changePerson}
-  //           />
-  //           <span id="error-summary" name="error-summary">
-  //             {!state.preprocessingState.isSuccess &&
-  //               state.preprocessingState.failureDetails.fieldErrors
-  //                 .userSummaryError}
-  //           </span>
-  //         </div>
-  //         <div>
-  //           <button type="submit" onClick={submitHandler}>
-  //               register
-  //           </button>
-  //         <button type="reset" onClick={(e) => {
-  //           console.log('from form default state ', defaultState)
-  //           setUser(defaultUser)
-  //           dispatch({ type: 'RESET', payload: defaultState })
-  //         }}>
-  //             reset
-  //           </button>
-  //          </div>
-  //       <div>
-  //         <h1>
-  //           {state.hasError &&
-  //             state.postprocessingState.failureDetails.failureMessage}
-  //         </h1>
-  //         <h5>
-  //           {state.hasError && state.postprocessingState.failureDetails.details}
-  //         </h5>
-  //       </div>
-  //       </form>
-  //   </>
-  // );
-
   return (
     <>
       <div style={{ height: "60rem" }}>
@@ -221,12 +102,8 @@ const UserRegister = () => {
               <h3>Citizen Sane</h3>
             </div>
             <Form
-              //className='my-75'
               noValidate
-              //validated={state.hasError}
               onSubmit={submitHandler}
-
-              //style={{  borderBlockColor: 'blue' }}
             >
               <div className="col-md-12 my-4 mx-auto">
                 <h5>Register</h5>

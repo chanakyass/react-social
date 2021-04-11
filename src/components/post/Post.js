@@ -1,10 +1,9 @@
 import cookie from "react-cookies";
 import history from "../../app-history";
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, {  useState, useRef, useCallback } from "react";
 import { likeUnlikeCUD, postsCUD } from "./post-service";
 import { loadComments, commentsCUD } from "../comments/comment-services";
 import Parser from "html-react-parser";
-import cleanEmpty from "../utility/cleanup-objects";
 import {
   Card,
   Button,
@@ -22,8 +21,9 @@ import { LikesModal } from "../likes/LikesModal";
 import moment from 'moment';
 import { convertDateToReadableFormat } from '../utility/handle-dates'
 
+let myfuncs2 = new Set();
+
 export const Post = React.memo(({ post, setPosts }) => {
-  const jwtToken = cookie.load("jwt");
   const currentUser = cookie.load("current_user");
 
   const [comments, setComments] = useState({});
@@ -65,7 +65,7 @@ export const Post = React.memo(({ post, setPosts }) => {
     }   
   }
 
-  const handleCommentCUD = async (e, method, commentObj) => {
+  const handleCommentCUD = useCallback( async (e, method, commentObj) => {
 
     let postId = commentObj.postId;
     let itemId = commentObj.commentId;
@@ -78,7 +78,7 @@ export const Post = React.memo(({ post, setPosts }) => {
     switch (method) {
       case RestMethod.POST:
       case RestMethod.PUT:
-        {
+        
            
           
           if (commentContent === '') {
@@ -134,16 +134,16 @@ export const Post = React.memo(({ post, setPosts }) => {
                 });
               }
              
-                //setNoOfReplies((noOfReplies) => noOfReplies + 1);
+              
               if(RestMethod.POST === method)
-                setNoOfComments(noOfComments => noOfComments + 1)
+                setNoOfComments(noOfComments + 1)
 
             }
-          }
         }
+        
         break;
 
-      case RestMethod.DELETE: {
+      case RestMethod.DELETE: 
             const responseBody = await commentsCUD(
               method,
               null,
@@ -168,39 +168,64 @@ export const Post = React.memo(({ post, setPosts }) => {
             });
 
           
-          setNoOfComments((noOfComments) => noOfComments - 1);
+          setNoOfComments(noOfComments - 1);
           
         }
-      }
+        myfuncs2.add(setComments);
+      
     }
     setCommentContent('')
-  };
+  }, [comments, noOfComments]);
 
-  const handleGetComments = async (e, postId, pageNo) => {
+  
+
+  const handleGetComments = useCallback( async (e, postId, pageNo) => {
     const postProp = `post${postId}`.trim();
 
 
-    if (
-      postId &&
-        (!comments[postProp] ||
-          (comments[postProp] && comments[postProp].currentPageNo !== pageNo))) {
-      const responseBody = await loadComments(
-        postId,
-        null,
-        pageNo
-      );
+    // if (
+    //   postId &&
+    //     (!comments[postProp] ||
+    //       (comments[postProp] && comments[postProp].currentPageNo !== pageNo))) {
+    //   const responseBody = await loadComments(
+    //     postId,
+    //     null,
+    //     pageNo
+    //   );
+    //   if ("error" in responseBody) {
+    //     const { error } = responseBody;
+    //     history.push("/error");
+    //   } else {
+
+    //     setComments({ ...comments, [postProp]: responseBody });
+
+    //   }
+    // }
+
+    if (postId) {
+      const responseBody = await loadComments( postId, null, pageNo);
       if ("error" in responseBody) {
         const { error } = responseBody;
-        console.log("/error");
         history.push("/error");
       } else {
-
-        setComments({ ...comments, [postProp]: responseBody });
-        
-        
+        if (!comments[postProp]) {
+          setComments({ ...comments, [postProp]: responseBody });
+        } else {
+          setComments({
+            ...comments,
+            [postProp]: {
+              currentPageNo: responseBody.currentPageNo,
+              noOfPages: responseBody.noOfPages,
+              dataList: [
+                ...comments[postProp].dataList,
+                ...responseBody.dataList,
+              ],
+            },
+          });
+        }
       }
     }
-  };
+  }, [comments]);
 
   const handleLikeUnlikePost = async (e, post, action) => {
     const responseBody = await likeUnlikeCUD(post, action);
@@ -232,6 +257,7 @@ export const Post = React.memo(({ post, setPosts }) => {
           {
             replyBarRef.current.style.display = "block";
             reactionBarRef.current.style.display = "none";
+            replyInputRef.current.value = "";
             replyInputRef.current.focus();
           }
           break;
@@ -297,8 +323,11 @@ export const Post = React.memo(({ post, setPosts }) => {
               </div>
             </div>
           </Card.Subtitle>
-          <Card.Text><div style={{ display: 'inline-block' }}>{Parser(post.postBody)}</div></Card.Text>
-          { console.log(Parser(post.postBody))}
+          <Card.Text>
+            <div style={{ display: "inline-block" }}>
+              {Parser(post.postBody)}
+            </div>
+          </Card.Text>
         </Card.Body>
       </Card>
 
@@ -361,7 +390,6 @@ export const Post = React.memo(({ post, setPosts }) => {
                     onClick={(e) => handleLikeUnlikePost(e, post, "unlike")}
                     icon={faThumbsUp}
                     style={{
-  
                       marginRight: "0.5rem",
                       cursor: "pointer",
                     }}
@@ -473,23 +501,39 @@ export const Post = React.memo(({ post, setPosts }) => {
                 {comments[`post${post.id}`.trim()] &&
                   comments[`post${post.id}`].dataList.map((comment, index2) => {
                     return (
-                      //postId, parentCommentId, comment, handleCommentCUD, setParentComments, setCommentContent, commentContent, setNoOfRepliesInParent
                       <Comment
                         key={`comment${comment.id}`}
                         postId={post.id}
                         parentCommentId={null}
-                        comment={{ ...comment }}
+                        comment={comment}
                         handleCommentCUD={handleCommentCUD}
                         setParentComments={setComments}
                         setNoOfRepliesInParent={null}
                       />
                     );
                   })}
+                {comments[`post${post.id}`.trim()] &&
+                  comments[`post${post.id}`].currentPageNo <
+                    comments[`post${post.id}`].noOfPages - 1 && (
+                    <button
+                      className="link-button"
+                      onClick={(e) =>
+                        handleGetComments(
+                          e,
+                          post.id,
+                          comments[`post${post.id}`].currentPageNo + 1
+                        )
+                      }
+                    >
+                      load more comments
+                    </button>
+                  )}
               </Card.Body>
             </Accordion.Collapse>
           )}
         </Card>
       </Accordion>
+      {/* {console.log('no of commentcud functions for post ', post.id, ' is ', myfuncs2.size)} */}
     </div>
   );
 });

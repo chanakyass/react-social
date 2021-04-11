@@ -1,6 +1,5 @@
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
-import Parser from "html-react-parser";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { Button, Modal, InputGroup, FormControl } from "react-bootstrap";
 import { postsCUD } from "./post/post-service";
@@ -28,7 +27,7 @@ export const CreatePost = React.memo(({
         }
     }, [show])
 
-  console.log("CreatePost entered");
+
 
   const handleClose = (e) => setShow(false);
 
@@ -37,7 +36,7 @@ export const CreatePost = React.memo(({
         const postHeading = editorPost.postHeading.trim();
       const postBody = editorPost.postBody.trim();
       
-      console.log(editorPost.postBody)
+
 
 
 
@@ -152,17 +151,17 @@ export const CreatePost = React.memo(({
                   // You can store the "editor" and use when it is needed.
                   if(post)
                     editor.setData(post.postBody);
-                  console.log("Editor is ready to use!", editor);
+                  
                 }}
                 onChange={(event, editor) => {
                   const data = editor.getData();
                   setEditorPost({ ...editorPost, postBody: data });
                 }}
                 onBlur={(event, editor) => {
-                  console.log("Blur.", editor);
+                  
                 }}
                 onFocus={(event, editor) => {
-                  console.log("Focus.", editor);
+                  
                 }}
               />
             </div>

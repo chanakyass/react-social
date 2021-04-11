@@ -5,13 +5,18 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import cookie from "react-cookies";
 import history from '../../app-history'
-import React, { useState } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
+import { CurrentUserContext } from '../../App'
+
 
 const NavBar = React.memo(({ setAddPostButtonClicked }) => {
 
-  const loggedInUser = cookie.load("current_user");
 
-  const [logoutRequired, setLogoutRequired] = useState(false)
+  const { isCurrentUserUpdated, setIsCurrentUserUpdated } = useContext(
+    CurrentUserContext
+  );
+
+  const loggedInUser = cookie.load('current_user');
 
   const logout = (e) => {
 
@@ -21,6 +26,7 @@ const NavBar = React.memo(({ setAddPostButtonClicked }) => {
     
     
   }
+
 
   return (
     <>
@@ -69,30 +75,9 @@ const NavBar = React.memo(({ setAddPostButtonClicked }) => {
                   </Dropdown.Item>
               </DropdownButton>
 
-              {/* <Nav.Button
-                  href={`/profile/${loggedInUser.id}`}
-                >
-                  My Profile
-                </Nav.Button> */}
+
             </Nav>
-            {/* <Form inline>
-                <FormControl
-                  type="text"
-                  placeholder="Search"
-                  className="mr-sm-2"
-                /> */}
 
-            {/* <FontAwesomeIcon
-                onClick={(e) => logout(e)}
-                icon={faSignOutAlt}
-                style={{
-                  marginLeft: "1rem",
-                  marginRight: "3rem",
-                  cursor: "pointer",
-                }}
-              ></FontAwesomeIcon> */}
-
-            {/* </Form> */}
           </Navbar.Collapse>
         </Navbar>
       }

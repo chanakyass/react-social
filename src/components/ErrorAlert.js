@@ -17,34 +17,9 @@ const [show, setShow] = useState(true);
   return (
     <>
       <Alert style={{  zIndex: '5000' }} show={show} variant="success" dismissible>
-        {/* <Alert.Heading>
-          <FontAwesomeIcon
-            onClick={(e) => {
-              setShow(false);
-            }}
-            icon={faWindowClose}
-            style={{
-              marginLeft: "1rem",
-              marginRight: "1rem",
-              cursor: "pointer",
-            }}
-          ></FontAwesomeIcon>
-        </Alert.Heading> */}
+
         <p>{alertMessage}</p>
 
-        {/* <div className="d-flex justify-content-end">
-          <FontAwesomeIcon
-            onClick={(e) => {
-              setShow(false);
-            }}
-            icon={faWindowClose}
-            style={{
-              marginLeft: "1rem",
-              marginRight: "1rem",
-              cursor: "pointer",
-            }}
-          ></FontAwesomeIcon>
-        </div> */}
       </Alert>
     </>
   );
