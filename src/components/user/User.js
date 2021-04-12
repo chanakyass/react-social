@@ -52,7 +52,7 @@ const User = () => {
         };
 
         fetch(
-          `http://localhost:8080/api/v1/profile/${id}`,
+          `/api/v1/profile/${id}`,
           requestOptions
         ).then(response => response.json().then(body => {
           
@@ -120,7 +120,7 @@ const User = () => {
     if (isValid(user, fieldErrors, RestMethod.PUT)) {
       if (editSettings.editOtherTriggered === true) {
         
-        fetch("http://localhost:8080/api/v1/profile/{profileId}", requestOptions).then((response) => {
+        fetch(`/api/v1/profile/{profileId}`, requestOptions).then((response) => {
           response.json().then(body => {
             if (response.status === 200) {
               const { data } = body;
@@ -189,7 +189,7 @@ const User = () => {
     };
 
     fetch(
-      "http://localhost:8080/api/v1/profile/{profileId}",
+      `/api/v1/profile/${id}`,
       requestOptions
     ).then((response) => {
       response.json().then(body => {

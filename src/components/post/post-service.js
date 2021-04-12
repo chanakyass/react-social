@@ -20,7 +20,7 @@ export const loadUserFeed = async (pageNo) => {
     try {
 
         const response = await fetch(
-            `http://localhost:8080/api/v1/resource/posts/${pageNo}`,
+            `/api/v1/resource/posts/${pageNo}`,
             requestOptions
         );
 
@@ -62,17 +62,17 @@ export const postsCUD = async (
     case RestMethod.POST:
       {
         requestOptions.body = JSON.stringify({ ...postForDispatch, postedAtTime: moment.utc().toISOString() });
-        url = `http://localhost:8080/api/v1/resource/post`;
+        url = `/api/v1/resource/post`;
       }
       break;
     case RestMethod.PUT:
       {
         requestOptions.body = JSON.stringify({ ...postForDispatch, id: postId, modifiedAtTime: moment.utc().toISOString() });
-        url = `http://localhost:8080/api/v1/resource/post`;
+        url = `/api/v1/resource/post`;
       }
       break;
     case RestMethod.DELETE: {
-      url = `http://localhost:8080/api/v1/resource/post/${postId}`;
+      url = `/api/v1/resource/post/${postId}`;
     }
   }
   try {
@@ -107,7 +107,7 @@ export const likeUnlikeCUD = async (post, action) => {
     
     try {
         const response = await fetch(
-            `http://localhost:8080/api/v1/resource/post/${post.id}/${action}`,
+            `/api/v1/resource/post/${post.id}/${action}`,
             requestOptions
         )
         const body = await response.json();

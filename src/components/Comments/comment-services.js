@@ -36,7 +36,7 @@ export const commentsCUD = async (method, commentId, postId, itemId, commentCont
       {
 
         requestOptions.body = JSON.stringify({ ...commentForDispatch, commentedAtTime: moment.utc().toISOString() });
-        url = `http://localhost:8080/api/v1/resource/comment`;
+        url = `/api/v1/resource/comment`;
         
       }
       break;
@@ -44,14 +44,14 @@ export const commentsCUD = async (method, commentId, postId, itemId, commentCont
       {
         commentForDispatch = { ...commentForDispatch, id: itemId, modifiedAtTime: moment.utc().toISOString() };
         requestOptions.body = JSON.stringify({ ...commentForDispatch });
-        url = `http://localhost:8080/api/v1/resource/comment`;
+        url = `/api/v1/resource/comment`;
 
         
       }
       break;
     case RestMethod.DELETE: {
 
-      url = `http://localhost:8080/api/v1/resource/comment/${itemId}`;
+      url = `/api/v1/resource/comment/${itemId}`;
 
     }
   }
@@ -84,9 +84,9 @@ export const loadComments = async (postId, commentId, pageNo) => {
   };
   let url = null;
   if(commentId)
-     url = `http://localhost:8080/api/v1/resource/comment/${commentId}/replies/${pageNo}`;
+     url = `/api/v1/resource/comment/${commentId}/replies/${pageNo}`;
   else
-      url = `http://localhost:8080/api/v1/resource/post/${postId}/comments/${pageNo}`;
+      url = `/api/v1/resource/post/${postId}/comments/${pageNo}`;
 
     try {
       const response = await fetch(
@@ -124,7 +124,7 @@ export const likeUnlikeCommentCUD = async (comment, action) => {
 
   try {
     const response = await fetch(
-      `http://localhost:8080/api/v1/resource/comment/${comment.id}/${action}`,
+      `/api/v1/resource/comment/${comment.id}/${action}`,
       requestOptions
     );
     const body = await response.json();

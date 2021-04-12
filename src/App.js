@@ -2,6 +2,7 @@ import './App.css';
 import  UserRegister  from './components/user/UserRegister'
 import Login from './components/login/Login'
 import history from './app-history'
+import 'react-app-polyfill/stable';
 
 import {
   Router,

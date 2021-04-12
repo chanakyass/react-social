@@ -57,7 +57,7 @@ const UserRegister = () => {
     };
             if (isValid(user, fieldErrors, RestMethod.POST)) {
             fetch(
-              "http://localhost:8080/api/v1/public/register",
+              "/api/v1/public/register",
               requestOptions
             ).then((response) => {
               response.json().then(body => {

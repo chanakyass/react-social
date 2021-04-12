@@ -68,7 +68,7 @@ const Login = () => {
       }
         if (isValid(creds, fieldErrors))  {
             fetch(
-              "http://localhost:8080/api/v1/public/login",
+              "/api/v1/public/login",
               requestOptions
             ).then((response) => {
                 response.json().then(body => {
