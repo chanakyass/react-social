@@ -6,6 +6,7 @@ import { isValid } from './user-registration-validations'
 import { defaultState } from '../user/user-registration-validations'
 import history from '../../app-history'
 import { Col, Form, Button } from 'react-bootstrap';
+import baseURI from "../../api-config";
 
 const UserRegister = () => {
   const defaultUser = {
@@ -57,7 +58,7 @@ const UserRegister = () => {
     };
             if (isValid(user, fieldErrors, RestMethod.POST)) {
             fetch(
-              "/api/v1/public/register",
+              `${baseURI}/api/v1/public/register`,
               requestOptions
             ).then((response) => {
               response.json().then(body => {
@@ -250,13 +251,7 @@ const UserRegister = () => {
                 <button
                   className="my-3 link-button"
                   type="submit"
-                  // style={{
-                  //   background: "none",
-                  //   border: "none",
-                  //   margin: "none",
-                  //   textDecoration: "underline",
-                  //   color: "dodgerblue",
-                  // }}
+
                   onClick={() => history.push("/login")}
                 >
                   Already registered? Click here to login

@@ -8,6 +8,7 @@ import { defaultUserState as defaultState } from "../utility/state-info";
 import { Form, Col, Button } from 'react-bootstrap';
 import history from '../../app-history'
 import { CurrentUserContext } from "../../App";
+import baseURI from "../../api-config";
 
 const User = () => {
   const defaultUser = {
@@ -52,7 +53,7 @@ const User = () => {
         };
 
         fetch(
-          `/api/v1/profile/${id}`,
+          `${baseURI}/api/v1/profile/${id}`,
           requestOptions
         ).then(response => response.json().then(body => {
           
@@ -120,7 +121,7 @@ const User = () => {
     if (isValid(user, fieldErrors, RestMethod.PUT)) {
       if (editSettings.editOtherTriggered === true) {
         
-        fetch(`/api/v1/profile/{profileId}`, requestOptions).then((response) => {
+        fetch(`${baseURI}/api/v1/profile/{profileId}`, requestOptions).then((response) => {
           response.json().then(body => {
             if (response.status === 200) {
               const { data } = body;
@@ -189,7 +190,7 @@ const User = () => {
     };
 
     fetch(
-      `/api/v1/profile/${id}`,
+      `${baseURI}/api/v1/profile/${id}`,
       requestOptions
     ).then((response) => {
       response.json().then(body => {

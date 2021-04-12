@@ -2,7 +2,6 @@
   "name": "react-social",
   "version": "0.1.0",
   "private": true,
-  "proxy": "https://citizen-sane.herokuapp.com",
   "dependencies": {
     "@ckeditor/ckeditor5-build-classic": "^27.0.0",
     "@ckeditor/ckeditor5-react": "^3.0.2",

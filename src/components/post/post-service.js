@@ -1,7 +1,8 @@
 import cookie from "react-cookies";
 import history from "../../app-history";
 import moment from 'moment'
-import {RestMethod} from '../../enums'
+import { RestMethod } from '../../enums'
+import baseURI from "../../api-config";
 
 
 
@@ -20,7 +21,7 @@ export const loadUserFeed = async (pageNo) => {
     try {
 
         const response = await fetch(
-            `/api/v1/resource/posts/${pageNo}`,
+            `${baseURI}/api/v1/resource/posts/${pageNo}`,
             requestOptions
         );
 
@@ -62,17 +63,17 @@ export const postsCUD = async (
     case RestMethod.POST:
       {
         requestOptions.body = JSON.stringify({ ...postForDispatch, postedAtTime: moment.utc().toISOString() });
-        url = `/api/v1/resource/post`;
+        url = `${baseURI}/api/v1/resource/post`;
       }
       break;
     case RestMethod.PUT:
       {
         requestOptions.body = JSON.stringify({ ...postForDispatch, id: postId, modifiedAtTime: moment.utc().toISOString() });
-        url = `/api/v1/resource/post`;
+        url = `${baseURI}/api/v1/resource/post`;
       }
       break;
     case RestMethod.DELETE: {
-      url = `/api/v1/resource/post/${postId}`;
+      url = `${baseURI}/api/v1/resource/post/${postId}`;
     }
   }
   try {
@@ -107,7 +108,7 @@ export const likeUnlikeCUD = async (post, action) => {
     
     try {
         const response = await fetch(
-            `/api/v1/resource/post/${post.id}/${action}`,
+            `${baseURI}/api/v1/resource/post/${post.id}/${action}`,
             requestOptions
         )
         const body = await response.json();

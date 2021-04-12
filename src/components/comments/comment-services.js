@@ -3,7 +3,7 @@ import cookie from "react-cookies";
 import history from "../../app-history";
 import moment from 'moment';
 import { RestMethod } from '../../enums'
-
+import baseURI from '../../api-config'
 
     
 
@@ -36,7 +36,7 @@ export const commentsCUD = async (method, commentId, postId, itemId, commentCont
       {
 
         requestOptions.body = JSON.stringify({ ...commentForDispatch, commentedAtTime: moment.utc().toISOString() });
-        url = `/api/v1/resource/comment`;
+        url = `${baseURI}/api/v1/resource/comment`;
         
       }
       break;
@@ -44,14 +44,14 @@ export const commentsCUD = async (method, commentId, postId, itemId, commentCont
       {
         commentForDispatch = { ...commentForDispatch, id: itemId, modifiedAtTime: moment.utc().toISOString() };
         requestOptions.body = JSON.stringify({ ...commentForDispatch });
-        url = `/api/v1/resource/comment`;
+        url = `${baseURI}/api/v1/resource/comment`;
 
         
       }
       break;
     case RestMethod.DELETE: {
 
-      url = `/api/v1/resource/comment/${itemId}`;
+      url = `${baseURI}/api/v1/resource/comment/${itemId}`;
 
     }
   }
@@ -84,9 +84,9 @@ export const loadComments = async (postId, commentId, pageNo) => {
   };
   let url = null;
   if(commentId)
-     url = `/api/v1/resource/comment/${commentId}/replies/${pageNo}`;
+     url = `${baseURI}/api/v1/resource/comment/${commentId}/replies/${pageNo}`;
   else
-      url = `/api/v1/resource/post/${postId}/comments/${pageNo}`;
+      url = `${baseURI}/api/v1/resource/post/${postId}/comments/${pageNo}`;
 
     try {
       const response = await fetch(
@@ -124,7 +124,7 @@ export const likeUnlikeCommentCUD = async (comment, action) => {
 
   try {
     const response = await fetch(
-      `/api/v1/resource/comment/${comment.id}/${action}`,
+      `${baseURI}/api/v1/resource/comment/${comment.id}/${action}`,
       requestOptions
     );
     const body = await response.json();

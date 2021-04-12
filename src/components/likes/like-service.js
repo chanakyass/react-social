@@ -2,6 +2,9 @@ import cookie from "react-cookies";
 import history from "../../app-history";
 import { RestMethod } from "../../enums";
 
+import baseURI from "../../api-config";
+
+
 export const loadLikesOnPost = async (postId, pageNo) => {
   const jwtToken = cookie.load("jwt");
   const currentUser = cookie.load("current_user");
@@ -15,7 +18,7 @@ export const loadLikesOnPost = async (postId, pageNo) => {
 
   try {
     const response = await fetch(
-      `/api/v1/resource/post/${postId}/likes`,
+      `${baseURI}/api/v1/resource/post/${postId}/likes`,
       requestOptions
     );
 
@@ -41,7 +44,7 @@ export const loadLikesOnComment = async (commentId, pageNo) => {
 
   try {
     const response = await fetch(
-      `/api/v1/resource/comment/${commentId}/likes`,
+      `${baseURI}/api/v1/resource/comment/${commentId}/likes`,
       requestOptions
     );
 

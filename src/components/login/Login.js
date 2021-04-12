@@ -3,7 +3,8 @@ import cookie from "react-cookies";
 import { RestMethod } from "../../enums.js";
 import  history  from '../../app-history'
 import { Link, withRouter } from 'react-router-dom'
-import { Form, Col, Button } from 'react-bootstrap'
+import { Form, Col, Button } from 'react-bootstrap';
+import baseURI from "../../api-config";
 
 const Login = () => {
 
@@ -68,7 +69,7 @@ const Login = () => {
       }
         if (isValid(creds, fieldErrors))  {
             fetch(
-              "/api/v1/public/login",
+              `${baseURI}/api/v1/public/login`,
               requestOptions
             ).then((response) => {
                 response.json().then(body => {
