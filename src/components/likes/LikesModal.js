@@ -38,7 +38,7 @@ export const LikesModal = ({ itemId, itemType, setShow, show }) => {
         })();
     }
 
-}, [show])
+}, [])
 
 return (
     <>

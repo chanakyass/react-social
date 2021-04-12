@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 
 import cookie from 'react-cookies'
 import history from '../../app-history'
@@ -10,7 +10,7 @@ import { ErrorAlert } from '../ErrorAlert'
 
 
 const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) => {
-  console.log("render");
+
 
   let location = history.location;
   let showAlert = false;
@@ -20,6 +20,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
     alertMessage = location.state.alertMessage;
   }
 
+  const pagePostsRef = useRef();
   
 
   const [pagePosts, setPosts] = useState({
@@ -28,60 +29,89 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
     dataList: [],
   });
 
+  pagePostsRef.current = pagePosts;
+
   const changeHistory = () => {
-    console.log("changeHistory called");
     history.replace({ state: null });
   };
 
   useEffect(() => {
-   if(showAlert === true) { window.onbeforeunload = function () {
-      console.log("entering onbeforeunload");
-      changeHistory();
+    
+    window.onbeforeunload = function () {
+      if (showAlert === true) changeHistory();
+      //window.scrollTo(0, 0);
+      document.body.style.display = 'none';
     };
-   }
+  
+    if (pagePostsRef.current.currentPageNo === -1) {
 
-    (async () => {
-      try {
-        const body = await loadUserFeed(0);
-        if ("error" in body) {
-          console.log(body.error);
-          history.push("/error");
-        } else setPosts(body);
+      (async () => {
+        try {
+          const body = await loadUserFeed(0);
+          if ("error" in body) {
+            console.log(body.error);
+            history.push("/error");
+          } else {
+            setPosts(body);
+            window.addEventListener("scroll", (e) => handleScroll(e));
+          };
 
-      } catch (err) {
-        console.log(err);
-        history.push("/error");
-      }
-    })();
-    if (showAlert === true) {
-      return () => (window.onbeforeunload = null);
+        } catch (err) {
+          console.log(err);
+          history.push("/error"); 
+        }
+      })();
     }
+    
+
+      return () => {
+        if (showAlert === true) {
+          window.onbeforeunload = null;
+          
+        }
+        window.removeEventListener("scroll", e => handleScroll(e));
+      };
+    
   }, []);
 
+  function getDocHeight() {
+    var D = document;
+    return Math.max(
+      D.body.scrollHeight,
+      D.documentElement.scrollHeight,
+      D.body.offsetHeight,
+      D.documentElement.offsetHeight,
+      D.body.clientHeight,
+      D.documentElement.clientHeight
+    );
+  }
+
   const handleScroll = async (e) => {
-     const bottom = (e.target.scrollHeight - e.target.scrollTop) === e.target.clientHeight;
-    if (bottom) {
+    
+    if ((window.scrollY + window.innerHeight) === getDocHeight()) {
       try {
-        if (pagePosts.currentPageNo < pagePosts.noOfPages) {
-          const body = await loadUserFeed(pagePosts.currentPageNo + 1);
+        if (pagePostsRef.current.currentPageNo < pagePostsRef.current.noOfPages ) {
+          const body = await loadUserFeed(pagePostsRef.current.currentPageNo + 1);
           if ("error" in body) {
             console.log(body.error);
             history.push("/error");
           } else {
             const { dataList, currentPageNo, noOfPages } = body;
-            setPosts({ ...pagePosts, dataList: [...pagePosts.dataList, ...dataList], currentPageNo: currentPageNo, noOfPages: noOfPages });
+            setPosts({ ...pagePostsRef.current, dataList: [...pagePostsRef.current.dataList, ...dataList], currentPageNo: currentPageNo, noOfPages: noOfPages});
            
           }
         }
-       } catch (err) {
-         console.log(err);
-         history.push("/error");
-       }
+      } catch (err) {
+        console.log(err);
+        history.push("/error");
+      }
     }
-  }
+  };
+
 
   return (
-    <div onScroll = {handleScroll} className='social-container'>
+    <div>
+
       {showAlert === true && <ErrorAlert alertMessage={alertMessage} />}
       {addPostButtonClicked === true && <CreatePost setShow={ setAddPostButtonClicked} show={addPostButtonClicked} method={RestMethod.POST} setPosts={setPosts} post={null}  />}
       <div className="col-md-8 my-3 mx-auto">

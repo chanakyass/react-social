@@ -11,8 +11,8 @@ import {
   Form
 } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faThumbsUp, faCommentDots, faReply } from "@fortawesome/free-solid-svg-icons";
-import { faThumbsUp as faRegularThumbsUp, faEdit, faWindowClose } from "@fortawesome/free-regular-svg-icons";
+import { faThumbsUp, faReply } from "@fortawesome/free-solid-svg-icons";
+import { faThumbsUp as faRegularThumbsUp, faEdit, faCommentDots, faWindowClose } from "@fortawesome/free-regular-svg-icons";
 import { RestMethod } from "../../enums";
 import { UserDetailsPopup } from '../UserDetailsPopup'
 import { Comment } from '../comments/Comment'
@@ -210,7 +210,7 @@ export const Post = React.memo(({ post, setPosts }) => {
       } else {
         if (!comments[postProp]) {
           setComments({ ...comments, [postProp]: responseBody });
-        } else {
+        } else if(comments[postProp].currentPageNo !== pageNo){
           setComments({
             ...comments,
             [postProp]: {
@@ -284,7 +284,8 @@ export const Post = React.memo(({ post, setPosts }) => {
 
   return (
     <div>
-      {showPostModal === true && (
+      {
+        showPostModal === true && (
         <CreatePost
           setShow={setShowPostModal}
           show={showPostModal}
@@ -292,13 +293,17 @@ export const Post = React.memo(({ post, setPosts }) => {
           setPosts={setPosts}
           post={post}
         />
-      )}
-      <LikesModal
+        )
+      }
+
+      {
+        showLikesModal === true && <LikesModal
         itemId={post.id}
         itemType="POST"
         setShow={setShowLikesModal}
         show={showLikesModal}
-      />
+        />
+      }
       <Card className="mt-2" style={{ maxWidth: "80%", borderBottom: "none" }}>
         {/* <Card.Img variant="top" src="holder.js/100px180" /> */}
 
@@ -360,7 +365,7 @@ export const Post = React.memo(({ post, setPosts }) => {
               post.postLikedByCurrentUser === null ? (
                 <>
                   <FontAwesomeIcon
-                    color="gray"
+                    color="#4A4A4A"
                     onClick={(e) =>
                       post.owner.id !== currentUser.id &&
                       handleLikeUnlikePost(e, post, "like")
@@ -379,14 +384,14 @@ export const Post = React.memo(({ post, setPosts }) => {
                           }
                     }
                   ></FontAwesomeIcon>
-                  <span style={{ color: "grey", marginRight: "1rem" }}>
+                  <span style={{ color: "#4A4A4A", marginRight: "1rem" }}>
                     {post.noOfLikes}
                   </span>
                 </>
               ) : (
                 <>
                   <FontAwesomeIcon
-                    color="gray"
+                    color="#4A4A4A"
                     onClick={(e) => handleLikeUnlikePost(e, post, "unlike")}
                     icon={faThumbsUp}
                     style={{
@@ -409,7 +414,7 @@ export const Post = React.memo(({ post, setPosts }) => {
                   >
                     <FontAwesomeIcon
                       icon={faCommentDots}
-                      color="gray"
+                      color="#4A4A4A"
                       style={{
                         marginLeft: "1rem",
                         marginRight: "1rem",
@@ -422,7 +427,7 @@ export const Post = React.memo(({ post, setPosts }) => {
                 onClick={(e) => {
                   handleMovingPartsOnClick(e, "REPLY");
                 }}
-                color="gray"
+                color="#4A4A4A"
                 icon={faReply}
                 style={{
                   marginLeft: "1rem",
@@ -434,7 +439,7 @@ export const Post = React.memo(({ post, setPosts }) => {
               {post.owner.id === currentUser.id && (
                 <FontAwesomeIcon
                   icon={faEdit}
-                  color="gray"
+                  color="#4A4A4A"
                   style={{
                     marginLeft: "1rem",
                     marginRight: "1rem",
@@ -450,7 +455,7 @@ export const Post = React.memo(({ post, setPosts }) => {
                   onClick={(e) => {
                     handlePostDelete(e, post.id);
                   }}
-                  color="gray"
+                  color="#4A4A4A"
                   icon={faWindowClose}
                   style={{
                     marginLeft: "1rem",
@@ -506,9 +511,9 @@ export const Post = React.memo(({ post, setPosts }) => {
                         postId={post.id}
                         parentCommentId={null}
                         comment={comment}
-                        handleCommentCUD={handleCommentCUD}
+                        //handleCommentCUD={handleCommentCUD}
                         setParentComments={setComments}
-                        setNoOfRepliesInParent={null}
+                        setNoOfRepliesInParent={setNoOfComments}
                       />
                     );
                   })}

@@ -32,7 +32,7 @@ function App() {
   
 
   return (
-    <div className='social-special-gray'>
+    <div>
     <Router history={history}>
       <Switch>
         <Route exact path="/login"  render={() => userExists()? <Redirect to={{pathname: '/', state: {showAlert: true, alertMessage: 'You are logged in'}}} />: <Login/>} />

@@ -15,7 +15,7 @@ import { LikesModal } from '../likes/LikesModal'
 import { convertDateToReadableFormat } from '../utility/handle-dates';
 
 
-export const Comment = React.memo(({ postId, parentCommentId, comment, handleCommentCUD, setParentComments, setNoOfRepliesInParent}) => {
+export const Comment = React.memo(({ postId, parentCommentId, comment, setParentComments, setNoOfRepliesInParent}) => {
   const currentUser = cookie.load("current_user");
 
 
@@ -25,6 +25,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
   const [replies, setReplies] = useState({})
   const [replyContent, setReplyContent] = useState('')
   const [showLikesModal, setShowLikesModal] = useState(false);
+  const [showGetRepliesLoad, setShowGetRepliesLoad] = useState(false);
 
   let replyBarRef = useRef(null)
   let reactionBarRef = useRef(null)
@@ -33,6 +34,124 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
   let repliesDotRef = useRef(null)
   let replyInputRef = useRef(null);
   let updateInputRef = useRef(null);
+
+
+    const handleCommentCUD = useCallback(
+      async (e, method, commentObj) => {
+        let postId = commentObj.postId;
+        let itemId = commentObj.commentId;
+        let commentContent = commentObj.commentContent;
+
+        const postProp = `post${postId}`.trim();
+
+        e.preventDefault();
+
+        switch (method) {
+          case RestMethod.PUT:
+            if (commentContent === "") {
+              //raise error
+            } else {
+              const responseBody = await commentsCUD(
+                method,
+                null,
+                postId,
+                itemId,
+                commentContent
+              );
+              if ("error" in responseBody) {
+                const { error } = responseBody;
+                console.log(error);
+                history.push("/error");
+              } else {
+                const { data } = responseBody;
+
+                //if (comments && comments[postProp]) {
+                  let newComment = {
+                    id: data.resourceId,
+                    commentedOn: { id: postId },
+                    commentContent: commentContent,
+                    owner: currentUser,
+                    commentLikedByCurrentUser: false,
+                    noOfLikes: 0,
+                    noOfReplies: 0,
+                  };
+
+                  // if (RestMethod.POST === method) {
+                  //   newComment = {
+                  //     ...newComment,
+                  //     commentedAtTime: moment.utc().toISOString(),
+                  //     modifiedAtTime: null,
+                  //   };
+                  // } else {
+                    newComment = {
+                      ...newComment,
+                      modifiedAtTime: moment.utc().toISOString(),
+                    };
+                  //}
+
+
+                setParentComments((comments) => {
+                  let newDataList =
+                    method === RestMethod.POST
+                      ? [...comments[postProp].dataList, newComment]
+                      : comments[postProp].dataList.map((comment) => {
+                        if (comment.id === itemId) return newComment;
+                        else return comment;
+                      });
+                  return {
+                    ...comments,
+                    [postProp]: {
+                      ...comments[postProp],
+                      dataList: newDataList,
+                    },
+                  };
+                });
+
+                 // setComments();
+                //}
+
+                // if (RestMethod.POST === method)
+                //   setNoOfComments(noOfComments + 1);
+              }
+            }
+
+            break;
+
+          case RestMethod.DELETE:
+            const responseBody = await commentsCUD(
+              method,
+              null,
+              postId,
+              itemId,
+              null
+            );
+            if ("error" in responseBody) {
+              const { error } = responseBody;
+              console.log(error);
+              history.push("/error");
+            } else {
+
+              setParentComments((comments => {
+                return {
+                  ...comments,
+                  [postProp]: {
+                    ...comments[`post${postId}`],
+                    dataList: comments[`post${postId}`].dataList.filter(
+                      (comment) => comment.id !== itemId
+                    ),
+                  },
+                };
+              }));
+              //setComments();
+
+              setNoOfRepliesInParent(noOfComments => noOfComments - 1);
+            }
+           
+        }
+        setReplyContent("");
+      },
+      []
+    );
 
   const handleReplyCUD = useCallback(async (e, method, replyObj) => {
     
@@ -231,20 +350,25 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
         } else {
           if (!replies[commentProp]) {
             setReplies({ ...replies, [commentProp]: responseBody });
+            
           }
-          else {
-            setReplies({
-              ...replies,
-              [commentProp]: {
-                currentPageNo: responseBody.currentPageNo,
-                noOfPages: responseBody.noOfPages,
-                dataList: [...replies[commentProp].dataList, ...responseBody.dataList]
-              }
-            });
+          else if (replies[commentProp].currentPageNo != pageNo) {
+              setReplies({
+                ...replies,
+                [commentProp]: {
+                  currentPageNo: responseBody.currentPageNo,
+                  noOfPages: responseBody.noOfPages,
+                  dataList: [...replies[commentProp].dataList, ...responseBody.dataList]
+                }
+              });
+              
+            
           }
         }
+        setShowGetRepliesLoad(false);
       }
-  }, [replies]);
+    
+  }, [replies, showGetRepliesLoad]);
 
   const handleMovingPartsOnClick = (e, action) => {
     switch (action) {
@@ -303,15 +427,18 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
     }
   }
 
-  return (
-    <div className={"" + (parentCommentId ? "pl-4 " : "") + " " + "bg-light"}>
+  return <>
+     <div className={"" + (parentCommentId ? "pl-4 " : "") + " " + "bg-light"}>
       <div className={"" + (parentCommentId ? "p-0 m-0 border-left" : "")}>
-        <LikesModal
+        {
+          showLikesModal === true &&
+          <LikesModal
           itemId={comment.id}
           itemType="COMMENT"
           setShow={setShowLikesModal}
           show={showLikesModal}
-        />
+          />
+        }
         <Card
           id={`commentCard${comment.id}`}
           style={{ maxWidth: "100%", border: "none" }}
@@ -461,7 +588,12 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
                       as={Button}
                       variant="link"
                       eventKey={`comment${comment.id}`}
-                      onClick={(e) => handleGetReplies(e, comment.id, 0)}
+                      onClick={(e) => {
+                        if (!replies[`comment${comment.id}`]) {
+                          setShowGetRepliesLoad(true);
+                          handleGetReplies(e, comment.id, 0);
+                        }
+                      }}
                       ref={repliesDotRef}
                       className="p-0 border-0"
                     >
@@ -566,6 +698,12 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
             {noOfReplies > 0 ? (
               <Accordion.Collapse eventKey={`comment${comment.id}`}>
                 <Card.Body className="p-0">
+                  {showGetRepliesLoad === true && 
+                  <div className='spinner bg-light'>
+                    <div className="bounce1"></div>
+                    <div className="bounce2"></div>
+                    <div className="bounce3"></div>
+                </div>}
                   {replies[`comment${comment.id}`.trim()] &&
                     replies[`comment${comment.id}`].dataList.map(
                       (reply, index2) => {
@@ -576,7 +714,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
                               postId={postId}
                               parentCommentId={comment.id}
                               comment={reply}
-                              handleCommentCUD={null}
+                              //handleCommentCUD={null}
                               setParentComments={setReplies}
                               setNoOfRepliesInParent={setNoOfReplies}
                             />
@@ -584,6 +722,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
                         );
                       }
                     )}
+                  
                   {replies[`comment${comment.id}`.trim()] &&
                     replies[`comment${comment.id}`].currentPageNo <
                       (replies[`comment${comment.id}`].noOfPages - 1) && (
@@ -610,5 +749,6 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, handleCom
       </div>
       {console.log("rendering comment ", comment.id)}
     </div>
-  );
+    
+  </>;
 });
