@@ -49,7 +49,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
         switch (method) {
           case RestMethod.PUT:
             if (commentContent === "") {
-              //raise error
+              updateCommentRef.current.focus();
             } else {
               const responseBody = await commentsCUD(
                 method,
@@ -76,18 +76,12 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                     noOfReplies: 0,
                   };
 
-                  // if (RestMethod.POST === method) {
-                  //   newComment = {
-                  //     ...newComment,
-                  //     commentedAtTime: moment.utc().toISOString(),
-                  //     modifiedAtTime: null,
-                  //   };
-                  // } else {
+
                     newComment = {
                       ...newComment,
                       modifiedAtTime: moment.utc().toISOString(),
                     };
-                  //}
+    
 
 
                 setParentComments((comments) => {
@@ -107,11 +101,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                   };
                 });
 
-                 // setComments();
-                //}
 
-                // if (RestMethod.POST === method)
-                //   setNoOfComments(noOfComments + 1);
               }
             }
 
@@ -142,10 +132,14 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                   },
                 };
               }));
-              //setComments();
+ 
 
               setNoOfRepliesInParent(noOfComments => noOfComments - 1);
             }
+
+            break;
+          //can do something more here
+          default: alert('Wrong rest method');
            
         }
         setReplyContent("");
@@ -170,14 +164,14 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
       switch (method) {
         case RestMethod.POST:
         
-          {
+          
 
             if (
               !replyContent ||
               replyContent === undefined ||
               replyContent === ""
             ) {
-              //raise error
+              replyInputRef.current.focus();
             } else {
               const responseBody = await commentsCUD(
                 method,
@@ -228,12 +222,12 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                 }
               }
             }
-          }
+          
           break;
-        case RestMethod.PUT: {
+        case RestMethod.PUT: 
 
           if (replyContent === '' || replyContent === undefined || replyContent === null) {
-            alert('comment cant be empty');
+            updateInputRef.current.focus();
           }
           else {
                   const responseBody = await commentsCUD(
@@ -263,18 +257,18 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
               });
             }
           }
-        }
+        
           break;
 
-        case RestMethod.DELETE: {
+        case RestMethod.DELETE:
 
-                const responseBody = await commentsCUD(
-                  method,
-                  commentId,
-                  postId,
-                  itemId,
-                  replyContent
-                );
+          const responseBody = await commentsCUD(
+            method,
+            commentId,
+            postId,
+            itemId,
+            replyContent
+          );
           if ("error" in responseBody) {
             const { error } = responseBody;
             console.log(error);
@@ -295,11 +289,14 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
               }
             });
 
-            if(setNoOfRepliesInParent)
+            if (setNoOfRepliesInParent)
               setNoOfRepliesInParent((noOfReplies) => noOfReplies - 1);
           }
+          break;
+
+        default: alert('Only Post, Update or delete')
          
-        }
+        
         
     }
     setReplyContent('');
@@ -324,23 +321,6 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
     const handleGetReplies = useCallback(async (e, commentId, pageNo) => {
       const commentProp = `comment${commentId}`.trim();
 
-      // if (
-      //   postId &&
-      //   (!replies[commentProp] ||
-      //     (replies[commentProp] &&
-      //       replies[commentProp].currentPageNo !== pageNo))
-      // ) {
-        
-      //   const responseBody = await loadComments(null, commentId, pageNo);
-      //   if ("error" in responseBody) {
-      //     const { error } = responseBody;
-      //     history.push("/error");
-      //   } else {
-
-      //     setReplies({ ...replies, [commentProp]: responseBody });
-          
-      //   }
-      // }
 
       if (postId) {
         const responseBody = await loadComments(null, commentId, pageNo);
@@ -672,6 +652,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                     onKeyDown={(e) =>
                       handleMovingPartsForKeys(e, "REPLY_SUBMIT")
                     }
+                    
                   />
                 </Form.Group>
                 <Form.Group controlId={`replyBoxFor${comment.id}`}>

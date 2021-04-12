@@ -8,7 +8,7 @@ import cookie from "react-cookies";
 import history from "../app-history";
 import moment from 'moment';
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 export const CreatePost = React.memo(({
   setShow,
@@ -18,14 +18,13 @@ export const CreatePost = React.memo(({
     post
 }) => {
   const [editorPost, setEditorPost] = useState({ id: null, postHeading: "", postBody: "" });
-  const jwtToken = cookie.load("jwt");
     const currentUser = cookie.load("current_user");
     
-    useEffect(() => {
+
         if (post && show === true) {
             setEditorPost({ id: post.id,  postHeading: post.postHeading, postBody: post.postBody });
         }
-    }, [show])
+
 
 
 
@@ -40,7 +39,7 @@ export const CreatePost = React.memo(({
 
 
 
-    if (postHeading === "" || postBody === "") {
+    if ( postBody === "") {
       //error
     } else {
     
@@ -62,7 +61,7 @@ export const CreatePost = React.memo(({
           const { data } = responseBody;
           
         switch (method) {
-          case RestMethod.POST: {
+          case RestMethod.POST: 
             console.log('post getting executed');
                 setPosts((posts) => {
                     return {
@@ -82,11 +81,11 @@ export const CreatePost = React.memo(({
                       ],
                     };
                 });
-            }
+            
             break;
-            case RestMethod.PUT: {
-                setPosts((posts) => {
-                return {
+          case RestMethod.PUT:
+            setPosts((posts) => {
+              return {
                 ...posts,
                 dataList: posts.dataList.map(listPost => {
                   let newPost = listPost;
@@ -105,8 +104,11 @@ export const CreatePost = React.memo(({
                     return listPost;
                   }
                 })
-              }});
-            }
+              }
+            });
+            break;
+          
+            
         }
 
 
@@ -168,7 +170,7 @@ export const CreatePost = React.memo(({
           </div>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleClose}>
+          <Button variant="secondary" disabled={ editorPost.postBody !== ''  } onClick={handleClose}>
             Close
           </Button>
           <Button
