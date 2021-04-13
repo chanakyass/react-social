@@ -20,6 +20,7 @@ import { CreatePost } from "../CreatePost";
 import { LikesModal } from "../likes/LikesModal";
 import moment from 'moment';
 import { convertDateToReadableFormat } from '../utility/handle-dates'
+import { CustomToggle } from '../utility/CustomToggle';
 
 let myfuncs2 = new Set();
 
@@ -34,7 +35,9 @@ export const Post = React.memo(({ post, setPosts }) => {
 
   let [noOfComments, setNoOfComments] = useState(post.noOfComments);
 
-  let [showLikesModal, setShowLikesModal] = useState(false)
+  let [showLikesModal, setShowLikesModal] = useState(false);
+
+  const [showGetRepliesLoad, setShowGetRepliesLoad] = useState(false);
 
   const replyBarRef = useRef(null);
   let reactionBarRef = useRef(null);
@@ -65,115 +68,67 @@ export const Post = React.memo(({ post, setPosts }) => {
     }   
   }
 
-  const handleCommentCUD = useCallback( async (e, method, commentObj) => {
+  const handleCreateComment = useCallback( async (e, commentObj) => {
 
     let postId = commentObj.postId;
-    let itemId = commentObj.commentId;
     let commentContent = commentObj.commentContent;
 
     const postProp = `post${postId}`.trim();
 
     e.preventDefault();
 
-    switch (method) {
-      case RestMethod.POST:
-      case RestMethod.PUT:
-        
-           
+    if (commentContent === '') {
+      replyInputRef.current.focus();
+    } else {
+          const responseBody = await commentsCUD(
+            RestMethod.POST,
+            null,
+            postId,
+            null,
+            commentContent
+          );
+      if ("error" in responseBody) {
+        const { error } = responseBody;
+        console.log(error);
+        history.push("/error");
+      } else {
+
+        const { data } = responseBody
+
+        if (comments && comments[postProp]){
           
-          if (commentContent === '') {
-            //raise error
-          } else {
-                const responseBody = await commentsCUD(
-                  method,
-                  null,
-                  postId,
-                  itemId,
-                  commentContent
-                );
-            if ("error" in responseBody) {
-              const { error } = responseBody;
-              console.log(error);
-              history.push("/error");
-            } else {
+            let newComment = {
+              id: data.resourceId,
+              commentedOn: { id: postId },
+              commentContent: commentContent,
+              owner: currentUser,
+              commentLikedByCurrentUser: false,
+              noOfLikes: 0,
+              noOfReplies: 0,
+            };
 
-              const { data } = responseBody
+        newComment = { ...newComment, commentedAtTime: moment.utc().toISOString(), modifiedAtTime: null };
 
-                if (comments && comments[postProp]){
-                
-                  let newComment = {
-                    id: data.resourceId,
-                    commentedOn: { id: postId },
-                    commentContent: commentContent,
-                    owner: currentUser,
-                    commentLikedByCurrentUser: false,
-                    noOfLikes: 0,
-                    noOfReplies: 0,
-                  };
-
-                  if (RestMethod.POST === method) {
-                    newComment = { ...newComment, commentedAtTime: moment.utc().toISOString(), modifiedAtTime: null };
-                  }
-                  else {
-                    newComment = { ...newComment, modifiedAtTime: moment.utc().toISOString() };
-                  }
-
-                let newDataList = (method === RestMethod.POST) ?
-                  [...comments[postProp].dataList, newComment]
-                  : comments[postProp].dataList.map((comment) => {
-                    if (comment.id === itemId)
-                      return newComment
-                    else return comment
-                  });
-                
-                setComments({
-                  ...comments, [postProp]: {
-                    ...comments[postProp],
-                    dataList: newDataList
-                  }
-                });
-              }
-             
-              
-              if(RestMethod.POST === method)
-                setNoOfComments(noOfComments + 1)
-
+        let newDataList = [...comments[postProp].dataList, newComment];
+          
+        setComments({
+            ...comments, [postProp]: {
+              ...comments[postProp],
+              dataList: newDataList
             }
+          });
         }
-        
-        break;
-
-      case RestMethod.DELETE: 
-            const responseBody = await commentsCUD(
-              method,
-              null,
-              postId,
-              itemId,
-              null
-            );
-        if ("error" in responseBody) {
-          const { error } = responseBody;
-          console.log(error);
-          history.push("/error");
-        } else {
-
-            setComments({
-              ...comments,
-              [postProp]: {
-                ...comments[`post${postId}`],
-                dataList: comments[`post${postId}`].dataList.filter(
-                  (comment) => comment.id !== itemId
-                ),
-              },
-            });
-
-          
-          setNoOfComments(noOfComments - 1);
-          
+        else {
+          setShowGetRepliesLoad(true);
+          await handleGetComments(e, postId, 0);
         }
-        myfuncs2.add(setComments);
-      
+
+
+        setNoOfComments(noOfComments + 1)
+
+      }
     }
+
     setCommentContent('')
   }, [comments, noOfComments]);
 
@@ -181,26 +136,6 @@ export const Post = React.memo(({ post, setPosts }) => {
 
   const handleGetComments = useCallback( async (e, postId, pageNo) => {
     const postProp = `post${postId}`.trim();
-
-
-    // if (
-    //   postId &&
-    //     (!comments[postProp] ||
-    //       (comments[postProp] && comments[postProp].currentPageNo !== pageNo))) {
-    //   const responseBody = await loadComments(
-    //     postId,
-    //     null,
-    //     pageNo
-    //   );
-    //   if ("error" in responseBody) {
-    //     const { error } = responseBody;
-    //     history.push("/error");
-    //   } else {
-
-    //     setComments({ ...comments, [postProp]: responseBody });
-
-    //   }
-    // }
 
     if (postId) {
       const responseBody = await loadComments( postId, null, pageNo);
@@ -224,8 +159,9 @@ export const Post = React.memo(({ post, setPosts }) => {
           });
         }
       }
+      setShowGetRepliesLoad(false);
     }
-  }, [comments]);
+  }, [comments, showGetRepliesLoad]);
 
   const handleLikeUnlikePost = async (e, post, action) => {
     const responseBody = await likeUnlikeCUD(post, action);
@@ -264,8 +200,9 @@ export const Post = React.memo(({ post, setPosts }) => {
         case "REPLY_SUBMIT":
           {
  
-              replyBarRef.current.style.display = "none";
-              reactionBarRef.current.style.display = "inline-block";
+            replyBarRef.current.style.display = "none";
+            reactionBarRef.current.style.display = "inline-block";
+            commentsDotRef.current.click();
             
           }
           break;
@@ -283,9 +220,8 @@ export const Post = React.memo(({ post, setPosts }) => {
 
 
   return (
-    <div>
-      {
-        showPostModal === true && (
+    <>
+      {showPostModal === true && (
         <CreatePost
           setShow={setShowPostModal}
           show={showPostModal}
@@ -293,18 +229,17 @@ export const Post = React.memo(({ post, setPosts }) => {
           setPosts={setPosts}
           post={post}
         />
-        )
-      }
+      )}
 
-      {
-        showLikesModal === true && <LikesModal
-        itemId={post.id}
-        itemType="POST"
-        setShow={setShowLikesModal}
-        show={showLikesModal}
+      {showLikesModal === true && (
+        <LikesModal
+          itemId={post.id}
+          itemType="POST"
+          setShow={setShowLikesModal}
+          show={showLikesModal}
         />
-      }
-      <Card className="mt-2" style={{ maxWidth: "80%", borderBottom: "none" }}>
+      )}
+      <Card className="mt-2" style={{ maxWidth: "100%", borderBottom: "none" }}>
         {/* <Card.Img variant="top" src="holder.js/100px180" /> */}
 
         <Card.Body>
@@ -337,14 +272,12 @@ export const Post = React.memo(({ post, setPosts }) => {
       </Card>
 
       <Accordion>
-        <Card style={{ maxWidth: "80%", borderTop: "none" }}>
+        <Card style={{ maxWidth: "100%", borderTop: "none" }}>
           <Card.Header
             style={{
               background: "none",
               border: "none",
               margin: "none",
-              // textDecoration: "underline",
-              // color: "dodgerblue",
             }}
           >
             <div ref={reactionBarRef} style={{ display: "inline-block" }}>
@@ -404,13 +337,9 @@ export const Post = React.memo(({ post, setPosts }) => {
               )}
               {noOfComments > 0 && (
                 <>
-                  <Accordion.Toggle
-                    as={Button}
-                    variant="link"
+                  <CustomToggle
                     eventKey={`post${post.id}`}
-                    onClick={(e) => handleGetComments(e, post.id, 0)}
-                    ref={commentsDotRef}
-                    className="p-0 border-0"
+                    attachRef={commentsDotRef}
                   >
                     <FontAwesomeIcon
                       icon={faCommentDots}
@@ -419,8 +348,12 @@ export const Post = React.memo(({ post, setPosts }) => {
                         marginLeft: "1rem",
                         marginRight: "1rem",
                       }}
+                      onClick={(e) => {
+                        setShowGetRepliesLoad(true);
+                        handleGetComments(e, post.id, 0);
+                      }}
                     ></FontAwesomeIcon>
-                  </Accordion.Toggle>
+                  </CustomToggle>
                 </>
               )}
               <FontAwesomeIcon
@@ -486,7 +419,7 @@ export const Post = React.memo(({ post, setPosts }) => {
                   id={`submitCommentOn${post.id}`}
                   name={`submitCommentOn${post.id}`}
                   onClick={(e) => {
-                    handleCommentCUD(e, RestMethod.POST, {
+                    handleCreateComment(e, {
                       commentId: null,
                       postId: post.id,
                       commentContent: commentContent,
@@ -503,6 +436,13 @@ export const Post = React.memo(({ post, setPosts }) => {
           {noOfComments > 0 && (
             <Accordion.Collapse eventKey={`post${post.id}`}>
               <Card.Body>
+                {showGetRepliesLoad === true && (
+                  <div className="spinner bg-light">
+                    <div className="bounce1"></div>
+                    <div className="bounce2"></div>
+                    <div className="bounce3"></div>
+                  </div>
+                )}
                 {comments[`post${post.id}`.trim()] &&
                   comments[`post${post.id}`].dataList.map((comment, index2) => {
                     return (
@@ -539,6 +479,6 @@ export const Post = React.memo(({ post, setPosts }) => {
         </Card>
       </Accordion>
       {/* {console.log('no of commentcud functions for post ', post.id, ' is ', myfuncs2.size)} */}
-    </div>
+    </>
   );
 });

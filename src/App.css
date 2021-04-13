@@ -53,6 +53,13 @@ border: none;
 padding:0%;
 }
 
+.toggle-button {
+background:none;
+border: none;
+padding:0%;
+margin: none;
+}
+
 /*Huge thanks to @tobiasahlin at http://tobiasahlin.com/spinkit/ */
 .spinner {
   /* height: 100%;

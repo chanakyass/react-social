@@ -8,22 +8,24 @@ import cookie from "react-cookies";
 import history from "../app-history";
 import moment from 'moment';
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export const CreatePost = React.memo(({
   setShow,
-    show,
+  show,
   method,
   setPosts,
-    post
+  post
 }) => {
   const [editorPost, setEditorPost] = useState({ id: null, postHeading: "", postBody: "" });
-    const currentUser = cookie.load("current_user");
+  const currentUser = cookie.load("current_user");
     
 
-        if (post && show === true) {
-            setEditorPost({ id: post.id,  postHeading: post.postHeading, postBody: post.postBody });
-        }
+    useEffect(() => {
+      if(post && show === true) {
+      setEditorPost({ id: post.id, postHeading: post.postHeading, postBody: post.postBody });
+    }
+  }, [show, post]);
 
 
 
@@ -170,11 +172,12 @@ export const CreatePost = React.memo(({
           </div>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" disabled={ editorPost.postBody !== ''  } onClick={handleClose}>
+          <Button variant="secondary" onClick={handleClose}>
             Close
           </Button>
           <Button
-            variant="primary"
+            variant="secondary"
+            disabled={ editorPost.postBody === ''  }
             onClick={(e) => handlePostCU(e, method, editorPost)}
           >
             {method === RestMethod.PUT ? 'Update post': 'Create post'}

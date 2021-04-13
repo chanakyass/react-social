@@ -13,6 +13,7 @@ import { RestMethod } from "../../enums";
 import { UserDetailsPopup } from "../UserDetailsPopup";
 import { LikesModal } from '../likes/LikesModal'
 import { convertDateToReadableFormat } from '../utility/handle-dates';
+import { CustomToggle } from '../utility/CustomToggle';
 
 
 export const Comment = React.memo(({ postId, parentCommentId, comment, setParentComments, setNoOfRepliesInParent}) => {
@@ -215,11 +216,8 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                   });
                 }
 
-                setNoOfReplies(noOfReplies + 1);
 
-                if (!replies || !replies[commentProp]) {
-                  repliesDotRef.current.click();
-                }
+                setNoOfReplies(noOfReplies + 1);
               }
             }
           
@@ -361,10 +359,10 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
         break;
       case "REPLY_SUBMIT": 
 
-          replyBarRef.current.style.display = 'none';
-          reactionBarRef.current.style.display = 'inline-block';
-        
-      
+        replyBarRef.current.style.display = 'none';
+        reactionBarRef.current.style.display = 'inline-block';
+        repliesDotRef.current.click();
+
         break;
       
       case "UPDATE": 
@@ -407,329 +405,327 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
     }
   }
 
-  return <>
-     <div className={"" + (parentCommentId ? "pl-4 " : "") + " " + "bg-light"}>
-      <div className={"" + (parentCommentId ? "p-0 m-0 border-left" : "")}>
-        {
-          showLikesModal === true &&
-          <LikesModal
-          itemId={comment.id}
-          itemType="COMMENT"
-          setShow={setShowLikesModal}
-          show={showLikesModal}
-          />
-        }
-        <Card
-          id={`commentCard${comment.id}`}
-          style={{ maxWidth: "100%", border: "none" }}
-          bg="light"
-        >
-          <Card.Body>
-            <Card.Subtitle>
-              <div className="pb-4">
-                <UserDetailsPopup owner={comment.owner} />
-                <div className="my-1">
-                  <button className="link-button">
-                    <small>
-                      {(!comment.modifiedAtTime ? "Posted: " : "Modified: ") +
-                        `${convertDateToReadableFormat(
-                          !comment.modifiedAtTime
-                            ? comment.commentedAtTime
-                            : comment.modifiedAtTime
-                        )}`}
-                    </small>
-                  </button>
-                </div>
-              </div>
-            </Card.Subtitle>
-            <Card.Text>
-              <div ref={commentContentRef} style={{ display: "inline-block" }}>
-                {comment.commentContent}
-              </div>
-              <div ref={updateCommentRef} style={{ display: "none" }}>
-                <Form.Group controlId={`updateCommentBoxFor${comment.id}`}>
-                  <Form.Control
-                    as="textarea"
-                    rows={3}
-                    cols={100}
-                    id={`updateOn${comment.id}`}
-                    name={`updateOn${comment.id}`}
-                    onChange={(e) => setReplyContent(e.target.value)}
-                    ref={updateInputRef}
-                    value={replyContent}
-                    onKeyDown={(e) =>
-                      handleMovingPartsForKeys(e, "UPDATE_SUBMIT")
-                    }
-                  />
-                </Form.Group>
-                <Form.Group controlId={`updateCommentBoxFor${comment.id}`}>
-                  <Button
-                    type="button"
-                    id={`submitUpdateOn${comment.id}`}
-                    name={`submitUpdateOn${comment.id}`}
-                    onClick={(e) => {
-                      !parentCommentId
-                        ? handleCommentCUD(e, RestMethod.PUT, {
-                            postId: postId,
-                            commentId: comment.id,
-                            commentContent: replyContent,
-                          })
-                        : handleReplyCUD(e, RestMethod.PUT, {
-                            parentCommentId: parentCommentId,
-                            postId: postId,
-                            commentId: comment.id,
-                            replyContent: replyContent,
-                          });
-                      handleMovingPartsOnClick(e, "UPDATE_SUBMIT");
-                    }}
-                  >
-                    update
-                  </Button>
-                </Form.Group>
-              </div>
-            </Card.Text>
-          </Card.Body>
-        </Card>
-        <Accordion>
-          <Card style={{ maxWidth: "100%", border: "none" }}>
-            <Card.Header
-              style={{
-                // background: "transparent",
-                border: "none",
-                // margin: "none",
-                // textDecoration: "underline",
-                // color: "dodgerblue",
-              }}
-            >
-              <div
-                ref={reactionBarRef}
-                className="p-1"
-                style={{ display: "block" }}
-              >
-                {noOfLikes > 0 && (
-                  <div className="mb-3">
-                    <button
-                      className="link-button"
-                      onClick={(e) => {
-                        setShowLikesModal(true);
-                      }}
-                    >
-                      <small>View likes</small>
+  return (
+    <>
+      <div className={"" + (parentCommentId ? "pl-4 " : "") + " " + "bg-light"}>
+        <div className={"" + (parentCommentId ? "p-0 m-0 border-left" : "")}>
+          {showLikesModal === true && (
+            <LikesModal
+              itemId={comment.id}
+              itemType="COMMENT"
+              setShow={setShowLikesModal}
+              show={showLikesModal}
+            />
+          )}
+          <Card
+            id={`commentCard${comment.id}`}
+            style={{ maxWidth: "100%", border: "none" }}
+            bg="light"
+          >
+            <Card.Body>
+              <Card.Subtitle>
+                <div className="pb-4">
+                  <UserDetailsPopup owner={comment.owner} />
+                  <div className="my-1">
+                    <button className="link-button">
+                      <small>
+                        {(!comment.modifiedAtTime ? "Posted: " : "Modified: ") +
+                          `${convertDateToReadableFormat(
+                            !comment.modifiedAtTime
+                              ? comment.commentedAtTime
+                              : comment.modifiedAtTime
+                          )}`}
+                      </small>
                     </button>
                   </div>
-                )}
-                {isCommentLiked === undefined ||
-                isCommentLiked === null ||
-                isCommentLiked === false ? (
-                  <>
-                    <FontAwesomeIcon
-                      onClick={(e) =>
-                        comment.owner.id !== currentUser.id &&
-                        handleLikeUnlikeComment(e, comment, "like")
+                </div>
+              </Card.Subtitle>
+              <Card.Text>
+                <div
+                  ref={commentContentRef}
+                  style={{ display: "inline-block" }}
+                >
+                  {comment.commentContent}
+                </div>
+                <div ref={updateCommentRef} style={{ display: "none" }}>
+                  <Form.Group controlId={`updateCommentBoxFor${comment.id}`}>
+                    <Form.Control
+                      as="textarea"
+                      rows={3}
+                      cols={100}
+                      id={`updateOn${comment.id}`}
+                      name={`updateOn${comment.id}`}
+                      onChange={(e) => setReplyContent(e.target.value)}
+                      ref={updateInputRef}
+                      value={replyContent}
+                      onKeyDown={(e) =>
+                        handleMovingPartsForKeys(e, "UPDATE_SUBMIT")
                       }
-                      icon={faRegularThumbsUp}
-                      style={
-                        comment.owner.id !== currentUser.id
-                          ? {
-                              marginRight: "0.5rem",
-                              cursor: "pointer",
-                            }
-                          : {
-                              marginRight: "0.5rem",
+                    />
+                  </Form.Group>
+                  <Form.Group controlId={`updateCommentBoxFor${comment.id}`}>
+                    <Button
+                      type="button"
+                      id={`submitUpdateOn${comment.id}`}
+                      name={`submitUpdateOn${comment.id}`}
+                      onClick={(e) => {
+                        !parentCommentId
+                          ? handleCommentCUD(e, RestMethod.PUT, {
+                              postId: postId,
+                              commentId: comment.id,
+                              commentContent: replyContent,
+                            })
+                          : handleReplyCUD(e, RestMethod.PUT, {
+                              parentCommentId: parentCommentId,
+                              postId: postId,
+                              commentId: comment.id,
+                              replyContent: replyContent,
+                            });
+                        handleMovingPartsOnClick(e, "UPDATE_SUBMIT");
+                      }}
+                    >
+                      update
+                    </Button>
+                  </Form.Group>
+                </div>
+              </Card.Text>
+            </Card.Body>
+          </Card>
+          <Accordion>
+            <Card style={{ maxWidth: "100%", border: "none" }}>
+              <Card.Header
+                style={{
+                  // background: "transparent",
+                  border: "none",
+                  // margin: "none",
+                  // textDecoration: "underline",
+                  // color: "dodgerblue",
+                }}
+              >
+                <div
+                  ref={reactionBarRef}
+                  className="p-1"
+                  style={{ display: "block" }}
+                >
+                  {noOfLikes > 0 && (
+                    <div className="mb-3">
+                      <button
+                        className="link-button"
+                        onClick={(e) => {
+                          setShowLikesModal(true);
+                        }}
+                      >
+                        <small>View likes</small>
+                      </button>
+                    </div>
+                  )}
+                  {isCommentLiked === undefined ||
+                  isCommentLiked === null ||
+                  isCommentLiked === false ? (
+                    <>
+                      <FontAwesomeIcon
+                        onClick={(e) =>
+                          comment.owner.id !== currentUser.id &&
+                          handleLikeUnlikeComment(e, comment, "like")
+                        }
+                        icon={faRegularThumbsUp}
+                        style={
+                          comment.owner.id !== currentUser.id
+                            ? {
+                                marginRight: "0.5rem",
+                                cursor: "pointer",
+                              }
+                            : {
+                                marginRight: "0.5rem",
 
-                              opacity: 0.4,
-                            }
-                      }
-                    ></FontAwesomeIcon>
-                    <span style={{ color: "grey", marginRight: "1rem" }}>
-                      {noOfLikes}
-                    </span>
-                  </>
-                ) : (
-                  <>
+                                opacity: 0.4,
+                              }
+                        }
+                      ></FontAwesomeIcon>
+                      <span style={{ color: "grey", marginRight: "1rem" }}>
+                        {noOfLikes}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <FontAwesomeIcon
+                        onClick={(e) =>
+                          handleLikeUnlikeComment(e, comment, "unlike")
+                        }
+                        icon={faThumbsUp}
+                        style={{
+                          marginRight: "0.5rem",
+                          cursor: "pointer",
+                        }}
+                      ></FontAwesomeIcon>
+                      <span style={{ color: "grey", marginRight: "1rem" }}>
+                        {noOfLikes}
+                      </span>
+                    </>
+                  )}
+                  {noOfReplies > 0 ? (
+                    <>
+                      <CustomToggle
+                        eventKey={`comment${comment.id}`}
+                        attachRef={repliesDotRef}
+                      >
+                        <FontAwesomeIcon
+                          icon={faRegularCommentDots}
+                          color="black"
+                          style={{
+                            marginLeft: "1rem",
+                            marginRight: "1rem",
+                          }}
+                          onClick={(e) => {
+                            setShowGetRepliesLoad(true);
+                            handleGetReplies(e, comment.id, 0);
+                          }}
+                        ></FontAwesomeIcon>
+                      </CustomToggle>
+                    </>
+                  ) : (
+                    <></>
+                  )}
+
+                  <FontAwesomeIcon
+                    onClick={(e) => {
+                      handleMovingPartsOnClick(e, "REPLY");
+                    }}
+                    icon={faReply}
+                    style={{
+                      marginLeft: "1rem",
+                      marginRight: "1rem",
+                      cursor: "pointer",
+                    }}
+                  ></FontAwesomeIcon>
+                  {comment.owner.id === currentUser.id && (
                     <FontAwesomeIcon
-                      onClick={(e) =>
-                        handleLikeUnlikeComment(e, comment, "unlike")
-                      }
-                      icon={faThumbsUp}
+                      icon={faEdit}
                       style={{
-                        marginRight: "0.5rem",
+                        marginLeft: "1rem",
+                        marginRight: "1rem",
+                        cursor: "pointer",
+                      }}
+                      onClick={(e) => {
+                        setReplyContent(comment.commentContent);
+                        handleMovingPartsOnClick(e, "UPDATE");
+                      }}
+                    ></FontAwesomeIcon>
+                  )}
+                  {comment.owner.id === currentUser.id && (
+                    <FontAwesomeIcon
+                      onClick={(e) => {
+                        !parentCommentId
+                          ? handleCommentCUD(e, RestMethod.DELETE, {
+                              postId: postId,
+                              commentId: comment.id,
+                            })
+                          : handleReplyCUD(e, RestMethod.DELETE, {
+                              parentCommentId: parentCommentId,
+                              postId: postId,
+                              commentId: comment.id,
+                            });
+                      }}
+                      icon={faWindowClose}
+                      style={{
+                        marginLeft: "1rem",
+                        marginRight: "1rem",
                         cursor: "pointer",
                       }}
                     ></FontAwesomeIcon>
-                    <span style={{ color: "grey", marginRight: "1rem" }}>
-                      {noOfLikes}
-                    </span>
-                  </>
-                )}
-                {noOfReplies > 0 ? (
-                  <>
-                    <Accordion.Toggle
-                      as={Button}
-                      variant="link"
-                      eventKey={`comment${comment.id}`}
-                      onClick={(e) => {
-                        if (!replies[`comment${comment.id}`]) {
-                          setShowGetRepliesLoad(true);
-                          handleGetReplies(e, comment.id, 0);
-                        }
-                      }}
-                      ref={repliesDotRef}
-                      className="p-0 border-0"
-                    >
-                      <FontAwesomeIcon
-                        icon={faRegularCommentDots}
-                        color="black"
-                        style={{
-                          marginLeft: "1rem",
-                          marginRight: "1rem",
-                        }}
-                      ></FontAwesomeIcon>
-                    </Accordion.Toggle>
-                  </>
-                ) : (
-                  <></>
-                )}
-
-                <FontAwesomeIcon
-                  onClick={(e) => {
-                    handleMovingPartsOnClick(e, "REPLY");
-                  }}
-                  icon={faReply}
-                  style={{
-                    marginLeft: "1rem",
-                    marginRight: "1rem",
-                    cursor: "pointer",
-                  }}
-                ></FontAwesomeIcon>
-                {comment.owner.id === currentUser.id && (
-                  <FontAwesomeIcon
-                    icon={faEdit}
-                    style={{
-                      marginLeft: "1rem",
-                      marginRight: "1rem",
-                      cursor: "pointer",
-                    }}
-                    onClick={(e) => {
-                      setReplyContent(comment.commentContent);
-                      handleMovingPartsOnClick(e, "UPDATE");
-                    }}
-                  ></FontAwesomeIcon>
-                )}
-                {comment.owner.id === currentUser.id && (
-                  <FontAwesomeIcon
-                    onClick={(e) => {
-                      !parentCommentId
-                        ? handleCommentCUD(e, RestMethod.DELETE, {
-                            postId: postId,
-                            commentId: comment.id,
-                          })
-                        : handleReplyCUD(e, RestMethod.DELETE, {
-                            parentCommentId: parentCommentId,
-                            postId: postId,
-                            commentId: comment.id,
-                          });
-                    }}
-                    icon={faWindowClose}
-                    style={{
-                      marginLeft: "1rem",
-                      marginRight: "1rem",
-                      cursor: "pointer",
-                    }}
-                  ></FontAwesomeIcon>
-                )}
-              </div>
-              <div ref={replyBarRef} style={{ display: "none" }}>
-                <Form.Group controlId={`replyBoxFor${comment.id}`}>
-                  <Form.Control
-                    as="textarea"
-                    rows={3}
-                    cols={100}
-                    id={`replyOn${comment.id}`}
-                    name={`replyOn${comment.id}`}
-                    ref={replyInputRef}
-                    onChange={(e) => setReplyContent(e.target.value)}
-                    onKeyDown={(e) =>
-                      handleMovingPartsForKeys(e, "REPLY_SUBMIT")
-                    }
-                    
-                  />
-                </Form.Group>
-                <Form.Group controlId={`replyBoxFor${comment.id}`}>
-                  <Button
-                    type="submit"
-                    id={`submitReplyOn${comment.id}`}
-                    name={`submitReplyOn${comment.id}`}
-                    onClick={(e) => {
-                      handleReplyCUD(e, RestMethod.POST, {
-                        parentCommentId: comment.id,
-                        postId: postId,
-                        commentId: null,
-                        replyContent: replyContent,
-                      });
-                      handleMovingPartsOnClick(e, "REPLY_SUBMIT");
-                    }}
-                  >
-                    reply
-                  </Button>
-                </Form.Group>
-              </div>
-            </Card.Header>
-
-            {noOfReplies > 0 ? (
-              <Accordion.Collapse eventKey={`comment${comment.id}`}>
-                <Card.Body className="p-0">
-                  {showGetRepliesLoad === true && 
-                  <div className='spinner bg-light'>
-                    <div className="bounce1"></div>
-                    <div className="bounce2"></div>
-                    <div className="bounce3"></div>
-                </div>}
-                  {replies[`comment${comment.id}`.trim()] &&
-                    replies[`comment${comment.id}`].dataList.map(
-                      (reply, index2) => {
-                        return (
-                          <>
-                            <Comment
-                              key={`reply${reply.id}`}
-                              postId={postId}
-                              parentCommentId={comment.id}
-                              comment={reply}
-                              //handleCommentCUD={null}
-                              setParentComments={setReplies}
-                              setNoOfRepliesInParent={setNoOfReplies}
-                            />
-                          </>
-                        );
+                  )}
+                </div>
+                <div ref={replyBarRef} style={{ display: "none" }}>
+                  <Form.Group controlId={`replyBoxFor${comment.id}`}>
+                    <Form.Control
+                      as="textarea"
+                      rows={3}
+                      cols={100}
+                      id={`replyOn${comment.id}`}
+                      name={`replyOn${comment.id}`}
+                      ref={replyInputRef}
+                      onChange={(e) => setReplyContent(e.target.value)}
+                      onKeyDown={(e) =>
+                        handleMovingPartsForKeys(e, "REPLY_SUBMIT")
                       }
+                    />
+                  </Form.Group>
+                  <Form.Group controlId={`replyBoxFor${comment.id}`}>
+                    <Button
+                      type="submit"
+                      id={`submitReplyOn${comment.id}`}
+                      name={`submitReplyOn${comment.id}`}
+                      onClick={(e) => {
+                        handleReplyCUD(e, RestMethod.POST, {
+                          parentCommentId: comment.id,
+                          postId: postId,
+                          commentId: null,
+                          replyContent: replyContent,
+                        });
+                        handleMovingPartsOnClick(e, "REPLY_SUBMIT");
+                      }}
+                    >
+                      reply
+                    </Button>
+                  </Form.Group>
+                </div>
+              </Card.Header>
+
+              {noOfReplies > 0 ? (
+                <Accordion.Collapse eventKey={`comment${comment.id}`}>
+                  <Card.Body className="p-0">
+                    {showGetRepliesLoad === true && (
+                      <div className="spinner bg-light">
+                        <div className="bounce1"></div>
+                        <div className="bounce2"></div>
+                        <div className="bounce3"></div>
+                      </div>
                     )}
-                  
-                  {replies[`comment${comment.id}`.trim()] &&
-                    replies[`comment${comment.id}`].currentPageNo <
-                      (replies[`comment${comment.id}`].noOfPages - 1) && (
-                      <button
-                        className="link-button"
-                        onClick={(e) =>
-                          handleGetReplies(
-                            e,
-                            comment.id,
-                            replies[`comment${comment.id}`].currentPageNo + 1
-                          )
+                    {replies[`comment${comment.id}`.trim()] &&
+                      replies[`comment${comment.id}`].dataList.map(
+                        (reply, index2) => {
+                          return (
+                            <>
+                              <Comment
+                                key={`reply${reply.id}`}
+                                postId={postId}
+                                parentCommentId={comment.id}
+                                comment={reply}
+                                //handleCommentCUD={null}
+                                setParentComments={setReplies}
+                                setNoOfRepliesInParent={setNoOfReplies}
+                              />
+                            </>
+                          );
                         }
-                      >
-                        load more replies
-                      </button>
-                    )}
-                </Card.Body>
-              </Accordion.Collapse>
-            ) : (
-              <></>
-            )}
-          </Card>
-        </Accordion>
+                      )}
+
+                    {replies[`comment${comment.id}`.trim()] &&
+                      replies[`comment${comment.id}`].currentPageNo <
+                        replies[`comment${comment.id}`].noOfPages - 1 && (
+                        <button
+                          className="link-button"
+                          onClick={(e) =>
+                            handleGetReplies(
+                              e,
+                              comment.id,
+                              replies[`comment${comment.id}`].currentPageNo + 1
+                            )
+                          }
+                        >
+                          load more replies
+                        </button>
+                      )}
+                  </Card.Body>
+                </Accordion.Collapse>
+              ) : (
+                <></>
+              )}
+            </Card>
+          </Accordion>
+        </div>
+        {console.log("rendering comment ", comment.id)}
       </div>
-      {console.log("rendering comment ", comment.id)}
-    </div>
-    
-  </>;
+    </>
+  );
 });

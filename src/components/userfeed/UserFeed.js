@@ -7,6 +7,7 @@ import { Post } from '../post/Post'
 import { CreatePost } from '../CreatePost';
 import { RestMethod } from '../../enums'
 import { ErrorAlert } from '../ErrorAlert'
+import { LoadingPage } from '../utility/LoadingPage'
 
 
 const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) => {
@@ -114,7 +115,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
 
       {showAlert === true && <ErrorAlert alertMessage={alertMessage} />}
       {addPostButtonClicked === true && <CreatePost setShow={ setAddPostButtonClicked} show={addPostButtonClicked} method={RestMethod.POST} setPosts={setPosts} post={null}  />}
-      <div className="col-md-8 my-3 mx-auto">
+      <div className="col-md-5 my-3 mx-auto">
         {pagePosts.dataList && pagePosts.dataList.length > 0 ? (
           pagePosts.dataList.map((post, index) => {
             return (
@@ -122,7 +123,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
             );
           })
         ) : (
-          pagePosts.currentPageNo === -1 && <>loading</> 
+            pagePosts.currentPageNo === -1 && <><LoadingPage noOfDivs={5}/></>
         )}
       </div>
     </div>

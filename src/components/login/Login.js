@@ -76,10 +76,7 @@ const Login = () => {
                   if (response.status === 200) {
                     const { data } = body
                       const jwt = response.headers.get('Authorization')
-                      console.log(response)
-                      console.log(response.headers)
-                      response.headers.forEach((value, key)=>console.log('value is ',value,'key is ', key))
-                      console.log(jwt)
+ 
                       let expires = new Date();
                       expires.setDate(
                         expires.getDate() + 7
@@ -265,7 +262,6 @@ const isValid = (creds, fieldErrors) => {
       }
   }
   
-    console.log('enetered is valid ', returnValue);
 
     return returnValue
 }
