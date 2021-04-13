@@ -118,13 +118,9 @@ export const Post = React.memo(({ post, setPosts }) => {
             }
           });
         }
-        else {
-          setShowGetRepliesLoad(true);
-          await handleGetComments(e, postId, 0);
-        }
 
 
-        setNoOfComments(noOfComments + 1)
+        setNoOfComments(noOfComments => noOfComments + 1)
 
       }
     }
@@ -296,66 +292,77 @@ export const Post = React.memo(({ post, setPosts }) => {
               {post.postLikedByCurrentUser === false ||
               post.postLikedByCurrentUser === undefined ||
               post.postLikedByCurrentUser === null ? (
-                <>
+                <span style={{ marginRight: "1rem" }}>
                   <FontAwesomeIcon
                     color="#4A4A4A"
-                    onClick={(e) =>
+                    onClick={ (e) =>
                       post.owner.id !== currentUser.id &&
-                      handleLikeUnlikePost(e, post, "like")
+                       handleLikeUnlikePost(e, post, "like")
                     }
                     icon={faRegularThumbsUp}
                     style={
                       post.owner.id !== currentUser.id
                         ? {
-                            marginRight: "0.5rem",
+                            marginRight: "0.4rem",
                             cursor: "pointer",
                           }
                         : {
-                            marginRight: "0.5rem",
+                            marginRight: "0.4rem",
 
                             opacity: 0.4,
                           }
                     }
                   ></FontAwesomeIcon>
-                  <span style={{ color: "#4A4A4A", marginRight: "1rem" }}>
-                    {post.noOfLikes}
-                  </span>
-                </>
+                  <span style={{ color: "#4A4A4A" }}>{post.noOfLikes}</span>
+                </span>
               ) : (
-                <>
+                  <span style={{marginRight: '1rem'}}>
                   <FontAwesomeIcon
                     color="#4A4A4A"
                     onClick={(e) => handleLikeUnlikePost(e, post, "unlike")}
                     icon={faThumbsUp}
                     style={{
-                      marginRight: "0.5rem",
+                      marginRight: "0.4rem",
                       cursor: "pointer",
                     }}
                   ></FontAwesomeIcon>
                   <span style={{ color: "grey" }}>{post.noOfLikes}</span>
-                </>
+                </span>
               )}
-              {noOfComments > 0 && (
-                <>
-                  <CustomToggle
-                    eventKey={`post${post.id}`}
-                    attachRef={commentsDotRef}
-                  >
-                    <FontAwesomeIcon
-                      icon={faCommentDots}
-                      color="#4A4A4A"
-                      style={{
-                        marginLeft: "1rem",
-                        marginRight: "1rem",
-                      }}
-                      onClick={(e) => {
-                        setShowGetRepliesLoad(true);
-                        handleGetComments(e, post.id, 0);
-                      }}
-                    ></FontAwesomeIcon>
-                  </CustomToggle>
-                </>
-              )}
+
+              <button className='toggle-button'
+                onClick={ (e) => {
+                  
+                  if (
+                    noOfComments > 0 &&
+                    (!comments || !comments[`post${post.id}`])
+                  ) {
+                    setShowGetRepliesLoad(true);
+                     handleGetComments(e, post.id, 0);
+                  }
+                }}>
+                <CustomToggle
+                  eventKey={`post${post.id}`}
+                  attachRef={commentsDotRef}
+                  allowToggle={noOfComments}
+                >
+                  <>
+                  <FontAwesomeIcon
+                    icon={faCommentDots}
+                    color="#4A4A4A"
+                    style={{
+                      marginRight: "0.4rem",
+                    }}
+
+                    />
+                    {noOfComments!==0 && <span style={{ color: "grey" }}>{ noOfComments }</span>}
+                    </>
+                  
+                  {/* </FontAwesomeIcon> */}
+                  
+                </CustomToggle>
+              </button>
+
               <FontAwesomeIcon
                 onClick={(e) => {
                   handleMovingPartsOnClick(e, "REPLY");
@@ -418,8 +425,8 @@ export const Post = React.memo(({ post, setPosts }) => {
                   type="submit"
                   id={`submitCommentOn${post.id}`}
                   name={`submitCommentOn${post.id}`}
-                  onClick={(e) => {
-                    handleCreateComment(e, {
+                  onClick={async (e) => {
+                    await handleCreateComment(e, {
                       commentId: null,
                       postId: post.id,
                       commentContent: commentContent,

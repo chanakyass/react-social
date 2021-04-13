@@ -1,8 +1,8 @@
 import { useAccordionToggle } from "react-bootstrap";
 
-export function CustomToggle({ children, eventKey, onClick, attachRef }) {
+export function CustomToggle({ children, eventKey, attachRef, allowToggle }) {
 
-    console.log(onClick);
+    
     const decoratedOnClick = useAccordionToggle(eventKey, () =>
     {
 
@@ -13,9 +13,16 @@ export function CustomToggle({ children, eventKey, onClick, attachRef }) {
   return (
     <button
       type="button"
-          className='toggle-button'
-          onClick={decoratedOnClick}
-          ref = {attachRef}
+      style = {
+        {
+        background: 'none',
+        border:'none',
+        padding:'0%'
+
+        }
+      }
+      onClick={ allowToggle > 0 ? decoratedOnClick : null}
+      ref = {attachRef}
     >
       {children}
     </button>
