@@ -1,13 +1,11 @@
 import cookie from "react-cookies";
 import history from "../../app-history";
-import { RestMethod } from "../../enums";
 
 import baseURI from "../../api-config";
 
 
 export const loadLikesOnPost = async (postId, pageNo) => {
   const jwtToken = cookie.load("jwt");
-  const currentUser = cookie.load("current_user");
   const requestOptions = {
     method: "GET",
     headers: {
@@ -33,7 +31,6 @@ export const loadLikesOnPost = async (postId, pageNo) => {
 
 export const loadLikesOnComment = async (commentId, pageNo) => {
   const jwtToken = cookie.load("jwt");
-  const currentUser = cookie.load("current_user");
   const requestOptions = {
     method: "GET",
     headers: {

@@ -22,8 +22,6 @@ import moment from 'moment';
 import { convertDateToReadableFormat } from '../utility/handle-dates'
 import { CustomToggle } from '../utility/CustomToggle';
 
-let myfuncs2 = new Set();
-
 export const Post = React.memo(({ post, setPosts }) => {
   const currentUser = cookie.load("current_user");
 
@@ -43,6 +41,7 @@ export const Post = React.memo(({ post, setPosts }) => {
   let reactionBarRef = useRef(null);
   const replyInputRef = useRef(null);
   const commentsDotRef = useRef(null);
+  let paginationRef = useRef(null);
 
 
   const handlePostDelete = async (e, postId) => {
@@ -126,7 +125,7 @@ export const Post = React.memo(({ post, setPosts }) => {
     }
 
     setCommentContent('')
-  }, [comments, noOfComments]);
+  }, [comments, currentUser]);
 
   
 
@@ -137,6 +136,7 @@ export const Post = React.memo(({ post, setPosts }) => {
       const responseBody = await loadComments( postId, null, pageNo);
       if ("error" in responseBody) {
         const { error } = responseBody;
+        console.log(error);
         history.push("/error");
       } else {
         if (!comments[postProp]) {
@@ -157,7 +157,26 @@ export const Post = React.memo(({ post, setPosts }) => {
       }
       setShowGetRepliesLoad(false);
     }
-  }, [comments, showGetRepliesLoad]);
+  }, [comments]);
+
+  const handleCommentPaginationMovingParts = useCallback(
+    async (e) => {
+      if (paginationRef.current) {
+        paginationRef.current.children[0].style.display = "none";
+        paginationRef.current.children[1].style.display = "block";
+      }
+      await handleGetComments(
+        e,
+        post.id,
+        comments[`post${post.id}`].currentPageNo + 1
+      );
+      if (paginationRef.current) {
+        paginationRef.current.children[1].style.display = "none";
+        paginationRef.current.children[0].style.display = "block";
+      }
+    },
+    [handleGetComments, comments, post.id]
+  );
 
   const handleLikeUnlikePost = async (e, post, action) => {
     const responseBody = await likeUnlikeCUD(post, action);
@@ -186,22 +205,24 @@ export const Post = React.memo(({ post, setPosts }) => {
     const handleMovingPartsOnClick = (e, action) => {
       switch (action) {
         case "REPLY":
-          {
+          
             replyBarRef.current.style.display = "block";
             reactionBarRef.current.style.display = "none";
             replyInputRef.current.value = "";
             replyInputRef.current.focus();
-          }
+          
           break;
         case "REPLY_SUBMIT":
-          {
+          
  
             replyBarRef.current.style.display = "none";
             reactionBarRef.current.style.display = "inline-block";
             commentsDotRef.current.click();
             
-          }
+          
           break;
+        
+        default: console.log('action not supported');
       }
   };
   
@@ -258,11 +279,7 @@ export const Post = React.memo(({ post, setPosts }) => {
               </div>
             </div>
           </Card.Subtitle>
-          <Card.Text>
-            <div style={{ display: "inline-block" }}>
-              {Parser(post.postBody)}
-            </div>
-          </Card.Text>
+          <Card.Text>{Parser(post.postBody)}</Card.Text>
         </Card.Body>
       </Card>
 
@@ -466,19 +483,19 @@ export const Post = React.memo(({ post, setPosts }) => {
                 {comments[`post${post.id}`.trim()] &&
                   comments[`post${post.id}`].currentPageNo <
                     comments[`post${post.id}`].noOfPages - 1 && (
-                    <div className="bg-light">
+                    <div className="bg-light pl-1 pt-2" ref={paginationRef}>
                       <button
+                        style={{ display: "block" }}
                         className="link-button"
-                        onClick={(e) =>
-                          handleGetComments(
-                            e,
-                            post.id,
-                            comments[`post${post.id}`].currentPageNo + 1
-                          )
-                        }
+                      onClick={handleCommentPaginationMovingParts}
                       >
                         load more comments
                       </button>
+                      <div className="spinner" style={{ display: "none" }}>
+                        <div className="bounce1"></div>
+                        <div className="bounce2"></div>
+                        <div className="bounce3"></div>
+                      </div>
                     </div>
                   )}
               </Card.Body>
@@ -486,7 +503,6 @@ export const Post = React.memo(({ post, setPosts }) => {
           )}
         </Card>
       </Accordion>
-      {/* {console.log('no of commentcud functions for post ', post.id, ' is ', myfuncs2.size)} */}
     </>
   );
 });

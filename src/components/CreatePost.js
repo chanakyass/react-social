@@ -1,6 +1,5 @@
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
-import "bootstrap/dist/css/bootstrap.min.css";
 import { Button, Modal, InputGroup, FormControl } from "react-bootstrap";
 import { postsCUD } from "./post/post-service";
 import { RestMethod } from "../enums";
@@ -36,11 +35,9 @@ export const CreatePost = React.memo(({
         const postId = editorPost.id;
         const postHeading = editorPost.postHeading.trim();
       const postBody = editorPost.postBody.trim();
+
+      console.log(postBody);
       
-
-
-
-
     if ( postBody === "") {
       //error
     } else {
@@ -108,6 +105,9 @@ export const CreatePost = React.memo(({
                 })
               }
             });
+            break;
+
+          default: console.log('Method not applicable');
             break;
           
             

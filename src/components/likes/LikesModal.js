@@ -1,6 +1,6 @@
 import { Card, Modal, ListGroup, Button } from 'react-bootstrap';
 import { UserDetailsPopup } from '../UserDetailsPopup';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { loadLikesOnPost, loadLikesOnComment } from "./like-service";
 import history from '../../app-history'
 
@@ -9,36 +9,37 @@ export const LikesModal = ({ itemId, itemType, setShow, show }) => {
 
     const [likes, setLikes] = useState({ dataList: [], currentPageNo: 0, noOfPages: 0 })
     
-    const handleClose = () => setShow(false);
+  const handleClose = () => setShow(false);
+  
+  const loadOnRender = useCallback(async () => {
+    if (show === true) {
+          
+      try {
+        let body = null;
+        if (itemType === "POST") body = await loadLikesOnPost(itemId, 0);
+        else body = await loadLikesOnComment(itemId, 0);
+        if ("error" in body) {
+          const { error } = body;
+          console.log(error);
+          history.push("/error");
+        } else {
+          console.log(body);
+          setLikes(body);
+        }
+      } catch (err) {
+        console.log(err);
+        history.push("/error");
+      }
+          
+    }
+  }, [itemId, itemType, show]);
 
     useEffect(() => {
-    if(show === true)
-    {
-        (async () => {
-            try {
-            let body = null;
-                if (itemType === 'POST')
-                    body = await loadLikesOnPost(itemId, 0);
-                else
-                    body = await loadLikesOnComment(itemId, 0);
-            if ('error' in body) {
-                const { error } = body;
-                console.log(error);
-                history.push('/error');
-            }
-            else {
-                console.log(body)
-                setLikes(body);
-            }
-        }
-        catch (err) {
-            console.log(err);
-            history.push('/error')
-        }
-        })();
-    }
+      (async () => {
+        await loadOnRender();
+      })();
 
-}, [])
+}, [loadOnRender])
 
 return (
     <>

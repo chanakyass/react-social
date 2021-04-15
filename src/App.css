@@ -38,11 +38,22 @@
 }
 
 .ck-editor__editable_inline {
-  min-height: 500px;
-  max-height: 500px;
+  min-height: 40rem;
+  max-height: 40rem;
+  max-width: 40rem;
+  min-width: 40rem;
       scroll-snap-type: y mandatory; 
    overflow-y: auto;
+   overflow-wrap: break-word;
 
+}
+
+.post-content{
+  text-decoration: none;
+}
+
+.post-anchor{
+  text-decoration: none;
 }
 
 .link-button {

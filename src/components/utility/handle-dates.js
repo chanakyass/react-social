@@ -3,7 +3,6 @@ import moment from 'moment';
 export const convertDateToReadableFormat = (itemUTCString) => {
   if (itemUTCString) {
     if (!itemUTCString.match(/Z$/gi)) {
-      console.log(itemUTCString.match(/$Z/gi));
       itemUTCString += 'Z';
     }
     var itemUTC = moment.utc(itemUTCString);

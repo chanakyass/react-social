@@ -1,4 +1,4 @@
-import React, { useState, useReducer, useEffect, useContext } from "react";
+import React, { useState, useReducer, useEffect, useContext, useCallback } from "react";
 import { useParams } from 'react-router-dom'
 import { reducer } from "./reducer";
 import cookie from "react-cookies";
@@ -30,7 +30,7 @@ const User = () => {
   }
 
   
-  const { isCurrentUserUpdated, setIsCurrentUserUpdated } = useContext(CurrentUserContext);
+  const { setIsCurrentUserUpdated } = useContext(CurrentUserContext);
 
   const jwtToken = cookie.load('jwt')
   const loggedInUser = cookie.load("current_user");
@@ -45,7 +45,7 @@ const User = () => {
     
     const { id } = useParams();
 
-      const loadUser =  () => {
+      const loadUser =  useCallback(() => {
         const requestOptions = {
           headers: {
             Authorization: `Bearer ${jwtToken}`,
@@ -80,11 +80,11 @@ const User = () => {
         if (loggedInUser.id === parseInt(id)) {
           setIsLoggedInUser(true);
         }
-      };
+      }, [id, jwtToken, loggedInUser.id]);
   
   useEffect(() => {
     loadUser();
-  }, []);
+  }, [loadUser]);
   
 
   const changePerson = (e) => {
@@ -443,7 +443,7 @@ const User = () => {
                   </Form.Group>
                 ) : isLoggedInUser ? (
                   <Form.Group as={Col} md={12}>
-                    <div className="row">
+                    <div className="row p-1">
                       <button
                         className="col-md col-sm col-lg p-0 link-button"
                         type="button"
@@ -462,7 +462,7 @@ const User = () => {
                           })
                         }
                       >
-                        update your details
+                        Update your details
                     </button>
                       <button
                         className="col-md col-sm col-lg p-0 link-button"
@@ -504,6 +504,9 @@ const User = () => {
                       >
                         Change Password
                     </button>
+                    </div>
+                    <div className='row p-1'>
+                          <button className='col-md col-sm col-lg p-0 link-button' onClick={deleteHandler}>Delete your account</button>
                     </div>
                   </Form.Group>
                 ) : (

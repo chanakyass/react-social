@@ -1,6 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, useCallback } from 'react'
 
-import cookie from 'react-cookies'
 import history from '../../app-history'
 import { loadUserFeed } from '../post/post-service'
 import { Post } from '../post/Post'
@@ -36,12 +35,47 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
     history.replace({ state: null });
   };
 
+  const handlePagination = useCallback(async () => {
+    try {
+      if (
+        pagePostsRef.current.currentPageNo <
+        pagePostsRef.current.noOfPages - 1
+      ) {
+        paginationRef.current.children[0].style.display = "block";
+        const body = await loadUserFeed(pagePostsRef.current.currentPageNo + 1);
+        if ("error" in body) {
+          console.log(body.error);
+          history.push("/error");
+        } else {
+          const { dataList, currentPageNo, noOfPages } = body;
+          setPosts({
+            ...pagePostsRef.current,
+            dataList: [...pagePostsRef.current.dataList, ...dataList],
+            currentPageNo: currentPageNo,
+            noOfPages: noOfPages,
+          });
+          paginationRef.current.children[0].style.display = "none";
+        }
+      } else {
+        paginationRef.current.children[1].style.display = "block";
+      }
+    } catch (err) {
+      console.log(err);
+      history.push("/error");
+    }
+  }, []);
+
   useEffect(() => {
     
     window.onbeforeunload = function () {
       if (showAlert === true) changeHistory();
-      //window.scrollTo(0, 0);
       document.body.style.display = 'none';
+    };
+
+    const handleScroll = async (e) => {
+      if (window.scrollY + window.innerHeight === getDocHeight()) {
+        await handlePagination();
+      }
     };
   
     if (pagePostsRef.current.currentPageNo === -1) {
@@ -54,7 +88,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
             history.push("/error");
           } else {
             setPosts(body);
-            window.addEventListener("scroll", (e) => handleScroll(e));
+            window.addEventListener("scroll", handleScroll);
           };
 
         } catch (err) {
@@ -73,7 +107,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
         window.removeEventListener("scroll", e => handleScroll(e));
       };
     
-  }, []);
+  }, [handlePagination, showAlert]);
 
   function getDocHeight() {
     var D = document;
@@ -86,40 +120,6 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
       D.documentElement.clientHeight
     );
   }
-
-  const handlePagination = async () => {
-    try {
-        if (pagePostsRef.current.currentPageNo < (pagePostsRef.current.noOfPages - 1)) {
-          paginationRef.current.children[0].style.display = "block";
-          const body = await loadUserFeed(pagePostsRef.current.currentPageNo + 1);
-          if ("error" in body) {
-            console.log(body.error);
-            history.push("/error");
-          } else {
-            const { dataList, currentPageNo, noOfPages } = body;
-            setPosts({ ...pagePostsRef.current, dataList: [...pagePostsRef.current.dataList, ...dataList], currentPageNo: currentPageNo, noOfPages: noOfPages });
-            paginationRef.current.children[0].style.display = "none";
-          }
-        }
-        else {
-          paginationRef.current.children[1].style.display = 'block';
-          
-        }
-
-      } catch (err) {
-        console.log(err);
-        history.push("/error");
-      }
-  }
-
-  const handleScroll = async (e) => {
-    
-    if ((window.scrollY + window.innerHeight) === getDocHeight()) {
-
-        handlePagination();
-      }
-    
-  };
 
 
   return (

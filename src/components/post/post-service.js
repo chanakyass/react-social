@@ -9,7 +9,6 @@ import baseURI from "../../api-config";
 export const loadUserFeed = async (pageNo) => {
 
     const jwtToken = cookie.load("jwt");
-    const currentUser = cookie.load("current_user");
   const requestOptions = {
     method: "GET",
     headers: {
@@ -61,20 +60,24 @@ export const postsCUD = async (
 
   switch (method) {
     case RestMethod.POST:
-      {
+      
         requestOptions.body = JSON.stringify({ ...postForDispatch, postedAtTime: moment.utc().toISOString() });
         url = `${baseURI}/api/v1/resource/post`;
-      }
+      
       break;
     case RestMethod.PUT:
-      {
+      
         requestOptions.body = JSON.stringify({ ...postForDispatch, id: postId, modifiedAtTime: moment.utc().toISOString() });
         url = `${baseURI}/api/v1/resource/post`;
-      }
+      
       break;
-    case RestMethod.DELETE: {
+    case RestMethod.DELETE:
       url = `${baseURI}/api/v1/resource/post/${postId}`;
-    }
+    
+      break;
+    
+    default: console.log('method not supported');
+      break;
   }
   try {
     let response = await fetch(url, requestOptions);

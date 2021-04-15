@@ -35,6 +35,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
   let repliesDotRef = useRef(null)
   let replyInputRef = useRef(null);
   let updateInputRef = useRef(null);
+  let paginationRef = useRef(null);
 
 
     const handleCommentCUD = useCallback(
@@ -145,7 +146,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
         }
         setReplyContent("");
       },
-      []
+      [currentUser, setNoOfRepliesInParent, setParentComments]
     );
 
   const handleReplyCUD = useCallback(async (e, method, replyObj) => {
@@ -298,7 +299,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
         
     }
     setReplyContent('');
-  }, [replies, noOfReplies]);
+  }, [replies, noOfReplies, currentUser, setNoOfRepliesInParent, setParentComments]);
 
 
     const handleLikeUnlikeComment = async (e, comment, action) => {
@@ -318,19 +319,17 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
   
     const handleGetReplies = useCallback(async (e, commentId, pageNo) => {
       const commentProp = `comment${commentId}`.trim();
-
-
-      if (postId) {
         const responseBody = await loadComments(null, commentId, pageNo);
         if ("error" in responseBody) {
           const { error } = responseBody;
+          console.log(error);
           history.push("/error");
         } else {
           if (!replies[commentProp]) {
             setReplies({ ...replies, [commentProp]: responseBody });
             
           }
-          else if (replies[commentProp].currentPageNo != pageNo) {
+          else if (replies[commentProp].currentPageNo !== pageNo) {
               setReplies({
                 ...replies,
                 [commentProp]: {
@@ -339,14 +338,30 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                   dataList: [...replies[commentProp].dataList, ...responseBody.dataList]
                 }
               });
-              
             
+
           }
         }
         setShowGetRepliesLoad(false);
-      }
+      
     
-  }, [replies, showGetRepliesLoad]);
+    }, [replies]);
+  
+  const handleReplyPaginationMovingParts = useCallback(async (e) => {
+    if (paginationRef.current) {
+      paginationRef.current.children[0].style.display = "none";
+      paginationRef.current.children[1].style.display = "block";
+    }
+    await handleGetReplies(
+      e,
+      comment.id,
+      replies[`comment${comment.id}`].currentPageNo + 1
+    );
+    if (paginationRef.current) {
+      paginationRef.current.children[1].style.display = "none";
+      paginationRef.current.children[0].style.display = "block";
+    }
+  }, [handleGetReplies, comment.id, replies]);
 
   const handleMovingPartsOnClick = (e, action) => {
     switch (action) {
@@ -360,55 +375,57 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
       case "REPLY_SUBMIT": 
 
         replyBarRef.current.style.display = 'none';
-        reactionBarRef.current.style.display = 'inline-block';
+        reactionBarRef.current.style.display = 'block';
         repliesDotRef.current.click();
 
         break;
       
       case "UPDATE": 
         commentContentRef.current.style.display = 'none';
-        updateCommentRef.current.style.display = 'inline-block';
+        updateCommentRef.current.style.display = 'block';
         updateInputRef.current.focus();
         reactionBarRef.current.style.display = 'none';
 
       
         break;
       
-      case "UPDATE_SUBMIT": 
+      case "UPDATE_SUBMIT":
 
-          commentContentRef.current.style.display = 'inline-block';
-          updateCommentRef.current.style.display = 'none';
-          reactionBarRef.current.style.display = 'inline-block';
-        
-      
+        commentContentRef.current.style.display = 'block';
+        updateCommentRef.current.style.display = 'none';
+        reactionBarRef.current.style.display = 'block';
+        break;
+      default: console.log('method not supported');
         
     }
   }
 
   const handleMovingPartsForKeys = (e, action) => {
     switch (action) {
-      case "REPLY_SUBMIT": {
+      case "REPLY_SUBMIT": 
         if (e.key === "Escape") {
           replyBarRef.current.style.display = "none";
           reactionBarRef.current.style.display = "inline-block";
         }
-      }
+      
         break;
       
-      case "UPDATE_SUBMIT": {
+      case "UPDATE_SUBMIT":
         if (e.key === "Escape") {
           updateCommentRef.current.style.display = "none";
           commentContentRef.current.style.display = "inline-block";
           reactionBarRef.current.style.display = "inline-block";
         }
-      }
+        break;
+      
+      default: console.log('action not supported');
     }
   }
 
   return (
     <>
-      <div className={"" + (parentCommentId ? "pl-4 " : "") + " " + "bg-light"}>
-        <div className={"" + (parentCommentId ? "p-0 m-0 border-left" : "")}>
+      <div className={(parentCommentId ? "pl-4 " : " ") + "bg-light"}>
+        <div className={parentCommentId ? "p-0 m-0 border-left" : ""}>
           {showLikesModal === true && (
             <LikesModal
               itemId={comment.id}
@@ -440,64 +457,63 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                   </div>
                 </div>
               </Card.Subtitle>
-              <Card.Text>
-                <div
+              <Card.Text ref={commentContentRef} style={{ display: "block" }}>
+                {/* <div
                   ref={commentContentRef}
                   style={{ display: "inline-block" }}
-                >
-                  {comment.commentContent}
-                </div>
-                <div ref={updateCommentRef} style={{ display: "none" }}>
-                  <Form.Group controlId={`updateCommentBoxFor${comment.id}`}>
-                    <Form.Control
-                      as="textarea"
-                      rows={3}
-                      cols={100}
-                      id={`updateOn${comment.id}`}
-                      name={`updateOn${comment.id}`}
-                      onChange={(e) => setReplyContent(e.target.value)}
-                      ref={updateInputRef}
-                      value={replyContent}
-                      onKeyDown={(e) =>
-                        handleMovingPartsForKeys(e, "UPDATE_SUBMIT")
-                      }
-                    />
-                  </Form.Group>
-                  <Form.Group controlId={`updateCommentBoxFor${comment.id}`}>
-                    <Button
-                      type="button"
-                      id={`submitUpdateOn${comment.id}`}
-                      name={`submitUpdateOn${comment.id}`}
-                      onClick={(e) => {
-                        !parentCommentId
-                          ? handleCommentCUD(e, RestMethod.PUT, {
-                              postId: postId,
-                              commentId: comment.id,
-                              commentContent: replyContent,
-                            })
-                          : handleReplyCUD(e, RestMethod.PUT, {
-                              parentCommentId: parentCommentId,
-                              postId: postId,
-                              commentId: comment.id,
-                              replyContent: replyContent,
-                            });
-                        handleMovingPartsOnClick(e, "UPDATE_SUBMIT");
-                      }}
-                    >
-                      update
-                    </Button>
-                  </Form.Group>
-                </div>
+                > */}
+                {comment.commentContent}
+                {/* </div> */}
               </Card.Text>
+              <div ref={updateCommentRef} style={{ display: "none" }}>
+                <Form.Group controlId={`updateCommentBoxFor${comment.id}`}>
+                  <Form.Control
+                    as="textarea"
+                    rows={3}
+                    cols={100}
+                    id={`updateOn${comment.id}`}
+                    name={`updateOn${comment.id}`}
+                    onChange={(e) => setReplyContent(e.target.value)}
+                    ref={updateInputRef}
+                    value={replyContent}
+                    onKeyDown={(e) =>
+                      handleMovingPartsForKeys(e, "UPDATE_SUBMIT")
+                    }
+                  />
+                </Form.Group>
+                <Form.Group controlId={`updateCommentBoxFor${comment.id}`}>
+                  <Button
+                    type="button"
+                    id={`submitUpdateOn${comment.id}`}
+                    name={`submitUpdateOn${comment.id}`}
+                    onClick={(e) => {
+                      !parentCommentId
+                        ? handleCommentCUD(e, RestMethod.PUT, {
+                            postId: postId,
+                            commentId: comment.id,
+                            commentContent: replyContent,
+                          })
+                        : handleReplyCUD(e, RestMethod.PUT, {
+                            parentCommentId: parentCommentId,
+                            postId: postId,
+                            commentId: comment.id,
+                            replyContent: replyContent,
+                          });
+                      handleMovingPartsOnClick(e, "UPDATE_SUBMIT");
+                    }}
+                  >
+                    update
+                  </Button>
+                </Form.Group>
+              </div>
+              {/* </Card.Text> */}
             </Card.Body>
           </Card>
           <Accordion>
             <Card style={{ maxWidth: "100%", border: "none" }}>
               <Card.Header
                 style={{
-
                   border: "none",
-
                 }}
               >
                 <div
@@ -539,7 +555,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                                 opacity: 0.4,
                               }
                         }
-                        size='sm'
+                        size="sm"
                       ></FontAwesomeIcon>
                       <span style={{ color: "grey" }}>{noOfLikes}</span>
                     </span>
@@ -553,8 +569,8 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                         style={{
                           marginRight: "0.4rem",
                           cursor: "pointer",
-                          }}
-                        size='sm'
+                        }}
+                        size="sm"
                       ></FontAwesomeIcon>
                       <span style={{ color: "grey" }}>{noOfLikes}</span>
                     </span>
@@ -577,7 +593,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                       <FontAwesomeIcon
                         icon={faRegularCommentDots}
                         color="black"
-                        size='sm'
+                        size="sm"
                         style={{
                           marginRight: "0.4rem",
                         }}
@@ -591,7 +607,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                       handleMovingPartsOnClick(e, "REPLY");
                     }}
                     icon={faReply}
-                    size='sm'
+                    size="sm"
                     style={{
                       marginLeft: "1rem",
                       marginRight: "1rem",
@@ -601,7 +617,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                   {comment.owner.id === currentUser.id && (
                     <FontAwesomeIcon
                       icon={faEdit}
-                      size='sm'
+                      size="sm"
                       style={{
                         marginLeft: "1rem",
                         marginRight: "1rem",
@@ -628,7 +644,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                             });
                       }}
                       icon={faWindowClose}
-                      size='sm'
+                      size="sm"
                       style={{
                         marginLeft: "1rem",
                         marginRight: "1rem",
@@ -705,18 +721,20 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                     {replies[`comment${comment.id}`.trim()] &&
                       replies[`comment${comment.id}`].currentPageNo <
                         replies[`comment${comment.id}`].noOfPages - 1 && (
-                        <button
-                          className="link-button"
-                          onClick={(e) =>
-                            handleGetReplies(
-                              e,
-                              comment.id,
-                              replies[`comment${comment.id}`].currentPageNo + 1
-                            )
-                          }
-                        >
-                          load more replies
-                        </button>
+                        <div className="bg-light pl-4 pt-2" ref={paginationRef}>
+                          <button
+                            className="link-button"
+                            onClick={handleReplyPaginationMovingParts}
+                            style={{ display: "block" }}
+                          >
+                            load more replies
+                          </button>
+                          <div className="spinner" style={{ display: "none" }}>
+                            <div className="bounce1"></div>
+                            <div className="bounce2"></div>
+                            <div className="bounce3"></div>
+                          </div>
+                        </div>
                       )}
                   </Card.Body>
                 </Accordion.Collapse>
@@ -726,7 +744,6 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
             </Card>
           </Accordion>
         </div>
-        {console.log("rendering comment ", comment.id)}
       </div>
     </>
   );

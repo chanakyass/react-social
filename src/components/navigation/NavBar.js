@@ -1,37 +1,31 @@
-import { Navbar, Nav, Form, FormControl, Button, NavDropdown , DropdownButton, Dropdown} from "react-bootstrap";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
- faSignOutAlt
-} from "@fortawesome/free-solid-svg-icons";
+import { Navbar, Nav, Form, FormControl, Button , DropdownButton, Dropdown} from "react-bootstrap";
+
 import cookie from "react-cookies";
 import history from '../../app-history'
-import React, { useState, useEffect, useContext } from 'react'
+import React, { useContext } from 'react'
 import { CurrentUserContext } from '../../App'
 
 
 const NavBar = React.memo(({ setAddPostButtonClicked }) => {
-
-
-  const { isCurrentUserUpdated, setIsCurrentUserUpdated } = useContext(
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const { setIsCurrentUserUpdated } = useContext(
     CurrentUserContext
   );
 
-  const loggedInUser = cookie.load('current_user');
+  setIsCurrentUserUpdated(false);
+
+  const loggedInUser = cookie.load("current_user");
 
   const logout = (e) => {
-
-    cookie.remove('jwt', { path: '/' })
-    cookie.remove('current_user', { path: '/' })
+    cookie.remove("jwt", { path: "/" });
+    cookie.remove("current_user", { path: "/" });
     setTimeout(() => history.push("/login"), 800);
-    
-    
-  }
-
+  };
 
   return (
     <>
       {
-        <Navbar sticky='top' bg="light" fixed='top' expand="lg">
+        <Navbar sticky="top" bg="light" fixed="top" expand="lg">
           <Navbar.Brand href="/">Citizen Sane</Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
@@ -43,16 +37,18 @@ const NavBar = React.memo(({ setAddPostButtonClicked }) => {
                   placeholder="Search"
                   className="mr-sm-2"
                 />
-                <Button variant='light' >Search</Button>
+                <Button variant="light">Search</Button>
               </Form>
-              <div >
-                <Button variant="light" onClick={(e) => { setAddPostButtonClicked(true) }}>
+              <div>
+                <Button
+                  variant="light"
+                  onClick={(e) => {
+                    setAddPostButtonClicked(true);
+                  }}
+                >
                   Add a post
-                  </Button>
+                </Button>
               </div>
-
-
-           
 
               <DropdownButton
                 variant="light"
@@ -67,23 +63,17 @@ const NavBar = React.memo(({ setAddPostButtonClicked }) => {
                   </div>
                 </Dropdown.Item>
                 <Dropdown.Divider />
-                <Dropdown.Item href="#" >
-                  Give feedback
-                  </Dropdown.Item>
+                <Dropdown.Item href="#">Give feedback</Dropdown.Item>
                 <Dropdown.Item href="#" onClick={(e) => logout(e)}>
                   Logout
-                  </Dropdown.Item>
+                </Dropdown.Item>
               </DropdownButton>
-
-
             </Nav>
-
           </Navbar.Collapse>
         </Navbar>
       }
     </>
   );
-    
 });
 
 export default NavBar

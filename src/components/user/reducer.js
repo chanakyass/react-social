@@ -1,4 +1,3 @@
-import { RestMethod } from '../../enums'
 export function reducer(state, action)
 {
   const { type, preprocessed, status, payload } = action

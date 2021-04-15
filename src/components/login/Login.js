@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import cookie from "react-cookies";
 import { RestMethod } from "../../enums.js";
 import  history  from '../../app-history'
-import { Link, withRouter } from 'react-router-dom'
+import { withRouter } from 'react-router-dom'
 import { Form, Col, Button } from 'react-bootstrap';
 import baseURI from "../../api-config";
 
@@ -142,12 +142,10 @@ const Login = () => {
               <h3>Citizen Sane</h3>
             </div>
             <Form
-              //className='my-75'
+              
               noValidate
-              //validated={state.hasError}
               onSubmit={submitHandler}
 
-              //style={{  borderBlockColor: 'blue' }}
             >
               <div className="col-md-12 my-4 mx-auto">
                 <h5>Login</h5>
