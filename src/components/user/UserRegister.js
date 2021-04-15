@@ -96,8 +96,8 @@ const UserRegister = () => {
 
   return (
     <>
-      <div style={{ height: "60rem" }}>
-        <div className="row h-100">
+      <div style={{ height: "97vh" }}>
+        <div className="row h-100 m-0">
           <div className="col-md-4 mx-auto my-auto rounded shadow bg-white">
             <div className="col-md-4 mx-auto mt-3">
               <h3>Citizen Sane</h3>

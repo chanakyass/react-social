@@ -495,11 +495,9 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
             <Card style={{ maxWidth: "100%", border: "none" }}>
               <Card.Header
                 style={{
-                  // background: "transparent",
+
                   border: "none",
-                  // margin: "none",
-                  // textDecoration: "underline",
-                  // color: "dodgerblue",
+
                 }}
               >
                 <div
@@ -522,7 +520,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                   {isCommentLiked === undefined ||
                   isCommentLiked === null ||
                   isCommentLiked === false ? (
-                      <span style={{marginRight: '1rem'}}>
+                    <span style={{ marginRight: "1rem" }}>
                       <FontAwesomeIcon
                         onClick={(e) =>
                           comment.owner.id !== currentUser.id &&
@@ -541,13 +539,12 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                                 opacity: 0.4,
                               }
                         }
+                        size='sm'
                       ></FontAwesomeIcon>
-                      <span style={{ color: "grey" }}>
-                        {noOfLikes}
-                      </span>
+                      <span style={{ color: "grey" }}>{noOfLikes}</span>
                     </span>
                   ) : (
-                      <span style={{marginRight: '1rem'}}>
+                    <span style={{ marginRight: "1rem" }}>
                       <FontAwesomeIcon
                         onClick={(e) =>
                           handleLikeUnlikeComment(e, comment, "unlike")
@@ -556,47 +553,45 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                         style={{
                           marginRight: "0.4rem",
                           cursor: "pointer",
-                        }}
+                          }}
+                        size='sm'
                       ></FontAwesomeIcon>
-                      <span style={{ color: "grey"}}>
-                        {noOfLikes}
-                      </span>
+                      <span style={{ color: "grey" }}>{noOfLikes}</span>
                     </span>
                   )}
-     
-                  <button className='toggle-button'
+
+                  <button
+                    className="toggle-button"
                     onClick={(e) => {
-                                            
                       if (!replies || !replies[`comment${comment.id}`]) {
                         setShowGetRepliesLoad(true);
-                        handleGetReplies(e, comment.id, 0);   
+                        handleGetReplies(e, comment.id, 0);
                       }
                     }}
                   >
                     <CustomToggle
                       eventKey={`comment${comment.id}`}
                       attachRef={repliesDotRef}
-                      allowToggle = {noOfReplies}
+                      allowToggle={noOfReplies}
                     >
                       <FontAwesomeIcon
                         icon={faRegularCommentDots}
                         color="black"
+                        size='sm'
                         style={{
-                         
                           marginRight: "0.4rem",
                         }}
-
                       ></FontAwesomeIcon>
                       <span style={{ color: "grey" }}>{noOfReplies}</span>
                     </CustomToggle>
                   </button>
-                  
 
                   <FontAwesomeIcon
                     onClick={(e) => {
                       handleMovingPartsOnClick(e, "REPLY");
                     }}
                     icon={faReply}
+                    size='sm'
                     style={{
                       marginLeft: "1rem",
                       marginRight: "1rem",
@@ -606,6 +601,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                   {comment.owner.id === currentUser.id && (
                     <FontAwesomeIcon
                       icon={faEdit}
+                      size='sm'
                       style={{
                         marginLeft: "1rem",
                         marginRight: "1rem",
@@ -632,6 +628,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                             });
                       }}
                       icon={faWindowClose}
+                      size='sm'
                       style={{
                         marginLeft: "1rem",
                         marginRight: "1rem",

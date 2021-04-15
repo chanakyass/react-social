@@ -31,7 +31,7 @@ const NavBar = React.memo(({ setAddPostButtonClicked }) => {
   return (
     <>
       {
-        <Navbar style={{ position: "sticky" }} bg="light" fixed='top' expand="lg">
+        <Navbar sticky='top' bg="light" fixed='top' expand="lg">
           <Navbar.Brand href="/">Citizen Sane</Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">

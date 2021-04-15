@@ -420,6 +420,7 @@ const User = () => {
                       onChange={changePerson}
                     />
                   </Form.Group>
+
                 ) : (
                   editSettings.editTriggered === false && (
                     <div className="container">
@@ -433,10 +434,10 @@ const User = () => {
 
                 {editSettings.editTriggered === true ? (
                   <Form.Group as={Col} md={12}>
-                    <Button className="my-3 mr-2" type="submit">
+                    <Button className="my-3 mr-2" variant='secondary' type="submit">
                       Update
                   </Button>
-                    <Button className="my-3 ml-2" type="clear">
+                    <Button className="my-3 ml-2" variant='secondary' type="reset">
                       Clear
                   </Button>
                   </Form.Group>

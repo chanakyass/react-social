@@ -22,7 +22,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
   }
 
   const pagePostsRef = useRef();
-  
+  const paginationRef = useRef();
 
   const [pagePosts, setPosts] = useState({
     currentPageNo: -1,
@@ -87,26 +87,38 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
     );
   }
 
-  const handleScroll = async (e) => {
-    
-    if ((window.scrollY + window.innerHeight) === getDocHeight()) {
-      try {
-        if (pagePostsRef.current.currentPageNo < pagePostsRef.current.noOfPages ) {
+  const handlePagination = async () => {
+    try {
+        if (pagePostsRef.current.currentPageNo < (pagePostsRef.current.noOfPages - 1)) {
+          paginationRef.current.children[0].style.display = "block";
           const body = await loadUserFeed(pagePostsRef.current.currentPageNo + 1);
           if ("error" in body) {
             console.log(body.error);
             history.push("/error");
           } else {
             const { dataList, currentPageNo, noOfPages } = body;
-            setPosts({ ...pagePostsRef.current, dataList: [...pagePostsRef.current.dataList, ...dataList], currentPageNo: currentPageNo, noOfPages: noOfPages});
-           
+            setPosts({ ...pagePostsRef.current, dataList: [...pagePostsRef.current.dataList, ...dataList], currentPageNo: currentPageNo, noOfPages: noOfPages });
+            paginationRef.current.children[0].style.display = "none";
           }
         }
+        else {
+          paginationRef.current.children[1].style.display = 'block';
+          
+        }
+
       } catch (err) {
         console.log(err);
         history.push("/error");
       }
-    }
+  }
+
+  const handleScroll = async (e) => {
+    
+    if ((window.scrollY + window.innerHeight) === getDocHeight()) {
+
+        handlePagination();
+      }
+    
   };
 
 
@@ -115,7 +127,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
 
       {showAlert === true && <ErrorAlert alertMessage={alertMessage} />}
       {addPostButtonClicked === true && <CreatePost setShow={ setAddPostButtonClicked} show={addPostButtonClicked} method={RestMethod.POST} setPosts={setPosts} post={null}  />}
-      <div className="col-md-5 my-3 mx-auto">
+      <div className="col-md-5 col-sm-5 col-lg-5 my-3 mx-auto">
         {pagePosts.dataList && pagePosts.dataList.length > 0 ? (
           pagePosts.dataList.map((post, index) => {
             return (
@@ -125,6 +137,16 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
         ) : (
             pagePosts.currentPageNo === -1 && <><LoadingPage noOfDivs={5}/></>
         )}
+      </div>
+      <div ref={paginationRef} >
+        <div className="spinner" style={{ display: 'none',backgroundColor: 'rgb(241, 241, 241)'}} >
+          <div className="bounce1"></div>
+          <div className="bounce2"></div>
+          <div className="bounce3"></div>
+        </div>
+        <div style={{display: 'none', textAlign: 'center'}}>
+          No more posts to show
+        </div>
       </div>
     </div>
   );

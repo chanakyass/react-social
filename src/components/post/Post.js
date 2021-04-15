@@ -213,8 +213,6 @@ export const Post = React.memo(({ post, setPosts }) => {
   }
 
 
-
-
   return (
     <>
       {showPostModal === true && (
@@ -235,6 +233,7 @@ export const Post = React.memo(({ post, setPosts }) => {
           show={showLikesModal}
         />
       )}
+
       <Card className="mt-2" style={{ maxWidth: "100%", borderBottom: "none" }}>
         {/* <Card.Img variant="top" src="holder.js/100px180" /> */}
 
@@ -295,9 +294,9 @@ export const Post = React.memo(({ post, setPosts }) => {
                 <span style={{ marginRight: "1rem" }}>
                   <FontAwesomeIcon
                     color="#4A4A4A"
-                    onClick={ (e) =>
+                    onClick={(e) =>
                       post.owner.id !== currentUser.id &&
-                       handleLikeUnlikePost(e, post, "like")
+                      handleLikeUnlikePost(e, post, "like")
                     }
                     icon={faRegularThumbsUp}
                     style={
@@ -308,7 +307,6 @@ export const Post = React.memo(({ post, setPosts }) => {
                           }
                         : {
                             marginRight: "0.4rem",
-
                             opacity: 0.4,
                           }
                     }
@@ -316,7 +314,7 @@ export const Post = React.memo(({ post, setPosts }) => {
                   <span style={{ color: "#4A4A4A" }}>{post.noOfLikes}</span>
                 </span>
               ) : (
-                  <span style={{marginRight: '1rem'}}>
+                <span style={{ marginRight: "1rem" }}>
                   <FontAwesomeIcon
                     color="#4A4A4A"
                     onClick={(e) => handleLikeUnlikePost(e, post, "unlike")}
@@ -330,36 +328,37 @@ export const Post = React.memo(({ post, setPosts }) => {
                 </span>
               )}
 
-              <button className='toggle-button'
-                onClick={ (e) => {
-                  
+              <button
+                className="toggle-button"
+                onClick={(e) => {
                   if (
                     noOfComments > 0 &&
                     (!comments || !comments[`post${post.id}`])
                   ) {
                     setShowGetRepliesLoad(true);
-                     handleGetComments(e, post.id, 0);
+                    handleGetComments(e, post.id, 0);
                   }
-                }}>
+                }}
+              >
                 <CustomToggle
                   eventKey={`post${post.id}`}
                   attachRef={commentsDotRef}
                   allowToggle={noOfComments}
                 >
                   <>
-                  <FontAwesomeIcon
-                    icon={faCommentDots}
-                    color="#4A4A4A"
-                    style={{
-                      marginRight: "0.4rem",
-                    }}
-
+                    <FontAwesomeIcon
+                      icon={faCommentDots}
+                      color="#4A4A4A"
+                      style={{
+                        marginRight: "0.4rem",
+                      }}
                     />
-                    {noOfComments!==0 && <span style={{ color: "grey" }}>{ noOfComments }</span>}
-                    </>
-                  
+                    {noOfComments !== 0 && (
+                      <span style={{ color: "#4A4A4A" }}>{noOfComments}</span>
+                    )}
+                  </>
+
                   {/* </FontAwesomeIcon> */}
-                  
                 </CustomToggle>
               </button>
 
@@ -467,18 +466,20 @@ export const Post = React.memo(({ post, setPosts }) => {
                 {comments[`post${post.id}`.trim()] &&
                   comments[`post${post.id}`].currentPageNo <
                     comments[`post${post.id}`].noOfPages - 1 && (
-                    <button
-                      className="link-button"
-                      onClick={(e) =>
-                        handleGetComments(
-                          e,
-                          post.id,
-                          comments[`post${post.id}`].currentPageNo + 1
-                        )
-                      }
-                    >
-                      load more comments
-                    </button>
+                    <div className="bg-light">
+                      <button
+                        className="link-button"
+                        onClick={(e) =>
+                          handleGetComments(
+                            e,
+                            post.id,
+                            comments[`post${post.id}`].currentPageNo + 1
+                          )
+                        }
+                      >
+                        load more comments
+                      </button>
+                    </div>
                   )}
               </Card.Body>
             </Accordion.Collapse>
