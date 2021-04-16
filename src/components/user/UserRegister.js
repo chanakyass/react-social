@@ -98,15 +98,12 @@ const UserRegister = () => {
     <>
       <div style={{ height: "97vh" }}>
         <div className="row h-100 m-0">
-          <div className="col-md-4 mx-auto my-auto rounded shadow bg-white">
-            <div className="col-md-4 mx-auto mt-3">
+          <div className="col-md-4 col-lg-4 col-sm-4 mx-auto my-auto rounded shadow bg-white">
+            <div className="col-md-12 col-sm-12 col-lg-12 mx-auto mt-3">
               <h3>Citizen Sane</h3>
             </div>
-            <Form
-              noValidate
-              onSubmit={submitHandler}
-            >
-              <div className="col-md-12 my-4 mx-auto">
+            <Form noValidate onSubmit={submitHandler}>
+              <div className="col-md-12 col-sm-12 col-lg-12 my-4 mx-auto">
                 <h5>Register</h5>
               </div>
 
@@ -251,7 +248,6 @@ const UserRegister = () => {
                 <button
                   className="my-3 link-button"
                   type="submit"
-
                   onClick={() => history.push("/login")}
                 >
                   Already registered? Click here to login

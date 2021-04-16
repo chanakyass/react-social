@@ -27,6 +27,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
   const [replyContent, setReplyContent] = useState('')
   const [showLikesModal, setShowLikesModal] = useState(false);
   const [showGetRepliesLoad, setShowGetRepliesLoad] = useState(false);
+  const [repliesAccordionOpen, setRepliesAccordionOpen] = useState(false);
 
   let replyBarRef = useRef(null)
   let reactionBarRef = useRef(null)
@@ -342,9 +343,6 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
 
           }
         }
-        setShowGetRepliesLoad(false);
-      
-    
     }, [replies]);
   
   const handleReplyPaginationMovingParts = useCallback(async (e) => {
@@ -376,7 +374,11 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
 
         replyBarRef.current.style.display = 'none';
         reactionBarRef.current.style.display = 'block';
-        repliesDotRef.current.click();
+        if(repliesAccordionOpen === false)
+        {
+          repliesDotRef.current.click();
+          setRepliesAccordionOpen(true);
+        }
 
         break;
       
@@ -458,12 +460,8 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                 </div>
               </Card.Subtitle>
               <Card.Text ref={commentContentRef} style={{ display: "block" }}>
-                {/* <div
-                  ref={commentContentRef}
-                  style={{ display: "inline-block" }}
-                > */}
+
                 {comment.commentContent}
-                {/* </div> */}
               </Card.Text>
               <div ref={updateCommentRef} style={{ display: "none" }}>
                 <Form.Group controlId={`updateCommentBoxFor${comment.id}`}>
@@ -518,7 +516,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
               >
                 <div
                   ref={reactionBarRef}
-                  className="p-1"
+                  className="pl-1"
                   style={{ display: "block" }}
                 >
                   {noOfLikes > 0 && (
@@ -578,10 +576,12 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
 
                   <button
                     className="toggle-button"
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       if (!replies || !replies[`comment${comment.id}`]) {
+                        setRepliesAccordionOpen(!repliesAccordionOpen);
                         setShowGetRepliesLoad(true);
-                        handleGetReplies(e, comment.id, 0);
+                        await handleGetReplies(e, comment.id, 0);
+                        setShowGetRepliesLoad(false);
                       }
                     }}
                   >
@@ -594,11 +594,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                         icon={faRegularCommentDots}
                         color="black"
                         size="sm"
-                        style={{
-                          marginRight: "0.4rem",
-                        }}
                       ></FontAwesomeIcon>
-                      <span style={{ color: "grey" }}>{noOfReplies}</span>
                     </CustomToggle>
                   </button>
 
@@ -674,12 +670,14 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                       id={`submitReplyOn${comment.id}`}
                       name={`submitReplyOn${comment.id}`}
                       onClick={async (e) => {
+                        setShowGetRepliesLoad(true);
                         await handleReplyCUD(e, RestMethod.POST, {
                           parentCommentId: comment.id,
                           postId: postId,
                           commentId: null,
                           replyContent: replyContent,
                         });
+                        setShowGetRepliesLoad(false);
                         handleMovingPartsOnClick(e, "REPLY_SUBMIT");
                       }}
                     >

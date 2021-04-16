@@ -1,6 +1,7 @@
 import cookie from "react-cookies";
 import history from "../../app-history";
-import React, {  useState, useRef, useCallback } from "react";
+import { handleError } from '../error/error-handling'
+import React, {  useState, useRef, useCallback, useEffect } from "react";
 import { likeUnlikeCUD, postsCUD } from "./post-service";
 import { loadComments, commentsCUD } from "../comments/comment-services";
 import Parser from "html-react-parser";
@@ -43,6 +44,20 @@ export const Post = React.memo(({ post, setPosts }) => {
   const commentsDotRef = useRef(null);
   let paginationRef = useRef(null);
 
+  function globalErrorHandler(event) {
+    console.log(event);
+    history.push("/error");
+    return true;
+  }
+
+  useEffect(() => {
+    window.onunhandledrejection = globalErrorHandler;
+
+    return () => {
+      window.onunhandledrejection = null;
+    };
+  }, [])
+
 
   const handlePostDelete = async (e, postId) => {
     e.preventDefault();
@@ -76,25 +91,28 @@ export const Post = React.memo(({ post, setPosts }) => {
 
     e.preventDefault();
 
-    if (commentContent === '') {
-      replyInputRef.current.focus();
-    } else {
-          const responseBody = await commentsCUD(
-            RestMethod.POST,
-            null,
-            postId,
-            null,
-            commentContent
-          );
-      if ("error" in responseBody) {
-        const { error } = responseBody;
-        console.log(error);
-        history.push("/error");
+
+
+      if (commentContent === '') {
+        replyInputRef.current.focus();
       } else {
+        const responseBody = await commentsCUD(
+          RestMethod.POST,
+          null,
+          postId,
+          null,
+          commentContent
+        );
+        if ("error" in responseBody) {
+          const { error } = responseBody;
+          error.type = 'API_EXCEPTION';
+          throw error;
+          
+        } else {
 
-        const { data } = responseBody
+          const { data } = responseBody
 
-        if (comments && comments[postProp]){
+          if (comments && comments[postProp]) {
           
             let newComment = {
               id: data.resourceId,
@@ -106,23 +124,24 @@ export const Post = React.memo(({ post, setPosts }) => {
               noOfReplies: 0,
             };
 
-        newComment = { ...newComment, commentedAtTime: moment.utc().toISOString(), modifiedAtTime: null };
+            newComment = { ...newComment, commentedAtTime: moment.utc().toISOString(), modifiedAtTime: null };
 
-        let newDataList = [...comments[postProp].dataList, newComment];
+            let newDataList = [...comments[postProp].dataList, newComment];
           
-        setComments({
-            ...comments, [postProp]: {
-              ...comments[postProp],
-              dataList: newDataList
-            }
-          });
+            setComments({
+              ...comments, [postProp]: {
+                ...comments[postProp],
+                dataList: newDataList
+              }
+            });
+          }
+
+
+          setNoOfComments(noOfComments => noOfComments + 1)
+
         }
-
-
-        setNoOfComments(noOfComments => noOfComments + 1)
-
       }
-    }
+
 
     setCommentContent('')
   }, [comments, currentUser]);
@@ -292,7 +311,7 @@ export const Post = React.memo(({ post, setPosts }) => {
               margin: "none",
             }}
           >
-            <div ref={reactionBarRef} style={{ display: "inline-block" }}>
+            <div ref={reactionBarRef} className='pl-2' style={{ display: "inline-block" }}>
               <div className="mb-3">
                 {post.noOfLikes > 0 && (
                   <button
@@ -441,13 +460,18 @@ export const Post = React.memo(({ post, setPosts }) => {
                   type="submit"
                   id={`submitCommentOn${post.id}`}
                   name={`submitCommentOn${post.id}`}
-                  onClick={async (e) => {
-                    await handleCreateComment(e, {
+                  onClick={(e) => {
+             
+                    handleCreateComment(e, {
                       commentId: null,
                       postId: post.id,
                       commentContent: commentContent,
-                    });
-                    handleMovingPartsOnClick(e, "REPLY_SUBMIT");
+                    })
+                      .then(handleMovingPartsOnClick(e, "REPLY_SUBMIT"))
+                      .catch((error) => {
+                        handleError({error});
+                      });
+
                   }}
                 >
                   reply
@@ -458,7 +482,7 @@ export const Post = React.memo(({ post, setPosts }) => {
 
           {noOfComments > 0 && (
             <Accordion.Collapse eventKey={`post${post.id}`}>
-              <Card.Body>
+              <Card.Body className='pt-0'>
                 {showGetRepliesLoad === true && (
                   <div className="spinner bg-light">
                     <div className="bounce1"></div>
