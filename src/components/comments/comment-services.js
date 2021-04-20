@@ -1,9 +1,9 @@
 
 import cookie from "react-cookies";
-import history from "../../app-history";
 import moment from 'moment';
 import { RestMethod } from '../../enums'
 import baseURI from '../../api-config'
+import { handleError } from "../error/error-handling";
 
     
 
@@ -68,9 +68,8 @@ export const commentsCUD = async (method, commentId, postId, itemId, commentCont
 
     return body;
   }
-  catch (err) {
-    console.log(err);
-    history.push('/error');
+  catch (error) {
+    handleError({error})
   }
 };
 
@@ -99,8 +98,8 @@ export const loadComments = async (postId, commentId, pageNo) => {
       const body = await response.json()
       return body;
     }
-    catch (err) {
-      history.push('/error')
+    catch (error) {
+      handleError({ error });
     }
 
   
@@ -131,8 +130,7 @@ export const likeUnlikeCommentCUD = async (comment, action) => {
     );
     const body = await response.json();
     return body;
-  } catch (err) {
-    console.log(err);
-    history.push("/error");
+  } catch (error) {
+    handleError({ error });
   }
 };

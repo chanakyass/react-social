@@ -7,6 +7,7 @@ import { CreatePost } from '../CreatePost';
 import { RestMethod } from '../../enums'
 import { ErrorAlert } from '../ErrorAlert'
 import { LoadingPage } from '../utility/LoadingPage'
+import { handleError } from '../error/error-handling';
 
 
 const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) => {
@@ -44,8 +45,8 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
         paginationRef.current.children[0].style.display = "block";
         const body = await loadUserFeed(pagePostsRef.current.currentPageNo + 1);
         if ("error" in body) {
-          console.log(body.error);
-          history.push("/error");
+          const { error } = body;
+          throw error;
         } else {
           const { dataList, currentPageNo, noOfPages } = body;
           setPosts({
@@ -59,9 +60,8 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
       } else {
         paginationRef.current.children[1].style.display = "block";
       }
-    } catch (err) {
-      console.log(err);
-      history.push("/error");
+    } catch (error) {
+      handleError({ error });
     }
   }, []);
 
@@ -72,9 +72,9 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
       document.body.style.display = 'none';
     };
 
-    const handleScroll = async (e) => {
+    const handleScroll =  (e) => {
       if (window.scrollY + window.innerHeight === getDocHeight()) {
-        await handlePagination();
+        handlePagination().then(() => console.log('Done'));
       }
     };
   
@@ -84,16 +84,15 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
         try {
           const body = await loadUserFeed(0);
           if ("error" in body) {
-            console.log(body.error);
-            history.push("/error");
+            const { error } = body;
+            throw error;
           } else {
             setPosts(body);
             window.addEventListener("scroll", handleScroll);
           };
 
-        } catch (err) {
-          console.log(err);
-          history.push("/error"); 
+        } catch (error) {
+          handleError({ error });
         }
       })();
     }
@@ -104,7 +103,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
           window.onbeforeunload = null;
           
         }
-        window.removeEventListener("scroll", e => handleScroll(e));
+        window.removeEventListener("scroll", handleScroll);
       };
     
   }, [handlePagination, showAlert]);

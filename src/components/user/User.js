@@ -10,6 +10,7 @@ import history from '../../app-history'
 import { CurrentUserContext } from "../../App";
 import baseURI from "../../api-config";
 import { LoadingPage } from '../utility/LoadingPage';
+import { handleError } from "../error/error-handling";
 
 const User = () => {
   const defaultUser = {
@@ -66,14 +67,11 @@ const User = () => {
           else {
 
             const { error } = body
-            console.log(error)
-            history.push('/error')
+            throw error;
           }
           
         })).catch(error => {
-
-          console.log(error)
-          history.push('/error')
+          handleError({ error });
         })
 
 
@@ -195,12 +193,9 @@ const User = () => {
     ).then((response) => {
       response.json().then(body => {
         if (response.status === 200) {
-          
-          const { data } = body
-          console.log(data)
-
-          history.push("/login");
-
+          cookie.remove("jwt", { path: "/" });
+          cookie.remove("current_user", { path: "/" });
+          setTimeout(() => history.push("/login"), 800);
         } else {
           const { error } = body
           dispatch({

@@ -1,7 +1,6 @@
 import cookie from "react-cookies";
-import history from "../../app-history";
-
 import baseURI from "../../api-config";
+import { handleError } from "../error/error-handling";
 
 
 export const loadLikesOnPost = async (postId, pageNo) => {
@@ -22,9 +21,8 @@ export const loadLikesOnPost = async (postId, pageNo) => {
 
     const body = await response.json();
     return body;
-  } catch (err) {
-    console.log(err);
-    history.push("/error");
+  } catch (error) {
+      handleError({error})
   }
 };
 
@@ -47,8 +45,7 @@ export const loadLikesOnComment = async (commentId, pageNo) => {
 
     const body = await response.json();
     return body;
-  } catch (err) {
-    console.log(err);
-    history.push("/error");
+  } catch (error) {
+      handleError({error})
   }
 };

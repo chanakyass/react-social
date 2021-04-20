@@ -145,7 +145,7 @@ const Login = () => {
               <h5>Login</h5>
             </div>
 
-            <Form.Group as={Col} md={12} controlId="formUsername">
+            <Form.Group as={Col} md={12} >
               <Form.Label>Username</Form.Label>
               <Form.Control
                 id="username"
@@ -168,7 +168,7 @@ const Login = () => {
               </Form.Control.Feedback>
             </Form.Group>
 
-            <Form.Group as={Col} md={12} controlId="formPassword">
+            <Form.Group as={Col} md={12} >
               <Form.Label>Password</Form.Label>
               <Form.Control
                 id="password"

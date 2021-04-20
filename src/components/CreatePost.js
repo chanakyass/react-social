@@ -4,10 +4,10 @@ import { Button, Modal, InputGroup, FormControl } from "react-bootstrap";
 import { postsCUD } from "./post/post-service";
 import { RestMethod } from "../enums";
 import cookie from "react-cookies";
-import history from "../app-history";
 import moment from 'moment';
 
 import React, { useState, useEffect } from "react";
+import { handleError } from "./error/error-handling";
 
 export const CreatePost = React.memo(({
   setShow,
@@ -28,7 +28,6 @@ export const CreatePost = React.memo(({
 
 
 
-
   const handleClose = (e) => setShow(false);
 
     const handlePostCU = async (e, method, editorPost) => {
@@ -36,88 +35,90 @@ export const CreatePost = React.memo(({
         const postHeading = editorPost.postHeading.trim();
       const postBody = editorPost.postBody.trim();
 
-      console.log(postBody);
+      try {
       
-    if ( postBody === "") {
-      //error
-    } else {
+        if (postBody === "") {
+          //error
+        } else {
     
-      const responseBody = await postsCUD(
-        method,
-        postId,
-        postHeading,
-        postBody
-      );
+          const responseBody = await postsCUD(
+            method,
+            postId,
+            postHeading,
+            postBody
+          );
 
-      if ("error" in responseBody) {
-        const { error } = responseBody;
-
-          console.log(error);
-          handleClose(e);
-          history.push("/error");
+          if ("error" in responseBody) {
+            const { error } = responseBody;
+            handleClose(e);
+            throw error;
           
-      } else {
-          const { data } = responseBody;
+          } else {
+            const { data } = responseBody;
           
-        switch (method) {
-          case RestMethod.POST: 
-            console.log('post getting executed');
+            switch (method) {
+              case RestMethod.POST:
+                console.log('post getting executed');
                 setPosts((posts) => {
-                    return {
-                      ...posts,
-                      dataList: [
-                        {
-                          id: data.resourceId,
-                          owner: currentUser,
-                          postHeading: postHeading,
-                          postBody: postBody,
-                          postedAtTime: moment.utc().toISOString(),
-                          modifiedAtTime: null,
-                          noOfComments: 0,
-                          noOfLikes: 0,
-                        },
-                        ...posts.dataList,
-                      ],
-                    };
+                  return {
+                    ...posts,
+                    dataList: [
+                      {
+                        id: data.resourceId,
+                        owner: currentUser,
+                        postHeading: postHeading,
+                        postBody: postBody,
+                        postedAtTime: moment.utc().toISOString(),
+                        modifiedAtTime: null,
+                        noOfComments: 0,
+                        noOfLikes: 0,
+                      },
+                      ...posts.dataList,
+                    ],
+                  };
                 });
             
-            break;
-          case RestMethod.PUT:
-            setPosts((posts) => {
-              return {
-                ...posts,
-                dataList: posts.dataList.map(listPost => {
-                  let newPost = listPost;
-                  if (listPost.id === postId) {
-                    if (postHeading !== '') {
-                      newPost = { ...newPost, postHeading: postHeading };
-                    }
-                    if (postBody !== '') {
-                      newPost = { ...newPost, postBody: postBody };
-                    }
+                break;
+              case RestMethod.PUT:
+                setPosts((posts) => {
+                  return {
+                    ...posts,
+                    dataList: posts.dataList.map(listPost => {
+                      let newPost = listPost;
+                      if (listPost.id === postId) {
+                        if (postHeading !== '') {
+                          newPost = { ...newPost, postHeading: postHeading };
+                        }
+                        if (postBody !== '') {
+                          newPost = { ...newPost, postBody: postBody };
+                        }
 
-                    newPost = { ...newPost, modifiedAtTime: moment.utc().toISOString() }
-                    return newPost;
+                        newPost = { ...newPost, modifiedAtTime: moment.utc().toISOString() }
+                        return newPost;
+                      }
+                      else {
+                        return listPost;
+                      }
+                    })
                   }
-                  else {
-                    return listPost;
-                  }
-                })
-              }
-            });
-            break;
+                });
+                break;
 
-          default: console.log('Method not applicable');
-            break;
+              default: console.log('Method not applicable');
+                break;
           
             
+            }
+
+
+          }
         }
-
-
+        handleClose(e);
+        setEditorPost({ id: null, postHeading: '', postBody: '' });
       }
-    }
-    handleClose(e);
-    setEditorPost({ id: null, postHeading: '', postBody: '' });
+      catch (error) {
+        handleError({ error });
+      }
   };
 
   return (

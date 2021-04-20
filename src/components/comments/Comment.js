@@ -1,5 +1,4 @@
 import cookie from "react-cookies";
-import history from "../../app-history";
 import moment from 'moment';
 import React, {  useState, useRef, useCallback } from "react";
 
@@ -7,16 +6,17 @@ import { commentsCUD, likeUnlikeCommentCUD, loadComments } from './comment-servi
 
 import { Card, Button, Accordion, Form } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faThumbsUp, faReply } from "@fortawesome/free-solid-svg-icons";
-import { faThumbsUp as faRegularThumbsUp, faCommentDots as faRegularCommentDots, faEdit, faWindowClose } from "@fortawesome/free-regular-svg-icons";
+import { faThumbsUp, faReply, faLongArrowAltRight } from "@fortawesome/free-solid-svg-icons";
+import { faThumbsUp as faRegularThumbsUp, faEdit, faWindowClose } from "@fortawesome/free-regular-svg-icons";
 import { RestMethod } from "../../enums";
 import { UserDetailsPopup } from "../UserDetailsPopup";
 import { LikesModal } from '../likes/LikesModal'
 import { convertDateToReadableFormat } from '../utility/handle-dates';
 import { CustomToggle } from '../utility/CustomToggle';
+import { handleError } from "../error/error-handling";
 
 
-export const Comment = React.memo(({ postId, parentCommentId, comment, setParentComments, setNoOfRepliesInParent}) => {
+export const Comment = React.memo(({ postId, parentCommentId, comment, setParentComments, setNoOfRepliesInParent, adjustRepliesInHeirarchy, setNoOfCommentsInParentPost}) => {
   const currentUser = cookie.load("current_user");
 
 
@@ -37,6 +37,62 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
   let replyInputRef = useRef(null);
   let updateInputRef = useRef(null);
   let paginationRef = useRef(null);
+
+    const adjustNoOfReplies = useCallback((method, childReplyId, noOfRepliesAffected) => {
+      // if (RestMethod.POST === method) {
+      //   setNoOfReplies((noOfRepliesInParent) => noOfRepliesInParent + 1);
+      // } else {
+      //   if(setNoOfRepliesInParent)
+      //     setNoOfRepliesInParent(
+      //       (noOfRepliesInParent) => noOfRepliesInParent - (noOfReplies + 1)
+      //   );
+      // }
+      // if (adjustRepliesInHeirarchy) {
+      //   adjustRepliesInHeirarchy(method);
+      // }
+
+      if (RestMethod.POST === method) {
+          setParentComments((comments) => {
+            return comments[`comment${comment.id}`].dataList.map(
+              (childReply) => {
+                if (childReply.id === childReplyId) {
+                  return {
+                    ...childReply,
+                    noOfReplies:
+                      childReply.noOfReplies + noOfRepliesAffected,
+                  };
+                }
+                return childReply;
+              }
+            );
+          });
+
+          adjustRepliesInHeirarchy(
+            method,
+            comment.id,
+            noOfRepliesAffected
+          );
+      }
+
+    
+        setParentComments((comments) => {
+          return comments[`comment${comment.id}`].dataList.map(
+            (childReply) => {
+              if (childReply.id === childReplyId) {
+                return {
+                  ...childReply,
+                  noOfReplies: childReply.noOfReplies - noOfRepliesAffected,
+                };
+              }
+              return childReply;
+            }
+          );
+        });
+
+        adjustRepliesInHeirarchy(method, comment.id, noOfRepliesAffected);
+      
+
+    }, [adjustRepliesInHeirarchy, setNoOfReplies, setNoOfRepliesInParent, noOfReplies]);
 
 
     const handleCommentCUD = useCallback(
@@ -63,8 +119,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
               );
               if ("error" in responseBody) {
                 const { error } = responseBody;
-                console.log(error);
-                history.push("/error");
+                handleError({ error });
               } else {
                 const { data } = responseBody;
 
@@ -120,8 +175,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
             );
             if ("error" in responseBody) {
               const { error } = responseBody;
-              console.log(error);
-              history.push("/error");
+              handleError({ error });
             } else {
 
               setParentComments((comments => {
@@ -137,7 +191,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
               }));
  
 
-              setNoOfRepliesInParent(noOfComments => noOfComments - 1);
+              setNoOfCommentsInParentPost(noOfComments => noOfComments - (comment.noOfReplies+1));
             }
 
             break;
@@ -147,7 +201,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
         }
         setReplyContent("");
       },
-      [currentUser, setNoOfRepliesInParent, setParentComments]
+      [currentUser, setParentComments, setNoOfCommentsInParentPost]
     );
 
   const handleReplyCUD = useCallback(async (e, method, replyObj) => {
@@ -185,8 +239,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
               );
               if ("error" in responseBody) {
                 const { error } = responseBody;
-                console.log(error);
-                history.push("/error");
+                handleError({ error });
               } else {
                 const { data } = responseBody;
 
@@ -206,8 +259,8 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                   };
 
                   let newDataList = [
-                    ...replies[commentProp].dataList,
                     newComment,
+                    ...replies[commentProp].dataList,
                   ];
                   setReplies({
                     ...replies,
@@ -218,8 +271,8 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                   });
                 }
 
-
-                setNoOfReplies(noOfReplies + 1);
+                setNoOfCommentsInParentPost((noOfComments) => noOfComments + 1);
+                adjustNoOfReplies(method, commentId, 1);
               }
             }
           
@@ -239,8 +292,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                 );
             if ('error' in responseBody) {
               let { error } = responseBody;
-              console.log(error)
-              history.push('/error')
+              handleError({ error });
             }
             else {
               setParentComments((comments) => {
@@ -271,8 +323,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
           );
           if ("error" in responseBody) {
             const { error } = responseBody;
-            console.log(error);
-            history.push("/error");
+            handleError({ error });
           } else {
 
 
@@ -289,8 +340,13 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
               }
             });
 
-            if (setNoOfRepliesInParent)
-              setNoOfRepliesInParent((noOfReplies) => noOfReplies - 1);
+
+            setNoOfCommentsInParentPost(
+              (noOfComments) => noOfComments - (comment.noOfReplies + 1)
+            );
+            adjustRepliesInHeirarchy(method, commentId, comment.noOfReplies + 1);
+            
+
           }
           break;
 
@@ -300,15 +356,14 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
         
     }
     setReplyContent('');
-  }, [replies, noOfReplies, currentUser, setNoOfRepliesInParent, setParentComments]);
+  }, [replies, currentUser, setParentComments, setNoOfCommentsInParentPost, adjustNoOfReplies]);
 
 
     const handleLikeUnlikeComment = async (e, comment, action) => {
       const responseBody = await likeUnlikeCommentCUD(comment, action);
       if ("error" in responseBody) {
         const { error } = responseBody;
-        console.log(error);
-        history.push("/error");
+        handleError({ error });
       } else {
         const commentLikedByCurrentUser = action === "like" ? true : false;
 
@@ -323,8 +378,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
         const responseBody = await loadComments(null, commentId, pageNo);
         if ("error" in responseBody) {
           const { error } = responseBody;
-          console.log(error);
-          history.push("/error");
+          handleError({ error });
         } else {
           if (!replies[commentProp]) {
             setReplies({ ...replies, [commentProp]: responseBody });
@@ -374,11 +428,7 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
 
         replyBarRef.current.style.display = 'none';
         reactionBarRef.current.style.display = 'block';
-        if(repliesAccordionOpen === false)
-        {
-          repliesDotRef.current.click();
-          setRepliesAccordionOpen(true);
-        }
+
 
         break;
       
@@ -424,10 +474,43 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
     }
   }
 
+  const replyOnComment = (e, replyObj) => {
+      setShowGetRepliesLoad(true);
+      handleMovingPartsOnClick(e, "REPLY_SUBMIT");
+      handleReplyCUD(e, RestMethod.POST, replyObj)
+        .then(() => {
+          setShowGetRepliesLoad(false);
+          if (repliesAccordionOpen === false) {
+            repliesDotRef.current.click();
+          }
+        })
+      .catch((error) => {
+      handleError({error})
+    })
+  }
+
+  const getRepliesOnComment = (e, commentId) => {
+
+    setShowGetRepliesLoad(true);
+    handleGetReplies(e, commentId, 0).then(() => {
+      setShowGetRepliesLoad(false);                           
+    })
+    .catch((error) => {
+      console.log(error);
+      handleError({error});
+    })
+
+  }
+
   return (
     <>
       <div className={(parentCommentId ? "pl-4 " : " ") + "bg-light"}>
-        <div className={parentCommentId ? "p-0 m-0 border-left" : ""}>
+        <div
+          className={
+            parentCommentId ? "p-2 m-0 border-left" : "p-2 border-bottom"
+          }
+        >
+          {console.log(comment)}
           {showLikesModal === true && (
             <LikesModal
               itemId={comment.id}
@@ -460,7 +543,6 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                 </div>
               </Card.Subtitle>
               <Card.Text ref={commentContentRef} style={{ display: "block" }}>
-
                 {comment.commentContent}
               </Card.Text>
               <div ref={updateCommentRef} style={{ display: "none" }}>
@@ -510,144 +592,156 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
           <Accordion>
             <Card style={{ maxWidth: "100%", border: "none" }}>
               <Card.Header
+                className="bg-light"
                 style={{
                   border: "none",
                 }}
               >
                 <div
                   ref={reactionBarRef}
-                  className="pl-1"
+                  className="row pl-3"
                   style={{ display: "block" }}
                 >
-                  {noOfLikes > 0 && (
-                    <div className="mb-3">
-                      <button
-                        className="link-button"
-                        onClick={(e) => {
-                          setShowLikesModal(true);
-                        }}
-                      >
-                        <small>View likes</small>
-                      </button>
-                    </div>
-                  )}
-                  {isCommentLiked === undefined ||
-                  isCommentLiked === null ||
-                  isCommentLiked === false ? (
-                    <span style={{ marginRight: "1rem" }}>
-                      <FontAwesomeIcon
-                        onClick={(e) =>
-                          comment.owner.id !== currentUser.id &&
-                          handleLikeUnlikeComment(e, comment, "like")
-                        }
-                        icon={faRegularThumbsUp}
-                        style={
-                          comment.owner.id !== currentUser.id
-                            ? {
-                                marginRight: "0.4rem",
-                                cursor: "pointer",
-                              }
-                            : {
-                                marginRight: "0.4rem",
+                  <div>
+                    {noOfLikes > 0 && (
+                      <div className="mb-3">
+                        <button
+                          className="link-button"
+                          onClick={(e) => {
+                            setShowLikesModal(true);
+                          }}
+                        >
+                          <small>View likes</small>
+                        </button>
+                      </div>
+                    )}
+                    {isCommentLiked === undefined ||
+                    isCommentLiked === null ||
+                    isCommentLiked === false ? (
+                      <span style={{ marginRight: "1rem" }}>
+                        <FontAwesomeIcon
+                          onClick={(e) =>
+                            comment.owner.id !== currentUser.id &&
+                            handleLikeUnlikeComment(e, comment, "like")
+                          }
+                          icon={faRegularThumbsUp}
+                          style={
+                            comment.owner.id !== currentUser.id
+                              ? {
+                                  marginRight: "0.4rem",
+                                  cursor: "pointer",
+                                }
+                              : {
+                                  marginRight: "0.4rem",
 
-                                opacity: 0.4,
-                              }
-                        }
-                        size="sm"
-                      ></FontAwesomeIcon>
-                      <span style={{ color: "grey" }}>{noOfLikes}</span>
-                    </span>
-                  ) : (
-                    <span style={{ marginRight: "1rem" }}>
+                                  opacity: 0.4,
+                                }
+                          }
+                          size="sm"
+                        ></FontAwesomeIcon>
+                        <span style={{ color: "grey" }}>{noOfLikes}</span>
+                      </span>
+                    ) : (
+                      <span style={{ marginRight: "1rem" }}>
+                        <FontAwesomeIcon
+                          onClick={(e) =>
+                            handleLikeUnlikeComment(e, comment, "unlike")
+                          }
+                          icon={faThumbsUp}
+                          style={{
+                            marginRight: "0.4rem",
+                            cursor: "pointer",
+                          }}
+                          size="sm"
+                        ></FontAwesomeIcon>
+                        <span style={{ color: "grey" }}>{noOfLikes}</span>
+                      </span>
+                    )}
+
+                    <FontAwesomeIcon
+                      onClick={(e) => {
+                        handleMovingPartsOnClick(e, "REPLY");
+                      }}
+                      icon={faReply}
+                      size="sm"
+                      style={{
+                        marginLeft: "1rem",
+                        marginRight: "1rem",
+                        cursor: "pointer",
+                      }}
+                    ></FontAwesomeIcon>
+                    {comment.owner.id === currentUser.id && (
                       <FontAwesomeIcon
-                        onClick={(e) =>
-                          handleLikeUnlikeComment(e, comment, "unlike")
-                        }
-                        icon={faThumbsUp}
+                        icon={faEdit}
+                        size="sm"
                         style={{
-                          marginRight: "0.4rem",
+                          marginLeft: "1rem",
+                          marginRight: "1rem",
                           cursor: "pointer",
                         }}
-                        size="sm"
+                        onClick={(e) => {
+                          setReplyContent(comment.commentContent);
+                          handleMovingPartsOnClick(e, "UPDATE");
+                        }}
                       ></FontAwesomeIcon>
-                      <span style={{ color: "grey" }}>{noOfLikes}</span>
-                    </span>
-                  )}
-
-                  <button
-                    className="toggle-button"
-                    onClick={async (e) => {
-                      if (!replies || !replies[`comment${comment.id}`]) {
-                        setRepliesAccordionOpen(!repliesAccordionOpen);
-                        setShowGetRepliesLoad(true);
-                        await handleGetReplies(e, comment.id, 0);
-                        setShowGetRepliesLoad(false);
-                      }
-                    }}
-                  >
-                    <CustomToggle
-                      eventKey={`comment${comment.id}`}
-                      attachRef={repliesDotRef}
-                      allowToggle={noOfReplies}
-                    >
+                    )}
+                    {comment.owner.id === currentUser.id && (
                       <FontAwesomeIcon
-                        icon={faRegularCommentDots}
-                        color="black"
+                        onClick={(e) => {
+                          !parentCommentId
+                            ? handleCommentCUD(e, RestMethod.DELETE, {
+                                postId: postId,
+                                commentId: comment.id,
+                              })
+                            : handleReplyCUD(e, RestMethod.DELETE, {
+                                parentCommentId: parentCommentId,
+                                postId: postId,
+                                commentId: comment.id,
+                              });
+                        }}
+                        icon={faWindowClose}
                         size="sm"
+                        style={{
+                          marginLeft: "1rem",
+                          marginRight: "1rem",
+                          cursor: "pointer",
+                        }}
                       ></FontAwesomeIcon>
-                    </CustomToggle>
-                  </button>
-
-                  <FontAwesomeIcon
-                    onClick={(e) => {
-                      handleMovingPartsOnClick(e, "REPLY");
-                    }}
-                    icon={faReply}
-                    size="sm"
-                    style={{
-                      marginLeft: "1rem",
-                      marginRight: "1rem",
-                      cursor: "pointer",
-                    }}
-                  ></FontAwesomeIcon>
-                  {comment.owner.id === currentUser.id && (
-                    <FontAwesomeIcon
-                      icon={faEdit}
-                      size="sm"
-                      style={{
-                        marginLeft: "1rem",
-                        marginRight: "1rem",
-                        cursor: "pointer",
-                      }}
+                    )}
+                  </div>
+                  <div className="row pl-2 pt-3" hidden={noOfReplies <= 0}>
+                    <button
+                      className="toggle-button"
                       onClick={(e) => {
-                        setReplyContent(comment.commentContent);
-                        handleMovingPartsOnClick(e, "UPDATE");
+                        if (
+                          (!replies || !replies[`comment${comment.id}`]) &&
+                          noOfReplies > 0
+                        ) {
+                          getRepliesOnComment(e, comment.id);
+                        }
+                        if (noOfReplies > 0)
+                          setRepliesAccordionOpen(
+                            (repliesAccordionOpen) => !repliesAccordionOpen
+                          );
                       }}
-                    ></FontAwesomeIcon>
-                  )}
-                  {comment.owner.id === currentUser.id && (
-                    <FontAwesomeIcon
-                      onClick={(e) => {
-                        !parentCommentId
-                          ? handleCommentCUD(e, RestMethod.DELETE, {
-                              postId: postId,
-                              commentId: comment.id,
-                            })
-                          : handleReplyCUD(e, RestMethod.DELETE, {
-                              parentCommentId: parentCommentId,
-                              postId: postId,
-                              commentId: comment.id,
-                            });
-                      }}
-                      icon={faWindowClose}
-                      size="sm"
-                      style={{
-                        marginLeft: "1rem",
-                        marginRight: "1rem",
-                        cursor: "pointer",
-                      }}
-                    ></FontAwesomeIcon>
-                  )}
+                    >
+                      <CustomToggle
+                        eventKey={`comment${comment.id}`}
+                        attachRef={repliesDotRef}
+                        allowToggle={noOfReplies}
+                      >
+                        <FontAwesomeIcon
+                          icon={faLongArrowAltRight}
+                          size="sm"
+                        ></FontAwesomeIcon>
+                        <small>
+                          {repliesAccordionOpen === false
+                            ? `View ${noOfReplies} replies`
+                            : `Collapse`}
+                        </small>
+                      </CustomToggle>
+                    </button>
+                  </div>
                 </div>
                 <div ref={replyBarRef} style={{ display: "none" }}>
                   <Form.Group controlId={`replyBoxFor${comment.id}`}>
@@ -669,16 +763,13 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                       type="submit"
                       id={`submitReplyOn${comment.id}`}
                       name={`submitReplyOn${comment.id}`}
-                      onClick={async (e) => {
-                        setShowGetRepliesLoad(true);
-                        await handleReplyCUD(e, RestMethod.POST, {
+                      onClick={(e) => {
+                        replyOnComment(e, {
                           parentCommentId: comment.id,
                           postId: postId,
                           commentId: null,
                           replyContent: replyContent,
                         });
-                        setShowGetRepliesLoad(false);
-                        handleMovingPartsOnClick(e, "REPLY_SUBMIT");
                       }}
                     >
                       reply
@@ -710,6 +801,10 @@ export const Comment = React.memo(({ postId, parentCommentId, comment, setParent
                                 //handleCommentCUD={null}
                                 setParentComments={setReplies}
                                 setNoOfRepliesInParent={setNoOfReplies}
+                                adjustRepliesInHeirarchy={adjustNoOfReplies}
+                                setNoOfCommentsInParentPost={
+                                  setNoOfCommentsInParentPost
+                                }
                               />
                             </>
                           );

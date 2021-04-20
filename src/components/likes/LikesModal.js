@@ -2,7 +2,7 @@ import { Card, Modal, ListGroup, Button } from 'react-bootstrap';
 import { UserDetailsPopup } from '../UserDetailsPopup';
 import { useEffect, useState, useCallback } from 'react';
 import { loadLikesOnPost, loadLikesOnComment } from "./like-service";
-import history from '../../app-history'
+import { handleError } from '../error/error-handling';
 
 
 export const LikesModal = ({ itemId, itemType, setShow, show }) => {
@@ -20,15 +20,12 @@ export const LikesModal = ({ itemId, itemType, setShow, show }) => {
         else body = await loadLikesOnComment(itemId, 0);
         if ("error" in body) {
           const { error } = body;
-          console.log(error);
-          history.push("/error");
+          throw error;
         } else {
-          console.log(body);
           setLikes(body);
         }
-      } catch (err) {
-        console.log(err);
-        history.push("/error");
+      } catch (error) {
+        handleError({ error });
       }
           
     }

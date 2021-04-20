@@ -7,13 +7,12 @@ const ErrorPage = ({ location }) => {
             details: ["Error in processing"]
         }
     };
-    console.log(location.state)
     const { error } = location.state || defaultError;
     return (
       <>
         <div className='mw-100'>
             <div className="m-3 border-bottom row">
-                HTTP ERROR {error.statusCode}
+                <h2>HTTP ERROR {error.statusCode}</h2>
             </div>
             <div className='m-4 row'>
                 <span>{error.message}</span>
