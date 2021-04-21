@@ -8,10 +8,10 @@ import { RestMethod } from '../../enums'
 import { ErrorAlert } from '../ErrorAlert'
 import { LoadingPage } from '../utility/LoadingPage'
 import { handleError } from '../error/error-handling';
+import {throttleTheFunction} from '../utility/throttle'
 
 
 const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) => {
-
 
   let location = history.location;
   let showAlert = false;
@@ -72,7 +72,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
       document.body.style.display = 'none';
     };
 
-    const handleScroll =  (e) => {
+    const handleScroll = (e) => {
       if (window.scrollY + window.innerHeight === getDocHeight()) {
         handlePagination().then(() => console.log('Done'));
       }
@@ -88,7 +88,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
             throw error;
           } else {
             setPosts(body);
-            window.addEventListener("scroll", handleScroll);
+            window.addEventListener("scroll", (e) => (throttleTheFunction(1000, handleScroll, e))());
           };
 
         } catch (error) {
@@ -103,7 +103,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
           window.onbeforeunload = null;
           
         }
-        window.removeEventListener("scroll", handleScroll);
+        window.removeEventListener("scroll", (e) => (throttleTheFunction(300, handleScroll, e))());
       };
     
   }, [handlePagination, showAlert]);

@@ -523,7 +523,7 @@ export const Post = React.memo(({ post, setPosts }) => {
                 {comments[`post${post.id}`.trim()] &&
                   comments[`post${post.id}`].currentPageNo <
                     comments[`post${post.id}`].noOfPages - 1 && (
-                    <div className="bg-light pl-1 pt-2" ref={paginationRef}>
+                    <div className="bg-light pl-1 pt-1" ref={paginationRef}>
                       <button
                         style={{ display: "block" }}
                         className="link-button"

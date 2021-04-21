@@ -7,7 +7,7 @@ import { handleError } from '../error/error-handling';
 
 export const LikesModal = ({ itemId, itemType, setShow, show }) => {
 
-    const [likes, setLikes] = useState({ dataList: [], currentPageNo: 0, noOfPages: 0 })
+  const [likes, setLikes] = useState({ dataList: [], currentPageNo: 0, noOfPages: 0 })
     
   const handleClose = () => setShow(false);
   
