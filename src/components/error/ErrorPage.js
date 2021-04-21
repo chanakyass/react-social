@@ -7,7 +7,8 @@ const ErrorPage = ({ location }) => {
             details: ["Error in processing"]
         }
     };
-    const { error } = location.state || defaultError;
+    const error = location.state || defaultError;
+    console.log(error);
     return (
       <>
         <div className='mw-100'>
@@ -19,8 +20,8 @@ const ErrorPage = ({ location }) => {
             </div>
                 <div className='m-4 row'>
                     <ul>
-                        {error.details.map((detail) => {
-                            return <li>{detail}</li>
+                        {error.details.map((detail, index) => {
+                            return <li key={ index }>{detail}</li>
 
                         })}
                     </ul>

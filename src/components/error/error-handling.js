@@ -6,7 +6,7 @@ export const handleError = ({ error }) => {
     if (error.statusCode === 401 || error.statusCode === 403) {
     cookie.remove("jwt", { path: "/" });
     cookie.remove("current_user", { path: "/" });
-    history.push('/auth_error');
+    history.push('/auth_error', error);
     }
     else {
         history.push("/error", error);

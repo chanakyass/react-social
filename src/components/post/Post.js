@@ -31,8 +31,6 @@ export const Post = React.memo(({ post, setPosts }) => {
 
   const [commentContent, setCommentContent] = useState("");
 
-  let [noOfComments, setNoOfComments] = useState(post.noOfComments);
-
   let [showLikesModal, setShowLikesModal] = useState(false);
 
   const [showGetRepliesLoad, setShowGetRepliesLoad] = useState(false);
@@ -44,6 +42,25 @@ export const Post = React.memo(({ post, setPosts }) => {
   const replyInputRef = useRef(null);
   const commentsDotRef = useRef(null);
   let paginationRef = useRef(null);
+
+  const adjustNoOfCommentsInParentPost = useCallback((method, noOfRepliesAffected) => {
+    setPosts((posts) => {
+      let newDataList = posts.dataList.map((iterPost) => {
+        if (iterPost.id === post.id) {
+          return {
+            ...iterPost,
+            noOfComments: method === 'POST' ? (iterPost.noOfComments + noOfRepliesAffected): iterPost.noOfComments - noOfRepliesAffected,
+          };
+        }
+        return iterPost;
+      });
+
+      return {
+        ...posts,
+        dataList: newDataList,
+      };
+    });
+  }, [setPosts, post])
 
 
   const handlePostDelete = async (e, postId) => {
@@ -68,66 +85,66 @@ export const Post = React.memo(({ post, setPosts }) => {
     }
   }
 
-  const handleCreateComment = useCallback(async (e, commentObj) => {
+  const handleCreateComment = useCallback(
+    async (e, commentObj) => {
+      let postId = commentObj.postId;
+      let commentContent = commentObj.commentContent;
 
-    let postId = commentObj.postId;
-    let commentContent = commentObj.commentContent;
+      const postProp = `post${postId}`.trim();
 
-    const postProp = `post${postId}`.trim();
+      e.preventDefault();
 
-    e.preventDefault();
-
-    if (commentContent === '') {
-      replyInputRef.current.focus();
-    } else {
-      const responseBody = await commentsCUD(
-        RestMethod.POST,
-        null,
-        postId,
-        null,
-        commentContent
-      );
-      if ("error" in responseBody) {
-        const { error } = responseBody;
-        throw error;
-          
+      if (commentContent === "") {
+        replyInputRef.current.focus();
       } else {
+        const responseBody = await commentsCUD(
+          RestMethod.POST,
+          null,
+          postId,
+          null,
+          commentContent
+        );
+        if ("error" in responseBody) {
+          const { error } = responseBody;
+          throw error;
+        } else {
+          const { data } = responseBody;
 
-        const { data } = responseBody
+          if (comments && comments[postProp]) {
+            let newComment = {
+              id: data.resourceId,
+              commentedOn: { id: postId },
+              commentContent: commentContent,
+              owner: currentUser,
+              commentLikedByCurrentUser: false,
+              noOfLikes: 0,
+              noOfReplies: 0,
+            };
 
-        if (comments && comments[postProp]) {
-          
-          let newComment = {
-            id: data.resourceId,
-            commentedOn: { id: postId },
-            commentContent: commentContent,
-            owner: currentUser,
-            commentLikedByCurrentUser: false,
-            noOfLikes: 0,
-            noOfReplies: 0,
-          };
+            newComment = {
+              ...newComment,
+              commentedAtTime: moment.utc().toISOString(),
+              modifiedAtTime: null,
+            };
 
-          newComment = { ...newComment, commentedAtTime: moment.utc().toISOString(), modifiedAtTime: null };
+            let newDataList = [newComment, ...comments[postProp].dataList];
 
-          let newDataList = [ newComment, ...comments[postProp].dataList];
-          
-          setComments({
-            ...comments, [postProp]: {
-              ...comments[postProp],
-              dataList: newDataList
-            }
-          });
+            setComments({
+              ...comments,
+              [postProp]: {
+                ...comments[postProp],
+                dataList: newDataList,
+              },
+            });
+          }
+          adjustNoOfCommentsInParentPost(RestMethod.POST, 1);
         }
-
-
-        setNoOfComments(noOfComments => noOfComments + 1)
-
       }
-    }
 
-
-    setCommentContent('')
-  }, [comments, currentUser]);
+      setCommentContent("");
+    },
+    [comments, currentUser, adjustNoOfCommentsInParentPost]
+  );
 
   
 
@@ -374,10 +391,10 @@ export const Post = React.memo(({ post, setPosts }) => {
               <button
                 className="toggle-button"
                 onClick={(e) => {
-                  if (noOfComments > 0 && (!comments || !comments[`post${post.id}`])) {
+                  if (post.noOfComments > 0 && (!comments || !comments[`post${post.id}`])) {
                     getCommentsOnPost(e, post.id);
                   }
-                  if(noOfComments > 0)
+                  if(post.noOfComments > 0)
                       setCommentsAccordianOpen(
                         (commentsAccordianOpen) => !commentsAccordianOpen
                       );
@@ -387,15 +404,15 @@ export const Post = React.memo(({ post, setPosts }) => {
                 <CustomToggle
                   eventKey={`post${post.id}`}
                   attachRef={commentsDotRef}
-                  allowToggle={noOfComments}
+                  allowToggle={post.noOfComments}
                 >
                   <>
                     <FontAwesomeIcon
                       icon={faCommentDots}
                       color="#4A4A4A"
                     />
-                    {noOfComments !== 0 && (
-                      <span style={{ color: "#4A4A4A", marginLeft: '0.4rem' }}>{noOfComments}</span>
+                    {post.noOfComments !== 0 && (
+                      <span style={{ color: "#4A4A4A", marginLeft: '0.4rem' }}>{post.noOfComments}</span>
                     )}
                   </>
 
@@ -446,7 +463,7 @@ export const Post = React.memo(({ post, setPosts }) => {
               )}
             </div>
             <div ref={replyBarRef} style={{ display: "none" }}>
-              <Form.Group controlId={`commentBoxFor${post.id}`}>
+              <Form.Group>
                 <Form.Control
                   as="textarea"
                   rows={3}
@@ -460,7 +477,7 @@ export const Post = React.memo(({ post, setPosts }) => {
                   }}
                 />
               </Form.Group>
-              <Form.Group controlId={`replyBoxFor${post.id}`}>
+              <Form.Group>
                 <Button
                   type="submit"
                   id={`submitCommentOn${post.id}`}
@@ -479,7 +496,7 @@ export const Post = React.memo(({ post, setPosts }) => {
             </div>
           </Card.Header>
 
-          {noOfComments > 0 && (
+          {post.noOfComments > 0 && (
             <Accordion.Collapse eventKey={`post${post.id}`}>
               <Card.Body className="pt-0">
                 {showGetRepliesLoad === true && (
@@ -497,11 +514,9 @@ export const Post = React.memo(({ post, setPosts }) => {
                         postId={post.id}
                         parentCommentId={null}
                         comment={comment}
-                        //handleCommentCUD={handleCommentCUD}
                         setParentComments={setComments}
-                        setNoOfRepliesInParent={null}
                         adjustNoOfRepliesInHeirarchy={null}
-                        setNoOfCommentsInParentPost = {setNoOfComments}
+                        adjustNoOfCommentsInParentPost = {adjustNoOfCommentsInParentPost}
                       />
                     );
                   })}
