@@ -53,8 +53,8 @@ return (
         <Modal.Body className='p-0'>
         <Card >
         <ListGroup variant="flush">
-        { likes.dataList.map((like)=>{
-            return <ListGroup.Item>
+        { likes.dataList.map((like, index)=>{
+          return <ListGroup.Item key={`like${like.id}`}>
               <div className="col-md">
                 <UserDetailsPopup owner={like.owner} />
             </div>
