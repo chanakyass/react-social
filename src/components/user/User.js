@@ -7,7 +7,7 @@ import { isValid } from "./user-registration-validations";
 import { defaultUserState as defaultState } from "../utility/state-info";
 import { Form, Col, Button } from 'react-bootstrap';
 import history from '../../app-history'
-import { CurrentUserContext } from "../../App";
+import { CurrentUserContext, AlertContext } from "../../App";
 import baseURI from "../../api-config";
 import { LoadingPage } from '../utility/LoadingPage';
 import { handleError } from "../error/error-handling";
@@ -32,6 +32,7 @@ const User = () => {
 
   
   const { setIsCurrentUserUpdated } = useContext(CurrentUserContext);
+  const showAlertWithMessage  = useContext(AlertContext);
 
   const jwtToken = cookie.load('jwt')
   const loggedInUser = cookie.load("current_user");
@@ -144,7 +145,9 @@ const User = () => {
               });
               setEditSettings(defaultEditSettings)
 
-              history.push('/', { showAlert: true, alertMessage: 'Your profile has been updated successfully' });
+              showAlertWithMessage(true, 'Your profile has been updated successfully');
+              //history.push('/', { showAlert: true, alertMessage: 'Your profile has been updated successfully' });
+              history.push('/');
             } else {
               const { error } = body
               dispatch(

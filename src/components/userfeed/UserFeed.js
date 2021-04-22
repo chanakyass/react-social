@@ -1,11 +1,9 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react'
 
-import history from '../../app-history'
 import { loadUserFeed } from '../post/post-service'
 import { Post } from '../post/Post'
 import { CreatePost } from '../CreatePost';
 import { RestMethod } from '../../enums'
-import { ErrorAlert } from '../ErrorAlert'
 import { LoadingPage } from '../utility/LoadingPage'
 import { handleError } from '../error/error-handling';
 import {throttleTheFunction} from '../utility/throttle'
@@ -13,13 +11,13 @@ import {throttleTheFunction} from '../utility/throttle'
 
 const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) => {
 
-  let location = history.location;
-  let showAlert = false;
-  let alertMessage = null;
-  if (location && location.state) {
-    showAlert = location.state.showAlert;
-    alertMessage = location.state.alertMessage;
-  }
+  // let location = history.location;
+  // let showAlert = false;
+  // let alertMessage = null;
+  // if (location && location.state) {
+  //   showAlert = location.state.showAlert;
+  //   alertMessage = location.state.alertMessage;
+  // }
 
   const pagePostsRef = useRef();
   const paginationRef = useRef();
@@ -32,9 +30,9 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
 
   pagePostsRef.current = pagePosts;
 
-  const changeHistory = () => {
-    history.replace({ state: null });
-  };
+  // const changeHistory = () => {
+  //   history.replace({ state: null });
+  // };
 
   const handlePagination = useCallback(async () => {
     try {
@@ -67,10 +65,10 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
 
   useEffect(() => {
     
-    window.onbeforeunload = function () {
-      if (showAlert === true) changeHistory();
-      document.body.style.display = 'none';
-    };
+    // window.onbeforeunload = function () {
+    //   if (showAlert === true) changeHistory();
+    //   document.body.style.display = 'none';
+    // };
 
     const handleScroll = (e) => {
       if (window.scrollY + window.innerHeight === getDocHeight()) {
@@ -99,14 +97,14 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
     
 
       return () => {
-        if (showAlert === true) {
-          window.onbeforeunload = null;
+        // if (showAlert === true) {
+        //   window.onbeforeunload = null;
           
-        }
+        // }
         window.removeEventListener("scroll", (e) => (throttleTheFunction(300, handleScroll, e))());
       };
     
-  }, [handlePagination, showAlert]);
+  }, [handlePagination]);
 
   function getDocHeight() {
     var D = document;
@@ -124,7 +122,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
   return (
     <div>
 
-      {showAlert === true && <ErrorAlert alertMessage={alertMessage} />}
+      {/* {showAlert === true && <ErrorAlert alertMessage={alertMessage} />} */}
       {addPostButtonClicked === true && <CreatePost setShow={ setAddPostButtonClicked} show={addPostButtonClicked} method={RestMethod.POST} setPosts={setPosts} post={null}  />}
       <div className="col-md-5 col-sm-5 col-lg-5 my-3 mx-auto">
         {pagePosts.dataList && pagePosts.dataList.length > 0 ? (

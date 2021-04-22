@@ -375,7 +375,7 @@ export const Comment = React.memo(
     );
 
     const handleLikeUnlikeComment = async (e, comment, action) => {
-      const responseBody = await likeUnlikeCommentCUD(comment, action);
+
       let prop = null;
 
       if (comment.parentComment !== null) {
@@ -384,16 +384,10 @@ export const Comment = React.memo(
         prop = `post${comment.commentedOn.id}`;
       }
 
-      if ("error" in responseBody) {
-        const { error } = responseBody;
-        handleError({ error });
-      } else {
-        //const commentLikedByCurrentUser = action === "like" ? true : false;
 
-        setParentComments((comments) => {
-          console.log(comments);
-          console.log(comment);
-          let newDataList = comments[prop].dataList.map((childReply) => {
+      setParentComments((comments) => {
+        let newDataList = comments[prop].dataList.map(
+          (childReply) => {
             if (childReply.id === comment.id) {
               return {
                 ...childReply,
@@ -405,18 +399,28 @@ export const Comment = React.memo(
               };
             }
             return childReply;
-          });
-          return {
-            ...comments,
-            [prop]: {
-              ...comments[prop],
-              dataList: newDataList,
-            },
-          };
-        });
+          }
+        );
+        return {
+          ...comments,
+          [prop]: {
+            ...comments[prop],
+            dataList: newDataList,
+          },
+        };
+      });
 
-        //setIsCommentLiked(commentLikedByCurrentUser)
-        //setNoOfLikes((action === 'like') ? noOfLikes + 1 : noOfLikes - 1);
+      const responseBody = await likeUnlikeCommentCUD(comment, action);
+
+      if (responseBody) {
+
+        if ("error" in responseBody) {
+          const { error } = responseBody;
+          // if (error.statusCode === 500) {
+          //   showAlertWithMessage(true, 'Something went wrong. Reverting your previous action');
+          // }
+          handleError({ error });
+        }
       }
     };
 

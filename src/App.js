@@ -12,8 +12,9 @@ import {
 import { Redirect } from 'react-router'
 import Cookies from "universal-cookie";
 import AppIndex from './components/AppIndex';
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import ErrorPage from './components/error/ErrorPage';
+import { AlertWindow } from './components/AlertWindow';
 
 function userExists() {
     const cookies = new Cookies();
@@ -23,29 +24,93 @@ function userExists() {
 }
 
 export const CurrentUserContext = React.createContext();
+export const AlertContext = React.createContext();
 
 
 function App() {
 
 
   const [isCurrentUserUpdated, setIsCurrentUserUpdated] = useState(false);
+  const [showErrorAlert, setShowErrorAlert] = useState({show: false, alertMessage: ''});
   const value = { isCurrentUserUpdated, setIsCurrentUserUpdated };
+
+  const showAlertWithMessage = useCallback((show, alertMessage) => {
+    if (show === true) {
+      setShowErrorAlert({
+        show: true,
+        alertMessage: alertMessage
+      })
+    }
+  }, [])
 
 
   
 
   return (
     <div>
-    <Router history={history}>
-      <Switch>
-        <Route exact path="/login"  render={() => userExists()? <Redirect to={{pathname: '/', state: {showAlert: true, alertMessage: 'You are logged in'}}} />: <Login/>} />
-          <Route exact path="/register" render={() => userExists() ? <Redirect to={{ pathname: '/', state: { showAlert: true, alertMessage: 'You are logged in' } }} /> : <UserRegister />} />
-          <Route exact path="/auth_error" component={ ErrorPage }/>
-        <Route exact path='*' render={() => !userExists() ? <Redirect to={{ pathname: '/login' }} /> : <CurrentUserContext.Provider value={ value }><AppIndex/></CurrentUserContext.Provider>}/>
-    
-      </Switch>
+      <AlertWindow
+        showErrorAlert={showErrorAlert}
+        setShowErrorAlert={setShowErrorAlert}
+      />
+      <Router history={history}>
+        <Switch>
+          <Route
+            exact
+            path="/login"
+            render={() =>
+              userExists() ? (
+                <Redirect
+                  to={{
+                    pathname: "/",
+                    state: {
+                      showAlert: true,
+                      alertMessage: "You are logged in",
+                    },
+                  }}
+                />
+              ) : (
+                <Login />
+              )
+            }
+          />
+          <Route
+            exact
+            path="/register"
+            render={() =>
+              userExists() ? (
+                <Redirect
+                  to={{
+                    pathname: "/",
+                    state: {
+                      showAlert: true,
+                      alertMessage: "You are logged in",
+                    },
+                  }}
+                />
+              ) : (
+                <UserRegister />
+              )
+            }
+          />
+          <Route exact path="/auth_error" component={ErrorPage} />
+          <Route
+            exact
+            path="*"
+            render={() =>
+              !userExists() ? (
+                <Redirect to={{ pathname: "/login" }} />
+              ) : (
+                <CurrentUserContext.Provider value={value}>
+                  <AlertContext.Provider value={showAlertWithMessage}>
+                    <AppIndex />
+                  </AlertContext.Provider>
+                </CurrentUserContext.Provider>
+              )
+            }
+          />
+        </Switch>
       </Router>
-      </div>
+    </div>
   );
 }
 
