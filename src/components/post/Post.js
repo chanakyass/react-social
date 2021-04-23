@@ -1,6 +1,6 @@
 import cookie from "react-cookies";
 import { handleError } from '../error/error-handling'
-import React, {  useState, useRef, useCallback } from "react";
+import React, {  useState, useRef, useCallback, useContext } from "react";
 import { likeUnlikeCUD, postsCUD } from "./post-service";
 import { loadComments, commentsCUD } from "../comments/comment-services";
 import Parser from "html-react-parser";
@@ -21,6 +21,8 @@ import { LikesModal } from "../likes/LikesModal";
 import moment from 'moment';
 import { convertDateToReadableFormat } from '../utility/handle-dates'
 import { CustomToggle } from '../utility/CustomToggle';
+import { debounced } from "../utility/debouncer";
+import { AlertContext } from "../../App";
 
 export const Post = React.memo(({ post, setPosts }) => {
   const currentUser = cookie.load("current_user");
@@ -37,11 +39,17 @@ export const Post = React.memo(({ post, setPosts }) => {
 
   const [commentsAccordianOpen, setCommentsAccordianOpen] = useState(false);
 
+  const [localLike, setLocalLike] = useState({ postLikedByCurrentUser: post.postLikedByCurrentUser, noOfLikes: post.noOfLikes });
+
+  const showAlertWithMessage = useContext(AlertContext);
+
+
   const replyBarRef = useRef(null);
   let reactionBarRef = useRef(null);
   const replyInputRef = useRef(null);
   const commentsDotRef = useRef(null);
   let paginationRef = useRef(null);
+  let likeRef = useRef(post.postLikedByCurrentUser);
 
   const adjustNoOfCommentsInParentPost = useCallback((method, noOfRepliesAffected) => {
     setPosts((posts) => {
@@ -104,40 +112,43 @@ export const Post = React.memo(({ post, setPosts }) => {
           null,
           commentContent
         );
-        if ("error" in responseBody) {
-          const { error } = responseBody;
-          throw error;
-        } else {
-          const { data } = responseBody;
 
-          if (comments && comments[postProp]) {
-            let newComment = {
-              id: data.resourceId,
-              commentedOn: { id: postId },
-              commentContent: commentContent,
-              owner: currentUser,
-              commentLikedByCurrentUser: false,
-              noOfLikes: 0,
-              noOfReplies: 0,
-            };
+        if (responseBody) {
+          if ("error" in responseBody) {
+            const { error } = responseBody;
+            throw error;
+          } else {
+            const { data } = responseBody;
 
-            newComment = {
-              ...newComment,
-              commentedAtTime: moment.utc().toISOString(),
-              modifiedAtTime: null,
-            };
+            if (comments && comments[postProp]) {
+              let newComment = {
+                id: data.resourceId,
+                commentedOn: { id: postId },
+                commentContent: commentContent,
+                owner: currentUser,
+                commentLikedByCurrentUser: false,
+                noOfLikes: 0,
+                noOfReplies: 0,
+              };
 
-            let newDataList = [newComment, ...comments[postProp].dataList];
+              newComment = {
+                ...newComment,
+                commentedAtTime: moment.utc().toISOString(),
+                modifiedAtTime: null,
+              };
 
-            setComments({
-              ...comments,
-              [postProp]: {
-                ...comments[postProp],
-                dataList: newDataList,
-              },
-            });
+              let newDataList = [newComment, ...comments[postProp].dataList];
+
+              setComments({
+                ...comments,
+                [postProp]: {
+                  ...comments[postProp],
+                  dataList: newDataList,
+                },
+              });
+            }
+            adjustNoOfCommentsInParentPost(RestMethod.POST, 1);
           }
-          adjustNoOfCommentsInParentPost(RestMethod.POST, 1);
         }
       }
 
@@ -195,28 +206,42 @@ export const Post = React.memo(({ post, setPosts }) => {
     [handleGetComments, comments, post.id]
   );
 
-  const handleLikeUnlikePost = async (e, post, action) => {
-    const responseBody = await likeUnlikeCUD(post, action);
-    if ("error" in responseBody) {
-      const { error } = responseBody;
-      handleError({ error });
-    } else {
-      const postLikedByCurrentUser = action === "like" ? true : false;
-
-      setPosts((posts) => {
-        let dataList = posts.dataList.map((iterPost) => {
-          if (iterPost.id === post.id) {
-            const noOfLikes = (action === 'like') ? iterPost.noOfLikes + 1 : iterPost.noOfLikes - 1;
-            return { ...iterPost, postLikedByCurrentUser, noOfLikes };
+  const handleLikeUnlikePost = (e, post, action) => {
+    likeUnlikeCUD(post, action)
+        .then((responseBody) => {
+          if ("error" in responseBody) {
+            const { error } = responseBody;
+            if (
+              error.statusCode === 500 &&
+              error.exceptionType === "API_SPECIFIC_EXCEPTION"
+            ) {
+              let str = error.message;
+              showAlertWithMessage(str.concat(error.details));
+            } else {
+              throw error;
+            }
           } else {
-            return iterPost;
-          }
-        });
+            const postLikedByCurrentUser = action === "like" ? true : false;
 
-        return { ...posts, dataList: dataList };
-      });
-    }
-  };
+            setPosts((posts) => {
+              let dataList = posts.dataList.map((iterPost) => {
+                if (iterPost.id === post.id) {
+                  const noOfLikes = (action === 'like') ? iterPost.noOfLikes + 1 : iterPost.noOfLikes - 1;
+                  return { ...iterPost, postLikedByCurrentUser, noOfLikes };
+                } else {
+                  return iterPost;
+                }
+              });
+
+              return { ...posts, dataList: dataList };
+            });
+          }
+        })
+        .catch((error) => {
+          handleError({ error });
+      })
+    };
+  
 
   const handleMovingPartsOnClick = (e, action) => {
     switch (action) {
@@ -274,7 +299,7 @@ export const Post = React.memo(({ post, setPosts }) => {
 
 
   return (
-    <>
+    <div>
       {showPostModal === true && (
         <CreatePost
           setShow={setShowPostModal}
@@ -330,6 +355,7 @@ export const Post = React.memo(({ post, setPosts }) => {
               border: "none",
               margin: "none",
             }}
+           
           >
             <div
               ref={reactionBarRef}
@@ -337,9 +363,9 @@ export const Post = React.memo(({ post, setPosts }) => {
               style={{ display: "inline-block" }}
             >
               <div className="mb-3">
-                {post.noOfLikes > 0 && (
+                {localLike.noOfLikes > 0 && (
                   <button
-                    className="link-button mr-3"
+                    className="link-button mr-3 not-selectable"
                     onClick={(e) => {
                       setShowLikesModal(true);
                     }}
@@ -348,16 +374,20 @@ export const Post = React.memo(({ post, setPosts }) => {
                   </button>
                 )}
               </div>
-              {post.postLikedByCurrentUser === false ||
-              post.postLikedByCurrentUser === undefined ||
-              post.postLikedByCurrentUser === null ? (
-                <span style={{ marginRight: "1rem" }}>
+              {localLike.postLikedByCurrentUser === false ? (
+                <span style={{ marginRight: "1rem", userSelect: "none" }}>
                   <FontAwesomeIcon
                     color="#4A4A4A"
-                    onClick={(e) =>
-                      post.owner.id !== currentUser.id &&
-                      handleLikeUnlikePost(e, post, "like")
-                    }
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setLocalLike({
+                        postLikedByCurrentUser: true,
+                        noOfLikes: localLike.noOfLikes + 1,
+                      });
+                      likeRef.current = true;
+                      debounced(600, handleLikeUnlikePost, e, post, "like");
+                    }}
                     icon={faRegularThumbsUp}
                     style={
                       post.owner.id !== currentUser.id
@@ -371,34 +401,49 @@ export const Post = React.memo(({ post, setPosts }) => {
                           }
                     }
                   ></FontAwesomeIcon>
-                  <span style={{ color: "#4A4A4A" }}>{post.noOfLikes}</span>
+                  <span style={{ color: "#4A4A4A", userSelect: "none" }}>
+                    {localLike.noOfLikes}
+                  </span>
                 </span>
               ) : (
                 <span style={{ marginRight: "1rem" }}>
                   <FontAwesomeIcon
                     color="#4A4A4A"
-                    onClick={(e) => handleLikeUnlikePost(e, post, "unlike")}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setLocalLike({
+                        postLikedByCurrentUser: false,
+                        noOfLikes: localLike.noOfLikes - 1,
+                      });
+                      likeRef.current = true;
+                      debounced(600, handleLikeUnlikePost, e, post, "unlike");
+                    }}
                     icon={faThumbsUp}
                     style={{
                       marginRight: "0.4rem",
                       cursor: "pointer",
                     }}
                   ></FontAwesomeIcon>
-                  <span style={{ color: "grey" }}>{post.noOfLikes}</span>
+                  <span style={{ color: "grey", userSelect: "none" }}>
+                    {localLike.noOfLikes}
+                  </span>
                 </span>
               )}
 
               <button
                 className="toggle-button"
                 onClick={(e) => {
-                  if (post.noOfComments > 0 && (!comments || !comments[`post${post.id}`])) {
+                  if (
+                    post.noOfComments > 0 &&
+                    (!comments || !comments[`post${post.id}`])
+                  ) {
                     getCommentsOnPost(e, post.id);
                   }
-                  if(post.noOfComments > 0)
-                      setCommentsAccordianOpen(
-                        (commentsAccordianOpen) => !commentsAccordianOpen
-                      );
-                      
+                  if (post.noOfComments > 0)
+                    setCommentsAccordianOpen(
+                      (commentsAccordianOpen) => !commentsAccordianOpen
+                    );
                 }}
               >
                 <CustomToggle
@@ -407,12 +452,11 @@ export const Post = React.memo(({ post, setPosts }) => {
                   allowToggle={post.noOfComments}
                 >
                   <>
-                    <FontAwesomeIcon
-                      icon={faCommentDots}
-                      color="#4A4A4A"
-                    />
+                    <FontAwesomeIcon icon={faCommentDots} color="#4A4A4A" />
                     {post.noOfComments !== 0 && (
-                      <span style={{ color: "#4A4A4A", marginLeft: '0.4rem' }}>{post.noOfComments}</span>
+                      <span style={{ color: "#4A4A4A", marginLeft: "0.4rem" }}>
+                        {post.noOfComments}
+                      </span>
                     )}
                   </>
 
@@ -516,7 +560,9 @@ export const Post = React.memo(({ post, setPosts }) => {
                         comment={comment}
                         setParentComments={setComments}
                         adjustNoOfRepliesInHeirarchy={null}
-                        adjustNoOfCommentsInParentPost = {adjustNoOfCommentsInParentPost}
+                        adjustNoOfCommentsInParentPost={
+                          adjustNoOfCommentsInParentPost
+                        }
                       />
                     );
                   })}
@@ -543,6 +589,6 @@ export const Post = React.memo(({ post, setPosts }) => {
           )}
         </Card>
       </Accordion>
-    </>
+    </div>
   );
 });

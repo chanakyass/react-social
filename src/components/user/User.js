@@ -145,7 +145,7 @@ const User = () => {
               });
               setEditSettings(defaultEditSettings)
 
-              showAlertWithMessage(true, 'Your profile has been updated successfully');
+              showAlertWithMessage('Your profile has been updated successfully');
               //history.push('/', { showAlert: true, alertMessage: 'Your profile has been updated successfully' });
               history.push('/');
             } else {

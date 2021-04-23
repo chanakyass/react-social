@@ -31,16 +31,16 @@ function App() {
 
 
   const [isCurrentUserUpdated, setIsCurrentUserUpdated] = useState(false);
-  const [showErrorAlert, setShowErrorAlert] = useState({show: false, alertMessage: ''});
+  const [showAlert, setShowAlert] = useState({show: false, alertMessage: ''});
   const value = { isCurrentUserUpdated, setIsCurrentUserUpdated };
 
-  const showAlertWithMessage = useCallback((show, alertMessage) => {
-    if (show === true) {
-      setShowErrorAlert({
+  const showAlertWithMessage = useCallback((alertMessage) => {
+    
+      setShowAlert({
         show: true,
         alertMessage: alertMessage
       })
-    }
+    
   }, [])
 
 
@@ -48,10 +48,9 @@ function App() {
 
   return (
     <div>
-      <AlertWindow
-        showErrorAlert={showErrorAlert}
-        setShowErrorAlert={setShowErrorAlert}
-      />
+      
+      <AlertWindow showAlert={showAlert} setShowAlert={setShowAlert} />
+
       <Router history={history}>
         <Switch>
           <Route

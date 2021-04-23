@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react'
-import { Alert } from 'react-bootstrap'
+import { Alert, Fade } from 'react-bootstrap'
 
-export const AlertWindow = React.memo(({ showErrorAlert, setShowErrorAlert }) => {
+export const AlertWindow = React.memo(({ showAlert, setShowAlert }) => {
 
   useEffect(() => {
     let timer;
-    if (showErrorAlert.show === true) {
+    if (showAlert.show === true) {
       timer = setTimeout(() => {
-        setShowErrorAlert({ show: false, alertMessage: '' });
+        setShowAlert({ show: false, alertMessage: '' });
 
       }, 3000);
     }
@@ -15,14 +15,26 @@ export const AlertWindow = React.memo(({ showErrorAlert, setShowErrorAlert }) =>
       if(timer)
         clearTimeout(timer);
     }
-  }, [setShowErrorAlert, showErrorAlert])
+  }, [setShowAlert, showAlert])
 
   return (
     <>
-      <Alert style={{ zIndex: '5000', position: 'fixed', bottom: '1vh', left: '2vh' }} show={showErrorAlert.show}
-        variant="secondary" onClose={() => setShowErrorAlert({ show: false, alertMessage: '' })} dismissible>
-        <p>{showErrorAlert.alertMessage}</p>
-      </Alert>
+      <Fade in={ showAlert.show }>
+        <Alert
+          style={{
+            zIndex: "5000",
+            position: "fixed",
+            bottom: "1vh",
+            left: "2vh",
+          }}
+          show={showAlert.show}
+          variant="secondary"
+          onClose={() => setShowAlert({ show: false, alertMessage: "" })}
+          dismissible
+        >
+          <p>{showAlert.alertMessage}</p>
+        </Alert>
+      </Fade>
     </>
   );
 });

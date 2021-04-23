@@ -6,7 +6,7 @@ import { CreatePost } from '../CreatePost';
 import { RestMethod } from '../../enums'
 import { LoadingPage } from '../utility/LoadingPage'
 import { handleError } from '../error/error-handling';
-import {throttleTheFunction} from '../utility/throttle'
+import {debounced} from '../utility/debouncer'
 
 
 const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) => {
@@ -86,7 +86,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
             throw error;
           } else {
             setPosts(body);
-            window.addEventListener("scroll", (e) => (throttleTheFunction(1000, handleScroll, e))());
+            window.addEventListener("scroll", (e) => debounced(300, handleScroll, e));
           };
 
         } catch (error) {
@@ -101,7 +101,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
         //   window.onbeforeunload = null;
           
         // }
-        window.removeEventListener("scroll", (e) => (throttleTheFunction(300, handleScroll, e))());
+        window.removeEventListener("scroll", (e) => debounced(300, handleScroll, e));
       };
     
   }, [handlePagination]);

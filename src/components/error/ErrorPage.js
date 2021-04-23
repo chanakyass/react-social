@@ -7,6 +7,7 @@ const ErrorPage = ({ location }) => {
             details: ["Error in processing"]
         }
     };
+    
     const error = location.state || defaultError;
     console.log(error);
     return (
@@ -18,14 +19,16 @@ const ErrorPage = ({ location }) => {
             <div className='m-4 row'>
                 <span>{error.message}</span>
             </div>
-                <div className='m-4 row'>
-                    <ul>
-                        {error.details.map((detail, index) => {
-                            return <li key={ index }>{detail}</li>
+                {error.details &&
+                    <div className='m-4 row'>
+                        <ul>
+                            {error.details.map((detail, index) => {
+                                return <li key={index}>{detail}</li>
 
-                        })}
-                    </ul>
-            </div>      
+                            })}
+                        </ul>
+                    </div>
+                }
         </div>
       </>
     );

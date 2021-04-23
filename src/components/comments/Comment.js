@@ -1,6 +1,6 @@
 import cookie from "react-cookies";
 import moment from 'moment';
-import React, {  useState, useRef, useCallback } from "react";
+import React, {  useState, useRef, useCallback, useContext } from "react";
 
 import { commentsCUD, likeUnlikeCommentCUD, loadComments } from './comment-services'
 
@@ -14,6 +14,8 @@ import { LikesModal } from '../likes/LikesModal'
 import { convertDateToReadableFormat } from '../utility/handle-dates';
 import { CustomToggle } from '../utility/CustomToggle';
 import { handleError } from "../error/error-handling";
+import { AlertContext } from "../../App";
+import { debounced } from "../utility/debouncer";
 
 
 export const Comment = React.memo(
@@ -32,6 +34,9 @@ export const Comment = React.memo(
     const [showLikesModal, setShowLikesModal] = useState(false);
     const [showGetRepliesLoad, setShowGetRepliesLoad] = useState(false);
     const [repliesAccordionOpen, setRepliesAccordionOpen] = useState(false);
+    const [localLike, setLocalLike] = useState({commentLikedByCurrentUser: comment.commentLikedByCurrentUser, noOfLikes: comment.noOfLikes});
+
+    const showAlertWithMessage = useContext(AlertContext)
 
     let replyBarRef = useRef(null);
     let reactionBarRef = useRef(null);
@@ -41,6 +46,7 @@ export const Comment = React.memo(
     let replyInputRef = useRef(null);
     let updateInputRef = useRef(null);
     let paginationRef = useRef(null);
+    let likeRef = useRef(comment.commentLikedByCurrentUser);
 
     const adjustNoOfReplies = useCallback(
       (method, childReplyId, noOfRepliesAffected) => {
@@ -374,55 +380,65 @@ export const Comment = React.memo(
       ]
     );
 
-    const handleLikeUnlikeComment = async (e, comment, action) => {
+    const handleLikeUnlikeComment =  (e, comment, action) => {
 
-      let prop = null;
+        let prop = null;
 
-      if (comment.parentComment !== null) {
-        prop = `comment${comment.parentComment.id}`;
-      } else {
-        prop = `post${comment.commentedOn.id}`;
-      }
-
-
-      setParentComments((comments) => {
-        let newDataList = comments[prop].dataList.map(
-          (childReply) => {
-            if (childReply.id === comment.id) {
-              return {
-                ...childReply,
-                noOfLikes:
-                  action === "like"
-                    ? childReply.noOfLikes + 1
-                    : childReply.noOfLikes - 1,
-                commentLikedByCurrentUser: action === "like",
-              };
-            }
-            return childReply;
-          }
-        );
-        return {
-          ...comments,
-          [prop]: {
-            ...comments[prop],
-            dataList: newDataList,
-          },
-        };
-      });
-
-      const responseBody = await likeUnlikeCommentCUD(comment, action);
-
-      if (responseBody) {
-
-        if ("error" in responseBody) {
-          const { error } = responseBody;
-          // if (error.statusCode === 500) {
-          //   showAlertWithMessage(true, 'Something went wrong. Reverting your previous action');
-          // }
-          handleError({ error });
+        if (comment.parentComment !== null) {
+          prop = `comment${comment.parentComment.id}`;
+        } else {
+          prop = `post${comment.commentedOn.id}`;
         }
-      }
+
+        likeUnlikeCommentCUD(comment, action)
+          .then((responseBody) => {
+            if (responseBody) {
+              if ("error" in responseBody) {
+                const { error } = responseBody;
+                if (
+                  error.statusCode === 500 &&
+                  error.exceptionType === "API_SPECIFIC_EXCEPTION"
+                ) {
+                  let str = error.message;
+                  showAlertWithMessage(str.concat(error.details));
+                  // setParentComments(prevState);
+                } else {
+                  throw error;
+                }
+              } else {
+                setParentComments((comments) => {
+                  let newDataList = comments[prop].dataList.map(
+                    (childReply) => {
+                      if (childReply.id === comment.id) {
+                        return {
+                          ...childReply,
+                          noOfLikes:
+                            action === "like"
+                              ? childReply.noOfLikes + 1
+                              : childReply.noOfLikes - 1,
+                          commentLikedByCurrentUser: action === "like",
+                        };
+                      }
+                      return childReply;
+                    }
+                  );
+                  return {
+                    ...comments,
+                    [prop]: {
+                      ...comments[prop],
+                      dataList: newDataList,
+                    },
+                  };
+                });
+              }
+            }
+          })
+          .catch((error) => {
+            handleError({ error });
+          });
+      
     };
+
 
     const handleGetReplies = useCallback(
       async (e, commentId, pageNo) => {
@@ -669,14 +685,14 @@ export const Comment = React.memo(
                           </button>
                         </div>
                       )}
-                      {comment.commentLikedByCurrentUser === undefined ||
-                      comment.commentLikedByCurrentUser === null ||
-                      comment.commentLikedByCurrentUser === false ? (
+                      {localLike.commentLikedByCurrentUser === false ? (
                         <span style={{ marginRight: "1rem" }}>
                           <FontAwesomeIcon
-                            onClick={(e) =>
-                              comment.owner.id !== currentUser.id &&
-                              handleLikeUnlikeComment(e, comment, "like")
+                            onClick={(e) => {
+                              setLocalLike({commentLikedByCurrentUser: true, noOfLikes: localLike.noOfLikes+1});
+                              likeRef.current = true;
+                              debounced(500, handleLikeUnlikeComment, e, comment, "like");
+                            }
                             }
                             icon={faRegularThumbsUp}
                             style={
@@ -694,14 +710,17 @@ export const Comment = React.memo(
                             size="sm"
                           ></FontAwesomeIcon>
                           <span style={{ color: "grey" }}>
-                            {comment.noOfLikes}
+                            {localLike.noOfLikes}
                           </span>
                         </span>
                       ) : (
                         <span style={{ marginRight: "1rem" }}>
                           <FontAwesomeIcon
-                            onClick={(e) =>
-                              handleLikeUnlikeComment(e, comment, "unlike")
+                              onClick={(e) => {
+                                setLocalLike({commentLikedByCurrentUser: false, noOfLikes: localLike.noOfLikes-1});
+                                likeRef.current = false;
+                                debounced(500, handleLikeUnlikeComment, e, comment, "unlike");
+                              }
                             }
                             icon={faThumbsUp}
                             style={{
@@ -711,7 +730,7 @@ export const Comment = React.memo(
                             size="sm"
                           ></FontAwesomeIcon>
                           <span style={{ color: "grey" }}>
-                            {comment.noOfLikes}
+                            {localLike.noOfLikes}
                           </span>
                         </span>
                       )}

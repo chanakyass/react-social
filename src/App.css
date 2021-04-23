@@ -74,6 +74,10 @@ margin-left: 1rem;
 margin-right: 1rem;
 }
 
+.not-selectable{
+  user-select: none;
+}
+
 /*Huge thanks to @tobiasahlin at http://tobiasahlin.com/spinkit/ */
 .spinner {
   /* height: 100%;
