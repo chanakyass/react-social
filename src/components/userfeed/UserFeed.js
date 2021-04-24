@@ -22,7 +22,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
   });
 
 
-  pagePostsRef.current = pagePosts;
+  pagePostsRef.current = {currentPageNo: pagePosts.currentPageNo, noOfPages: pagePosts.noOfPages};
 
 
   const handlePagination = useCallback( () => {
@@ -44,6 +44,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
                 currentPageNo: currentPageNo,
                 noOfPages: noOfPages,
               });
+              pagePostsRef.current = { currentPageNo: currentPageNo, noOfPages: noOfPages };
             }
           })
 
@@ -73,6 +74,8 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
         if (!ok) {
           handleError({ error });
         } else {
+          const { currentPageNo, noOfPages } = body;
+          pagePostsRef.current = {currentPageNo: currentPageNo, noOfPages: noOfPages}
           setPosts(body);
           window.addEventListener("scroll", (e) =>
             debounced(150, handleScroll, e)
