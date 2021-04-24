@@ -13,6 +13,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
 
 
   const scrollEventCallbackRef = useRef();
+  const prevDocHeightRef = useRef();
 
   const [posts, setPosts] = useState({
     currentPageNo: -1,
@@ -51,7 +52,13 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
       if (st > lastScrollTopRef.current) {
         const scrollPos = window.scrollY + window.innerHeight;
         const docHeight = getDocHeight();
-        if (scrollPos > 0.65 * docHeight) handlePagination();
+        console.log(docHeight);
+        if (scrollPos > 0.65 * docHeight
+          && docHeight !== prevDocHeightRef.current
+        ) {
+          handlePagination();
+          prevDocHeightRef.current = docHeight;
+        }
       }
 
       lastScrollTopRef.current = st <= 0 ? 0 : st;
