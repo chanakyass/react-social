@@ -12,7 +12,7 @@ import {debounced} from '../utility/debouncer'
 const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) => {
 
 
-  const paginationRef = useRef();
+  const scrollEventCallbackRef = useRef();
 
   const [posts, setPosts] = useState({
     currentPageNo: -1,
@@ -23,7 +23,6 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
   const lastScrollTopRef = useRef(window.pageYOffset || getDocScrollTop());
 
   const handlePagination = useCallback(() => {
-    if (paginationRef.current) {
       if (posts.currentPageNo < posts.noOfPages - 1) {
         loadUserFeed(posts.currentPageNo + 1).then(
           ({ ok, responseBody: body, error }) => {
@@ -36,14 +35,20 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
                 dataList: [...posts.dataList, ...dataList],
                 currentPageNo: currentPageNo,
                 noOfPages: noOfPages,
+                isLastPage: false
               });
             }
           }
         );
-      } else {
-        paginationRef.current.style.display = "block";
-      }
     }
+      else {
+        setPosts({
+          ...posts,
+          isLastPage: true
+        });
+    }
+
+    
   }, [posts]);
 
 
@@ -67,7 +72,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
         if (!ok) {
           handleError({ error });
         } else {
-          setPosts({ ...posts, ...body });
+          setPosts({ ...posts, ...body, isLastPage: false });
         }
       });
 
@@ -80,23 +85,22 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
       document.body.style.display = 'none';
     };
 
-    window.removeEventListener("scroll", (e) =>
-      debounced(150, handleScroll, e)
-    );
+    window.removeEventListener("scroll", scrollEventCallbackRef.current, true);
 
-    window.addEventListener("scroll", (e) => debounced(150, handleScroll, e));
+      window.addEventListener("scroll", scrollEventCallbackRef.current = (e) => {
+        debounced(150, handleScroll, e);
+      }, true);
+
 
     if (posts.currentPageNo === -1) {      
-         initialFeedLoad();
+      initialFeedLoad();
     }
 
     return () => {
-      window.removeEventListener("scroll", (e) =>
-        debounced(150, handleScroll, e)
-      );
+      window.removeEventListener("scroll", scrollEventCallbackRef.current, true);
       window.onbeforeunload = null;
     };
-  }, [handlePagination, posts, handleScroll, initialFeedLoad]);
+  }, [ posts, handleScroll, initialFeedLoad]);
 
   function getDocHeight() {
     let D = document;
@@ -137,11 +141,13 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
             posts.currentPageNo === -1 && <><LoadingPage noOfDivs={5}/></>
         )}
       </div>
-      <div>
-        <div ref={paginationRef} style={{display: 'none', textAlign: 'center'}}>
-          No more posts to show
+
+      {posts.isLastPage === true &&
+        <div style={{ textAlign: 'center' }}>
+        No more posts to show
         </div>
-      </div>
+      }
+
     </div>
   );
 });
