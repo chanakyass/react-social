@@ -69,7 +69,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
     window.removeEventListener("scroll", scrollEventCallbackRef.current, true);
 
       window.addEventListener("scroll", scrollEventCallbackRef.current = (e) => {
-        debounced(150, handleScroll, e);
+        debounced(100, handleScroll, e);
       }, true);
 
 
