@@ -35,20 +35,13 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
                 dataList: [...posts.dataList, ...dataList],
                 currentPageNo: currentPageNo,
                 noOfPages: noOfPages,
-                isLastPage: false
+                isLastPage: currentPageNo === (noOfPages - 1)
               });
             }
           }
         );
     }
-      else {
-        setPosts({
-          ...posts,
-          isLastPage: true
-        });
-    }
 
-    
   }, [posts]);
 
 
@@ -58,25 +51,13 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
       if (st > lastScrollTopRef.current) {
         const scrollPos = window.scrollY + window.innerHeight;
         const docHeight = getDocHeight();
-        if (scrollPos > 0.80 * docHeight) setTimeout(handlePagination, 250);
+        if (scrollPos > 0.80 * docHeight) setTimeout(handlePagination, 150);
       }
 
       lastScrollTopRef.current = st <= 0 ? 0 : st;
     },
     [handlePagination]
   );
-
-  const initialFeedLoad = useCallback(  () => {
-
-      loadUserFeed(0).then(({ ok, responseBody: body, error }) => {
-        if (!ok) {
-          handleError({ error });
-        } else {
-          setPosts({ ...posts, ...body, isLastPage: false });
-        }
-      });
-
-  }, [posts])
 
 
   useEffect(() => {
@@ -93,14 +74,20 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
 
 
     if (posts.currentPageNo === -1) {      
-      initialFeedLoad();
+      loadUserFeed(0).then(({ ok, responseBody: body, error }) => {
+        if (!ok) {
+          handleError({ error });
+        } else {
+          setPosts({ ...posts, ...body, isLastPage: body.currentPageNo === (body.noOfPages - 1) });
+        }
+      });
     }
 
     return () => {
       window.removeEventListener("scroll", scrollEventCallbackRef.current, true);
       window.onbeforeunload = null;
     };
-  }, [ posts, handleScroll, initialFeedLoad]);
+  }, [ posts, handleScroll]);
 
   function getDocHeight() {
     let D = document;
