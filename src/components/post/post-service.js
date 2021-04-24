@@ -2,7 +2,6 @@ import cookie from "react-cookies";
 import moment from 'moment'
 import { RestMethod } from '../../enums'
 import baseURI from "../../api-config";
-import { handleError } from "../error/error-handling";
 
 
 
@@ -24,11 +23,15 @@ export const loadUserFeed = async (pageNo) => {
             requestOptions
         );
 
-        const body = await response.json();
-        return body;
+      const body = await response.json();
+      if ("error" in body) {
+        throw body.error
+      }
+      return {ok: true, responseBody: body, error: null};
     }
     catch (error) {
-      handleError({ error });
+
+      return { ok: false, responseBody: null, error: error};
     }
 
 };
@@ -83,9 +86,13 @@ export const postsCUD = async (
 
     let body = await response.json();
 
-    return body;
+    if ("error" in body) {
+      throw body.error;
+    }
+
+    return {ok: true, responseBody: body, error: null};
   } catch (error) {
-    handleError({ error });
+    return {ok: false, responseBody: null, error}
   }
 };
 
@@ -112,12 +119,17 @@ export const likeUnlikeCUD = async (post, action) => {
             `${baseURI}/api/v1/resource/post/${post.id}/${action}`,
             requestOptions
         )
-        const body = await response.json();
-        return body
+      const body = await response.json();
+      if ("error" in body) {
+        throw body.error;
+      }
+      else {
+        return { ok: true, responseBody: body, error: null };
+      }
     }
 
     catch (error) {
-      handleError({ error });
+      return { ok: false, responseBody: null, error};
     }
 
 };

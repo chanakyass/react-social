@@ -68,12 +68,10 @@ const User = () => {
           else {
 
             const { error } = body
-            throw error;
+            handleError({ error });
           }
           
-        })).catch(error => {
-          handleError({ error });
-        })
+        }))
 
 
         if (loggedInUser.id === parseInt(id)) {

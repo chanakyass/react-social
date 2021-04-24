@@ -5,6 +5,7 @@ import  history  from '../../app-history'
 import { withRouter } from 'react-router-dom'
 import { Form, Col, Button } from 'react-bootstrap';
 import baseURI from "../../api-config";
+import { handleError } from "../error/error-handling.js";
 
 const Login = () => {
 
@@ -72,51 +73,57 @@ const Login = () => {
               `${baseURI}/api/v1/public/login`,
               requestOptions
             ).then((response) => {
-                response.json().then(body => {
-                  if (response.status === 200) {
-                    const { data } = body
-                      const jwt = response.headers.get('Authorization')
+              response.json().then(body => {
+                if (response.status === 200) {
+                  const { data } = body
+                  const jwt = response.headers.get('Authorization')
  
-                      let expires = new Date();
-                      expires.setDate(
-                        expires.getDate() + 7
-                      );
+                  let expires = new Date();
+                  expires.setDate(
+                    expires.getDate() + 7
+                  );
 
-                      cookie.save('jwt', jwt, { path: '/', expires: expires })
-                      cookie.save('current_user', data, { path: '/', expires: expires })
+                  cookie.save('jwt', jwt, { path: '/', expires: expires })
+                  cookie.save('current_user', data, { path: '/', expires: expires })
                       
                     
-                      history.push('/')
-                    }
-                    else {
-                    const { error } = body
-                        changeState({
-                          ...state,
-                          hasError: true,
-                          preprocessingState: {
-                            ...state.preprocessingState,
-                            failureDetails: {
-                              ...state.preprocessingState.failureDetails,
-                              fieldErrors: {
-                                usernameError: '',
-                                passwordError: ''
-                              }
-                            },
-                            isSuccess: true
+                  history.push('/')
+                }
+                else {
+                  const { error } = body
+                  changeState({
+                    ...state,
+                    hasError: true,
+                    preprocessingState: {
+                      ...state.preprocessingState,
+                      failureDetails: {
+                        ...state.preprocessingState.failureDetails,
+                        fieldErrors: {
+                          usernameError: '',
+                          passwordError: ''
+                        }
+                      },
+                      isSuccess: true
                             
-                          },
-                          postprocessingState: {
-                            ...state.postprocessingState,
-                            isSuccess: false,
-                            failureDetails: {
-                              failureMessage: error.message,
-                              details: error.details
-                            }
-                          }
-                        });
+                    },
+                    postprocessingState: {
+                      ...state.postprocessingState,
+                      isSuccess: false,
+                      failureDetails: {
+                        failureMessage: error.message,
+                        details: error.details
+                      }
                     }
+                  });
+                }
+              })
+                .catch(error => {
+                  handleError({ error });
+                });
+            })
+              .catch(error => {
+                handleError({ error });
               });
-            });
         } else {
           changeState({
             ...state,
@@ -145,13 +152,14 @@ const Login = () => {
               <h5>Login</h5>
             </div>
 
-            <Form.Group as={Col} md={12} >
+            <Form.Group as={Col} md={12}>
               <Form.Label>Username</Form.Label>
               <Form.Control
                 id="username"
                 name="username"
                 type="email"
                 placeholder="Enter the email id you logged in with"
+                autoComplete="email"
                 value={creds.username}
                 isInvalid={
                   state.hasError &&
@@ -168,7 +176,7 @@ const Login = () => {
               </Form.Control.Feedback>
             </Form.Group>
 
-            <Form.Group as={Col} md={12} >
+            <Form.Group as={Col} md={12}>
               <Form.Label>Password</Form.Label>
               <Form.Control
                 id="password"
@@ -177,6 +185,7 @@ const Login = () => {
                 placeholder="Password"
                 value={creds.password}
                 onChange={changeDefaults}
+                autoComplete="current-password"
                 isInvalid={
                   state.hasError &&
                   state.preprocessingState.failureDetails.fieldErrors

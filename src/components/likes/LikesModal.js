@@ -1,40 +1,35 @@
 import { Card, Modal, ListGroup, Button } from 'react-bootstrap';
-import { UserDetailsPopup } from '../UserDetailsPopup';
+import  UserDetailsPopup  from '../UserDetailsPopup';
 import { useEffect, useState, useCallback } from 'react';
 import { loadLikesOnPost, loadLikesOnComment } from "./like-service";
 import { handleError } from '../error/error-handling';
 
 
-export const LikesModal = ({ itemId, itemType, setShow, show }) => {
+const LikesModal = ({ itemId, itemType, setShow, show }) => {
 
   const [likes, setLikes] = useState({ dataList: [], currentPageNo: 0, noOfPages: 0 })
     
   const handleClose = () => setShow(false);
   
-  const loadOnRender = useCallback(async () => {
+  const loadOnRender = useCallback( () => {
     if (show === true) {
-          
-      try {
-        let body = null;
-        if (itemType === "POST") body = await loadLikesOnPost(itemId, 0);
-        else body = await loadLikesOnComment(itemId, 0);
-        if ("error" in body) {
-          const { error } = body;
-          throw error;
+      let promise;
+        if (itemType === "POST") promise =  loadLikesOnPost(itemId, 0);
+      else promise = loadLikesOnComment(itemId, 0);
+      
+      promise.then(({ ok, responseBody: body, error }) => {
+        if (!ok) {
+          handleError({ error });
         } else {
           setLikes(body);
         }
-      } catch (error) {
-        handleError({ error });
-      }
-          
+      });
+  
     }
   }, [itemId, itemType, show]);
 
     useEffect(() => {
-      (async () => {
-        await loadOnRender();
-      })();
+      loadOnRender();
 
 }, [loadOnRender])
 
@@ -75,3 +70,5 @@ return (
     </>
   );
 };
+
+export default LikesModal;

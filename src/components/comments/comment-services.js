@@ -3,7 +3,6 @@ import cookie from "react-cookies";
 import moment from 'moment';
 import { RestMethod } from '../../enums'
 import baseURI from '../../api-config'
-import { handleError } from "../error/error-handling";
 
     
 
@@ -65,11 +64,13 @@ export const commentsCUD = async (method, commentId, postId, itemId, commentCont
     );
 
     let body = await response.json();
+    if ("error" in body)
+      throw body.error;
 
-    return body;
+    return {ok: true, responseBody: body, error: null};
   }
   catch (error) {
-    handleError({error})
+    return { ok: false, responseBody: null, error };
   }
 };
 
@@ -96,10 +97,14 @@ export const loadComments = async (postId, commentId, pageNo) => {
       )
       
       const body = await response.json()
-      return body;
+
+      if ("error" in body)
+        throw body.error;
+      
+      return { ok: true, responseBody: body, error: null };
     }
     catch (error) {
-      handleError({ error });
+      return { ok: false, responseBody: null, error: error };
     }
 
   
@@ -129,8 +134,14 @@ export const likeUnlikeCommentCUD = async (comment, action) => {
       requestOptions
     );
     const body = await response.json();
-    return body;
+    if ("error" in body)
+      throw body.error;
+    
+    return { ok: true, responseBody: body, error: null };
+    
   } catch (error) {
-    handleError({ error });
+    
+    return { ok: false, responseBody: null, error: error };
+
   }
 };

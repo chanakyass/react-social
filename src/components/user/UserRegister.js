@@ -138,6 +138,7 @@ const UserRegister = () => {
                   type="email"
                   placeholder="Enter email"
                   value={user.email}
+                  autoComplete="email"
                   onChange={changePerson}
                   isInvalid={
                     state.hasError &&
@@ -165,6 +166,7 @@ const UserRegister = () => {
                   placeholder="Enter a name you would like to chose for your profile"
                   value={user.profileName}
                   onChange={changePerson}
+                  autoComplete="nickname"
                   isInvalid={
                     state.hasError &&
                     state.preprocessingState.failureDetails.fieldErrors
@@ -187,6 +189,7 @@ const UserRegister = () => {
                   name="password"
                   type="password"
                   placeholder="Password"
+                  autoComplete="new-password"
                   value={user.password}
                   onChange={changePerson}
                   isInvalid={

@@ -9,7 +9,7 @@ import moment from 'moment';
 import React, { useState, useEffect } from "react";
 import { handleError } from "./error/error-handling";
 
-export const CreatePost = React.memo(({
+const CreatePost = React.memo(({
   setShow,
   show,
   method,
@@ -30,28 +30,27 @@ export const CreatePost = React.memo(({
 
   const handleClose = (e) => setShow(false);
 
-    const handlePostCU = async (e, method, editorPost) => {
+    const handlePostCU =  (e, method, editorPost) => {
         const postId = editorPost.id;
         const postHeading = editorPost.postHeading.trim();
       const postBody = editorPost.postBody.trim();
 
-      try {
-      
-        if (postBody === "") {
-          //error
-        } else {
-    
-          const responseBody = await postsCUD(
-            method,
-            postId,
-            postHeading,
-            postBody
-          );
 
-          if ("error" in responseBody) {
-            const { error } = responseBody;
+      
+      if (postBody === "") {
+        //error
+      } else {
+    
+        postsCUD(
+          method,
+          postId,
+          postHeading,
+          postBody
+        ).then(({ ok, responseBody, error }) => {
+
+          if (!ok) {
             handleClose(e);
-            throw error;
+            handleError({ error });
           
           } else {
             const { data } = responseBody;
@@ -71,7 +70,9 @@ export const CreatePost = React.memo(({
                         postedAtTime: moment.utc().toISOString(),
                         modifiedAtTime: null,
                         noOfComments: 0,
+                        postLikedByCurrentuser: false,
                         noOfLikes: 0,
+                        noOfComments: 0
                       },
                       ...posts.dataList,
                     ],
@@ -112,13 +113,12 @@ export const CreatePost = React.memo(({
 
 
           }
-        }
-        handleClose(e);
-        setEditorPost({ id: null, postHeading: '', postBody: '' });
+          
+          handleClose(e);
+          setEditorPost({ id: null, postHeading: '', postBody: '' });
+        })
       }
-      catch (error) {
-        handleError({ error });
-      }
+     
   };
 
   return (
@@ -188,3 +188,5 @@ export const CreatePost = React.memo(({
     </>
   );
 });
+
+export default CreatePost;

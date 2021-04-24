@@ -14,17 +14,17 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faThumbsUp, faReply } from "@fortawesome/free-solid-svg-icons";
 import { faThumbsUp as faRegularThumbsUp, faEdit, faCommentDots, faWindowClose } from "@fortawesome/free-regular-svg-icons";
 import { RestMethod } from "../../enums";
-import { UserDetailsPopup } from '../UserDetailsPopup'
-import { Comment } from '../comments/Comment'
-import { CreatePost } from "../CreatePost";
-import { LikesModal } from "../likes/LikesModal";
+import  UserDetailsPopup  from '../UserDetailsPopup'
+import  Comment  from '../comments/Comment'
+import  CreatePost  from "../CreatePost";
+import  LikesModal  from "../likes/LikesModal";
 import moment from 'moment';
 import { convertDateToReadableFormat } from '../utility/handle-dates'
-import { CustomToggle } from '../utility/CustomToggle';
+import  CustomToggle  from '../utility/CustomToggle';
 import { debounced } from "../utility/debouncer";
 import { AlertContext } from "../../App";
 
-export const Post = React.memo(({ post, setPosts }) => {
+const Post = React.memo(({ post, setPosts }) => {
   const currentUser = cookie.load("current_user");
 
   const [comments, setComments] = useState({});
@@ -39,7 +39,7 @@ export const Post = React.memo(({ post, setPosts }) => {
 
   const [commentsAccordianOpen, setCommentsAccordianOpen] = useState(false);
 
-  const [localLike, setLocalLike] = useState({ postLikedByCurrentUser: post.postLikedByCurrentUser, noOfLikes: post.noOfLikes });
+  const [localLike, setLocalLike] = useState({ postLikedByCurrentUser: post.postLikedByCurrentUser || false, noOfLikes: post.noOfLikes || 0 });
 
   const showAlertWithMessage = useContext(AlertContext);
 
@@ -71,30 +71,84 @@ export const Post = React.memo(({ post, setPosts }) => {
   }, [setPosts, post])
 
 
-  const handlePostDelete = async (e, postId) => {
+  const handlePostDelete = (e, postId) => {
     e.preventDefault();
-    const responseBody = await postsCUD(
+    postsCUD(
       RestMethod.DELETE,
       postId,
       null,
       null
-    );
-    if ("error" in responseBody) {
-      const { error } = responseBody;
-      handleError({ error });
-    } else {
+    ).then(({ ok, responseBody, error }) => {
+      if (!ok) {
+        handleError({ error });
+      } else {
 
-      setPosts((posts) => {
-        return {
-          ...posts,
-          dataList: posts.dataList.filter(iterPost => iterPost.id !== postId)
-        };
-      });
-    }
+        setPosts((posts) => {
+          return {
+            ...posts,
+            dataList: posts.dataList.filter(iterPost => iterPost.id !== postId)
+          };
+        });
+      }
+    });
   }
 
+  const handleMovingPartsOnClick = useCallback((e, action, details) => {
+    const { pageNo } = details || {};
+      switch (action) {
+        case "REPLY":
+          replyBarRef.current.style.display = "block";
+          reactionBarRef.current.style.display = "none";
+          replyInputRef.current.value = "";
+          replyInputRef.current.focus();
+
+          break;
+        case "PRE_REPLY_SUBMIT":
+          setShowGetRepliesLoad(true);
+          replyBarRef.current.style.display = "none";
+          reactionBarRef.current.style.display = "inline-block";
+
+          break;
+
+        case "POST_REPLY_SUBMIT":
+          setShowGetRepliesLoad(false);
+          if (commentsAccordianOpen === false) {
+            commentsDotRef.current.click();
+          }
+          break;
+        
+        case "PRE_GET_COMMENTS":
+          if (pageNo > 0) {
+            if (paginationRef.current) {
+              paginationRef.current.children[0].style.display = "none";
+              paginationRef.current.children[1].style.display = "block";
+            }
+          }
+          else {
+            setShowGetRepliesLoad(true);
+          }
+          break;
+        
+        case "POST_GET_COMMENTS":
+          if (pageNo > 0) {
+            if (paginationRef.current) {
+              paginationRef.current.children[1].style.display = "none";
+              paginationRef.current.children[0].style.display = "block";
+            }
+          }
+          else {
+            setShowGetRepliesLoad(false);
+          }
+          break;
+
+
+        default:
+          console.log("action not supported");
+      }
+    }, [commentsAccordianOpen]);
+
   const handleCreateComment = useCallback(
-    async (e, commentObj) => {
+     (e, commentObj) => {
       let postId = commentObj.postId;
       let commentContent = commentObj.commentContent;
 
@@ -102,115 +156,112 @@ export const Post = React.memo(({ post, setPosts }) => {
 
       e.preventDefault();
 
+      handleMovingPartsOnClick(e, "PRE_REPLY_SUBMIT");
+
       if (commentContent === "") {
         replyInputRef.current.focus();
       } else {
-        const responseBody = await commentsCUD(
-          RestMethod.POST,
-          null,
-          postId,
-          null,
-          commentContent
-        );
 
-        if (responseBody) {
-          if ("error" in responseBody) {
-            const { error } = responseBody;
-            throw error;
-          } else {
-            const { data } = responseBody;
+          commentsCUD(
+            RestMethod.POST,
+            null,
+            postId,
+            null,
+            commentContent
+          ).then(({ ok, responseBody, error }) => {
+            if (!ok) {
+              handleError({error})
+            } else {
+              const { data } = responseBody;
 
-            if (comments && comments[postProp]) {
-              let newComment = {
-                id: data.resourceId,
-                commentedOn: { id: postId },
-                commentContent: commentContent,
-                owner: currentUser,
-                commentLikedByCurrentUser: false,
-                noOfLikes: 0,
-                noOfReplies: 0,
-              };
+              if (comments && comments[postProp]) {
+                let newComment = {
+                  id: data.resourceId,
+                  commentedOn: { id: postId },
+                  commentContent: commentContent,
+                  owner: currentUser,
+                  commentLikedByCurrentUser: false,
+                  noOfLikes: 0,
+                  noOfReplies: 0,
+                };
 
-              newComment = {
-                ...newComment,
-                commentedAtTime: moment.utc().toISOString(),
-                modifiedAtTime: null,
-              };
+                newComment = {
+                  ...newComment,
+                  commentedAtTime: moment.utc().toISOString(),
+                  modifiedAtTime: null,
+                };
 
-              let newDataList = [newComment, ...comments[postProp].dataList];
+                let newDataList = [
+                  newComment,
+                  ...comments[postProp].dataList,
+                ];
 
-              setComments({
-                ...comments,
-                [postProp]: {
-                  ...comments[postProp],
-                  dataList: newDataList,
-                },
-              });
+                setComments({
+                  ...comments,
+                  [postProp]: {
+                    ...comments[postProp],
+                    dataList: newDataList,
+                  },
+                });
+              }
+              adjustNoOfCommentsInParentPost(RestMethod.POST, 1);
+              handleMovingPartsOnClick(e, "POST_REPLY_SUBMIT");
             }
-            adjustNoOfCommentsInParentPost(RestMethod.POST, 1);
-          }
-        }
+          })
+
       }
 
       setCommentContent("");
     },
-    [comments, currentUser, adjustNoOfCommentsInParentPost]
+    [comments, currentUser, adjustNoOfCommentsInParentPost, handleMovingPartsOnClick]
   );
 
   
 
-  const handleGetComments = useCallback(async (e, postId, pageNo) => {
+  const handleGetComments = useCallback( (e, postId, pageNo) => {
     const postProp = `post${postId}`.trim();
 
     if (postId) {
-      const responseBody = await loadComments(postId, null, pageNo);
-      if ("error" in responseBody) {
-        const { error } = responseBody;
-        handleError({ error });
-      } else {
-        if (!comments[postProp]) {
-          setComments({ ...comments, [postProp]: responseBody });
-        } else if (comments[postProp].currentPageNo !== pageNo) {
-          setComments({
-            ...comments,
-            [postProp]: {
-              currentPageNo: responseBody.currentPageNo,
-              noOfPages: responseBody.noOfPages,
-              dataList: [
-                ...comments[postProp].dataList,
-                ...responseBody.dataList,
-              ],
-            },
-          });
-        }
-      }
-    }
-  }, [comments]);
+      
+      handleMovingPartsOnClick(e, "PRE_GET_COMMENTS", { pageNo: pageNo});
+      
+      loadComments(postId, null, pageNo)
+      
+        .then(({ ok, responseBody, error }) => {
+          
+          if (!ok) {
+            handleError({ error });
+          } else {
+            if (!comments[postProp]) {
+              setComments({ ...comments, [postProp]: responseBody });
+            } else if (comments[postProp].currentPageNo !== pageNo) {
+              setComments({
+                ...comments,
+                [postProp]: {
+                  currentPageNo: responseBody.currentPageNo,
+                  noOfPages: responseBody.noOfPages,
+                  dataList: [
+                    ...comments[postProp].dataList,
+                    ...responseBody.dataList,
+                  ],
+                },
+              });
+            }
+            handleMovingPartsOnClick(e, "POST_GET_COMMENTS", {
+              pageNo: pageNo,
+            });
+          }
+      })
 
-  const handleCommentPaginationMovingParts = useCallback(
-    async (e) => {
-      if (paginationRef.current) {
-        paginationRef.current.children[0].style.display = "none";
-        paginationRef.current.children[1].style.display = "block";
-      }
-      await handleGetComments(
-        e,
-        post.id,
-        comments[`post${post.id}`].currentPageNo + 1
-      );
-      if (paginationRef.current) {
-        paginationRef.current.children[1].style.display = "none";
-        paginationRef.current.children[0].style.display = "block";
-      }
-    },
-    [handleGetComments, comments, post.id]
-  );
+    }
+  }, [comments, handleMovingPartsOnClick]);
+
 
   const handleLikeUnlikePost = (e, post, action) => {
     likeUnlikeCUD(post, action)
-        .then((responseBody) => {
-          if ("error" in responseBody) {
-            const { error } = responseBody;
+        .then(({ok, responseBody, error}) => {
+          if (!ok) {
+
             if (
               error.statusCode === 500 &&
               error.exceptionType === "API_SPECIFIC_EXCEPTION"
@@ -243,28 +294,7 @@ export const Post = React.memo(({ post, setPosts }) => {
     };
   
 
-  const handleMovingPartsOnClick = (e, action) => {
-    switch (action) {
-      case "REPLY":
-          
-        replyBarRef.current.style.display = "block";
-        reactionBarRef.current.style.display = "none";
-        replyInputRef.current.value = "";
-        replyInputRef.current.focus();
-          
-        break;
-      case "REPLY_SUBMIT":
-          
- 
-        replyBarRef.current.style.display = "none";
-        reactionBarRef.current.style.display = "inline-block";
-            
-          
-        break;
-        
-      default: console.log('action not supported');
-    }
-  };
+
   
   const handleMovingPartsForKeys = (e) => {
     if (e.key === 'Escape') {
@@ -273,28 +303,6 @@ export const Post = React.memo(({ post, setPosts }) => {
     }
   }
 
-  const commentOnPost = useCallback((e, commentObj) => {
-
-    setShowGetRepliesLoad(true);
-    handleMovingPartsOnClick(e, "REPLY_SUBMIT");
-    handleCreateComment(e, commentObj).then(() => {
-      setShowGetRepliesLoad(false);
-      if (commentsAccordianOpen === false) {
-        commentsDotRef.current.click();
-      }
-
-    })
-      .catch((error) => {
-        handleError({ error });
-      })
-  }, [commentsAccordianOpen, handleCreateComment]);
-
-  const getCommentsOnPost = useCallback((e, postId) => {
-
-    setShowGetRepliesLoad(true);
-    handleGetComments(e, postId, 0).then(() => setShowGetRepliesLoad(false));
-
-  }, [handleGetComments])
   
 
 
@@ -355,7 +363,6 @@ export const Post = React.memo(({ post, setPosts }) => {
               border: "none",
               margin: "none",
             }}
-           
           >
             <div
               ref={reactionBarRef}
@@ -438,12 +445,14 @@ export const Post = React.memo(({ post, setPosts }) => {
                     post.noOfComments > 0 &&
                     (!comments || !comments[`post${post.id}`])
                   ) {
-                    getCommentsOnPost(e, post.id);
+                    handleGetComments(e, post.id, 0)
                   }
                   if (post.noOfComments > 0)
                     setCommentsAccordianOpen(
-                      (commentsAccordianOpen) => !commentsAccordianOpen
+                      (commentsAccordianOpen) =>
+                        !commentsAccordianOpen
                     );
+
                 }}
               >
                 <CustomToggle
@@ -527,7 +536,7 @@ export const Post = React.memo(({ post, setPosts }) => {
                   id={`submitCommentOn${post.id}`}
                   name={`submitCommentOn${post.id}`}
                   onClick={(e) =>
-                    commentOnPost(e, {
+                    handleCreateComment(e, {
                       commentId: null,
                       postId: post.id,
                       commentContent: commentContent,
@@ -573,7 +582,13 @@ export const Post = React.memo(({ post, setPosts }) => {
                       <button
                         style={{ display: "block" }}
                         className="link-button"
-                        onClick={handleCommentPaginationMovingParts}
+                        onClick={(e) =>
+                          handleGetComments(
+                            e,
+                            post.id,
+                            comments[`post${post.id}`].currentPageNo + 1
+                          )
+                        }
                       >
                         load more comments
                       </button>
@@ -592,3 +607,5 @@ export const Post = React.memo(({ post, setPosts }) => {
     </div>
   );
 });
+
+export default Post;

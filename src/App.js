@@ -92,6 +92,7 @@ function App() {
             }
           />
           <Route exact path="/auth_error" component={ErrorPage} />
+          <Route exact path="/conn_error" component={ ErrorPage} />
           <Route
             exact
             path="*"

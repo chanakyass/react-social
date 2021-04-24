@@ -1,7 +1,7 @@
 import { OverlayTrigger, Popover } from 'react-bootstrap'
 import { Link } from 'react-router-dom'
 
-export function UserDetailsPopup(props) {
+function UserDetailsPopup(props) {
   const { owner } = props;
 
   return (
@@ -26,3 +26,5 @@ export function UserDetailsPopup(props) {
     </OverlayTrigger>
   );
 }
+
+export default UserDetailsPopup;
