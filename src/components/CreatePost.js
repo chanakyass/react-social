@@ -71,8 +71,7 @@ const CreatePost = React.memo(({
                         modifiedAtTime: null,
                         noOfComments: 0,
                         postLikedByCurrentuser: false,
-                        noOfLikes: 0,
-                        noOfComments: 0
+                        noOfLikes: 0
                       },
                       ...posts.dataList,
                     ],
