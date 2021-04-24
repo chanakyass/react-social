@@ -12,48 +12,67 @@ import {debounced} from '../utility/debouncer'
 const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) => {
 
 
-  const pagePostsRef = useRef();
   const paginationRef = useRef();
 
-  const [pagePosts, setPosts] = useState({
+  const [posts, setPosts] = useState({
     currentPageNo: -1,
     noOfPages: -1,
     dataList: [],
   });
 
+  const lastScrollTopRef = useRef(window.pageYOffset || getDocScrollTop());
 
-  pagePostsRef.current = {currentPageNo: pagePosts.currentPageNo, noOfPages: pagePosts.noOfPages};
-
-
-  const handlePagination = useCallback( () => {
-
+  const handlePagination = useCallback(() => {
     if (paginationRef.current) {
-      if (
-        pagePostsRef.current.currentPageNo <
-        pagePostsRef.current.noOfPages - 1
-      ) {
-        loadUserFeed(pagePostsRef.current.currentPageNo + 1)
-          .then(({ ok, responseBody: body, error }) => {
+      if (posts.currentPageNo < posts.noOfPages - 1) {
+        loadUserFeed(posts.currentPageNo + 1).then(
+          ({ ok, responseBody: body, error }) => {
             if (!ok) {
               handleError({ error });
             } else {
               const { dataList, currentPageNo, noOfPages } = body;
               setPosts({
-                ...pagePostsRef.current,
-                dataList: [...pagePostsRef.current.dataList, ...dataList],
+                ...posts,
+                dataList: [...posts.dataList, ...dataList],
                 currentPageNo: currentPageNo,
                 noOfPages: noOfPages,
               });
-              pagePostsRef.current = { currentPageNo: currentPageNo, noOfPages: noOfPages };
             }
-          })
-
+          }
+        );
       } else {
         paginationRef.current.style.display = "block";
       }
     }
+  }, [posts]);
 
-  }, []);
+
+  const handleScroll = useCallback(
+    (e) => {
+      var st = window.pageYOffset || getDocScrollTop();
+      if (st > lastScrollTopRef.current) {
+        const scrollPos = window.scrollY + window.innerHeight;
+        const docHeight = getDocHeight();
+        if (scrollPos > 0.80 * docHeight) setTimeout(handlePagination, 250);
+      }
+
+      lastScrollTopRef.current = st <= 0 ? 0 : st;
+    },
+    [handlePagination]
+  );
+
+  const initialFeedLoad = useCallback(  () => {
+
+      loadUserFeed(0).then(({ ok, responseBody: body, error }) => {
+        if (!ok) {
+          handleError({ error });
+        } else {
+          setPosts({ ...posts, ...body });
+        }
+      });
+
+  }, [posts])
+
 
   useEffect(() => {
 
@@ -61,27 +80,14 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
       document.body.style.display = 'none';
     };
 
-    const handleScroll = (e) => {
-      const scrollPos = window.scrollY + window.innerHeight;
-      const docHeight = getDocHeight();
-      if(scrollPos > 0.85*docHeight)
-        setTimeout(handlePagination, 1000);
-      
-    };
+    window.removeEventListener("scroll", (e) =>
+      debounced(150, handleScroll, e)
+    );
 
-    if (pagePostsRef.current.currentPageNo === -1) {
-      loadUserFeed(0).then(({ ok, responseBody: body, error }) => {
-        if (!ok) {
-          handleError({ error });
-        } else {
-          const { currentPageNo, noOfPages } = body;
-          pagePostsRef.current = {currentPageNo: currentPageNo, noOfPages: noOfPages}
-          setPosts(body);
-          window.addEventListener("scroll", (e) =>
-            debounced(150, handleScroll, e)
-          );
-        }
-      });
+    window.addEventListener("scroll", (e) => debounced(150, handleScroll, e));
+
+    if (posts.currentPageNo === -1) {      
+         initialFeedLoad();
     }
 
     return () => {
@@ -90,7 +96,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
       );
       window.onbeforeunload = null;
     };
-  }, [handlePagination]);
+  }, [handlePagination, posts, handleScroll, initialFeedLoad]);
 
   function getDocHeight() {
     let D = document;
@@ -104,19 +110,31 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
     );
   }
 
+  function getDocScrollTop() {
+    let D = document;
+    return Math.min(
+      D.body.scrollTop,
+      D.documentElement.scrollTop,
+      D.body.offsetTop,
+      D.documentElement.offsetTop,
+      D.body.clientTop,
+      D.documentElement.clientTop
+    );
+  }
+
 
   return (
     <div>
       {addPostButtonClicked === true && <CreatePost setShow={ setAddPostButtonClicked} show={addPostButtonClicked} method={RestMethod.POST} setPosts={setPosts} post={null}  />}
       <div className="col-md-5 col-sm-5 col-lg-5 my-3 mx-auto">
-        {pagePosts.dataList && pagePosts.dataList.length > 0 ? (
-          pagePosts.dataList.map((post, index) => {
+        {posts.dataList && posts.dataList.length > 0 ? (
+          posts.dataList.map((post, index) => {
             return (
               <Post key={`post${post.id}`} post={post} setPosts={setPosts} />
             );
           })
         ) : (
-            pagePosts.currentPageNo === -1 && <><LoadingPage noOfDivs={5}/></>
+            posts.currentPageNo === -1 && <><LoadingPage noOfDivs={5}/></>
         )}
       </div>
       <div>
