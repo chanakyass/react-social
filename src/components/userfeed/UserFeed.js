@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react'
 
 import { loadUserFeed } from '../post/post-service'
 import  Post  from '../post/Post'
-import  CreatePost  from '../CreatePost';
+import  CreatePost  from '../post/CreatePost';
 import { RestMethod } from '../../enums'
 import { LoadingPage } from '../utility/LoadingPage'
 import { handleError } from '../error/error-handling';

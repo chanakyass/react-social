@@ -9,7 +9,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faThumbsUp, faReply, faLongArrowAltRight } from "@fortawesome/free-solid-svg-icons";
 import { faThumbsUp as faRegularThumbsUp, faEdit, faWindowClose } from "@fortawesome/free-regular-svg-icons";
 import { RestMethod } from "../../enums";
-import  UserDetailsPopup  from "../UserDetailsPopup";
+import  UserDetailsPopup  from "../utility/UserDetailsPopup";
 import  LikesModal  from '../likes/LikesModal'
 import { convertDateToReadableFormat } from '../utility/handle-dates';
 import  CustomToggle  from '../utility/CustomToggle';

@@ -14,9 +14,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faThumbsUp, faReply } from "@fortawesome/free-solid-svg-icons";
 import { faThumbsUp as faRegularThumbsUp, faEdit, faCommentDots, faWindowClose } from "@fortawesome/free-regular-svg-icons";
 import { RestMethod } from "../../enums";
-import  UserDetailsPopup  from '../UserDetailsPopup'
+import  UserDetailsPopup  from '../utility/UserDetailsPopup'
 import  Comment  from '../comments/Comment'
-import  CreatePost  from "../CreatePost";
+import  CreatePost  from "./CreatePost";
 import  LikesModal  from "../likes/LikesModal";
 import moment from 'moment';
 import { convertDateToReadableFormat } from '../utility/handle-dates'

@@ -1,5 +1,5 @@
 import { Card, Modal, ListGroup, Button } from 'react-bootstrap';
-import  UserDetailsPopup  from '../UserDetailsPopup';
+import  UserDetailsPopup  from '../utility/UserDetailsPopup';
 import { useEffect, useState, useCallback } from 'react';
 import { loadLikesOnPost, loadLikesOnComment } from "./like-service";
 import { handleError } from '../error/error-handling';
