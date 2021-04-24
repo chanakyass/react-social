@@ -51,7 +51,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
       if (st > lastScrollTopRef.current) {
         const scrollPos = window.scrollY + window.innerHeight;
         const docHeight = getDocHeight();
-        if (scrollPos > 0.80 * docHeight) handlePagination();
+        if (scrollPos > 0.65 * docHeight) handlePagination();
       }
 
       lastScrollTopRef.current = st <= 0 ? 0 : st;
