@@ -85,6 +85,7 @@ margin-right: 1rem;
   width: 100%;
   max-width: 100%; */
   text-align: center;
+  margin-bottom: 0.5rem;
 }
 
 .spinner > div {

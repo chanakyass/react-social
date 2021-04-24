@@ -21,6 +21,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
     dataList: [],
   });
 
+
   pagePostsRef.current = pagePosts;
 
 
@@ -31,7 +32,6 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
         pagePostsRef.current.currentPageNo <
         pagePostsRef.current.noOfPages - 1
       ) {
-        paginationRef.current.children[0].style.display = "block";
         loadUserFeed(pagePostsRef.current.currentPageNo + 1)
           .then(({ ok, responseBody: body, error }) => {
             if (!ok) {
@@ -44,12 +44,11 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
                 currentPageNo: currentPageNo,
                 noOfPages: noOfPages,
               });
-              paginationRef.current.children[0].style.display = "none";
             }
           })
 
       } else {
-        paginationRef.current.children[1].style.display = "block";
+        paginationRef.current.style.display = "block";
       }
     }
 
@@ -62,9 +61,11 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
     };
 
     const handleScroll = (e) => {
-      if (window.scrollY + window.innerHeight === getDocHeight()) {
-        handlePagination();
-      }
+      const scrollPos = window.scrollY + window.innerHeight;
+      const docHeight = getDocHeight();
+      if(scrollPos > 0.85*docHeight)
+        setTimeout(handlePagination(), 1000);
+      
     };
 
     if (pagePostsRef.current.currentPageNo === -1) {
@@ -74,7 +75,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
         } else {
           setPosts(body);
           window.addEventListener("scroll", (e) =>
-            debounced(300, handleScroll, e)
+            debounced(150, handleScroll, e)
           );
         }
       });
@@ -82,7 +83,7 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
 
     return () => {
       window.removeEventListener("scroll", (e) =>
-        debounced(300, handleScroll, e)
+        debounced(150, handleScroll, e)
       );
       window.onbeforeunload = null;
     };
@@ -115,13 +116,8 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
             pagePosts.currentPageNo === -1 && <><LoadingPage noOfDivs={5}/></>
         )}
       </div>
-      <div ref={paginationRef} >
-        <div className="spinner" style={{ display: 'none',backgroundColor: 'rgb(241, 241, 241)'}} >
-          <div className="bounce1"></div>
-          <div className="bounce2"></div>
-          <div className="bounce3"></div>
-        </div>
-        <div style={{display: 'none', textAlign: 'center'}}>
+      <div>
+        <div ref={paginationRef} style={{display: 'none', textAlign: 'center'}}>
           No more posts to show
         </div>
       </div>
