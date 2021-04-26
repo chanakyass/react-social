@@ -52,7 +52,6 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
       if (st > lastScrollTopRef.current) {
         const scrollPos = window.scrollY + window.innerHeight;
         const docHeight = getDocHeight();
-        console.log(docHeight);
         if (scrollPos > 0.65 * docHeight
           && docHeight !== prevDocHeightRef.current
         ) {
