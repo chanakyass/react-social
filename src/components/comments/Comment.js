@@ -20,12 +20,14 @@ import { debounced } from "../utility/debouncer";
 
 const Comment = React.memo(
   ({
-    postId,
-    parentCommentId,
+    post,
+    parentComment,
     comment,
     setParentComments,
     adjustRepliesInHeirarchy,
     adjustNoOfCommentsInParentPost,
+    handleMovingPartsOnClickPost,
+    handleMovingPartsOnClickParent
   }) => {
     const currentUser = cookie.load("current_user");
 
@@ -34,9 +36,12 @@ const Comment = React.memo(
     const [showLikesModal, setShowLikesModal] = useState(false);
     const [showGetRepliesLoad, setShowGetRepliesLoad] = useState(false);
     const [repliesAccordionOpen, setRepliesAccordionOpen] = useState(false);
-    const [localLike, setLocalLike] = useState({commentLikedByCurrentUser: comment.commentLikedByCurrentUser, noOfLikes: comment.noOfLikes});
+    const [localLike, setLocalLike] = useState({
+      commentLikedByCurrentUser: comment.commentLikedByCurrentUser,
+      noOfLikes: comment.noOfLikes,
+    });
 
-    const showAlertWithMessage = useContext(AlertContext)
+    const showAlertWithMessage = useContext(AlertContext);
 
     let replyBarRef = useRef(null);
     let reactionBarRef = useRef(null);
@@ -47,6 +52,14 @@ const Comment = React.memo(
     let updateInputRef = useRef(null);
     let paginationRef = useRef(null);
     let likeRef = useRef(comment.commentLikedByCurrentUser);
+
+    const parentCommentId = parentComment ? parentComment.id: null;
+    const postId = post.id;
+
+    
+    const parentCommentRepliesCount = parentComment
+      ? parentComment.noOfReplies
+      : null;
 
     const adjustNoOfReplies = useCallback(
       (method, childReplyId, noOfRepliesAffected) => {
@@ -133,15 +146,16 @@ const Comment = React.memo(
             setShowGetRepliesLoad(true);
             replyBarRef.current.style.display = "none";
             reactionBarRef.current.style.display = "block";
-
+            console.log(showGetRepliesLoad);
             break;
 
           case "POST_REPLY_SUBMIT":
-            setShowGetRepliesLoad(false);
             if (repliesAccordionOpen === false) {
-              setRepliesAccordionOpen(true);
               repliesDotRef.current.click();
             }
+
+            setShowGetRepliesLoad(false);
+
             break;
 
           case "UPDATE":
@@ -177,19 +191,25 @@ const Comment = React.memo(
               }
             } else {
               setShowGetRepliesLoad(false);
-
             }
             break;
+          
+          case "DELETE_COMMENT":
+            if (repliesAccordionOpen === true) {
+            repliesDotRef.current.click();
+            setRepliesAccordionOpen(false);
+          }
+          break;
 
           default:
             console.log("method not supported");
         }
       },
-      [repliesAccordionOpen]
+      [repliesAccordionOpen, showGetRepliesLoad]
     );
 
     const handleCommentCUD = useCallback(
-       (e, method, commentObj) => {
+      (e, method, commentObj) => {
         let postId = commentObj.postId;
         let itemId = commentObj.commentId;
         let commentContent = commentObj.commentContent;
@@ -203,14 +223,8 @@ const Comment = React.memo(
             if (commentContent === "") {
               updateCommentRef.current.focus();
             } else {
-              commentsCUD(
-                method,
-                null,
-                postId,
-                itemId,
-                commentContent
-              )
-                .then(({ ok, responseBody, error }) => {
+              commentsCUD(method, null, postId, itemId, commentContent).then(
+                ({ ok, responseBody, error }) => {
                   if (!ok) {
                     handleError({ error });
                   } else {
@@ -236,9 +250,9 @@ const Comment = React.memo(
                         method === RestMethod.POST
                           ? [...comments[postProp].dataList, newComment]
                           : comments[postProp].dataList.map((comment) => {
-                            if (comment.id === itemId) return newComment;
-                            else return comment;
-                          });
+                              if (comment.id === itemId) return newComment;
+                              else return comment;
+                            });
                       return {
                         ...comments,
                         [postProp]: {
@@ -249,21 +263,15 @@ const Comment = React.memo(
                     });
                     handleMovingPartsOnClick(e, "UPDATE_SUBMIT");
                   }
-                });
-
+                }
+              );
             }
 
             break;
 
           case RestMethod.DELETE:
-            commentsCUD(
-              method,
-              null,
-              postId,
-              itemId,
-              null
-            )
-              .then(({ ok, responseBody, error }) => {
+            commentsCUD(method, null, postId, itemId, null).then(
+              ({ ok, responseBody, error }) => {
                 if (!ok) {
                   handleError({ error });
                 } else {
@@ -272,22 +280,27 @@ const Comment = React.memo(
                       ...comments,
                       [postProp]: {
                         ...comments[`post${postId}`],
-                        dataList: comments[
-                          `post${postId}`
-                        ].dataList.filter(
+                        dataList: comments[`post${postId}`].dataList.filter(
                           (comment) => comment.id !== itemId
                         ),
                       },
                     };
                   });
 
+                  if (
+                    post.noOfComments ===
+                    comment.noOfReplies + 1
+                  ) {
+                    handleMovingPartsOnClickPost(e, "DELETE_COMMENT")
+                  }
+
                   adjustNoOfCommentsInParentPost(
                     RestMethod.DELETE,
                     comment.noOfReplies + 1
                   );
                 }
-            })
-
+              }
+            );
 
             break;
           //can do something more here
@@ -301,12 +314,14 @@ const Comment = React.memo(
         setParentComments,
         adjustNoOfCommentsInParentPost,
         comment.noOfReplies,
-        handleMovingPartsOnClick
+        post.noOfComments,
+        handleMovingPartsOnClickPost,
+        handleMovingPartsOnClick,
       ]
     );
 
     const handleReplyCUD = useCallback(
-       (e, method, replyObj) => {
+      (e, method, replyObj) => {
         let commentId = replyObj.parentCommentId;
         let postId = replyObj.postId;
         let itemId = replyObj.commentId;
@@ -327,18 +342,11 @@ const Comment = React.memo(
               replyInputRef.current.focus();
             } else {
               handleMovingPartsOnClick(e, "PRE_REPLY_SUBMIT");
-              commentsCUD(
-                method,
-                commentId,
-                postId,
-                itemId,
-                replyContent
-              )
-                .then(({ ok, responseBody, error }) => {
+              commentsCUD(method, commentId, postId, itemId, replyContent).then(
+                ({ ok, responseBody, error }) => {
                   if (!ok) {
                     handleError({ error });
                   } else {
-                    
                     const { data } = responseBody;
 
                     if (replies && replies[commentProp]) {
@@ -370,10 +378,8 @@ const Comment = React.memo(
                     adjustNoOfReplies(method, commentId, 1);
                     handleMovingPartsOnClick(e, "POST_REPLY_SUBMIT");
                   }
-                });
-              
-              
-
+                }
+              );
             }
 
             break;
@@ -385,77 +391,76 @@ const Comment = React.memo(
             ) {
               updateInputRef.current.focus();
             } else {
-               commentsCUD(
-                method,
-                commentId,
-                postId,
-                itemId,
-                replyContent
-              )
-                .then(({ ok, responseBody, error }) => {
+              commentsCUD(method, commentId, postId, itemId, replyContent).then(
+                ({ ok, responseBody, error }) => {
                   if (!ok) {
-                                
                     handleError({ error });
-                    
                   } else {
                     setParentComments((comments) => {
                       return {
                         ...comments,
                         [commentProp]: {
                           ...comments[commentProp],
-                          dataList: comments[commentProp].dataList.map((reply) => {
-                            if (reply.id === itemId)
-                              return {
-                                ...reply,
-                                commentContent: replyContent,
-                                modifiedAtTime: moment.utc().toISOString(),
-                              };
-                            else return reply;
-                          }),
+                          dataList: comments[commentProp].dataList.map(
+                            (reply) => {
+                              if (reply.id === itemId)
+                                return {
+                                  ...reply,
+                                  commentContent: replyContent,
+                                  modifiedAtTime: moment.utc().toISOString(),
+                                };
+                              else return reply;
+                            }
+                          ),
                         },
                       };
                     });
 
                     handleMovingPartsOnClick(e, "UPDATE_SUBMIT");
-
-                  }  
-              })
-
+                  }
+                }
+              );
             }
 
             break;
 
           case RestMethod.DELETE:
-            commentsCUD(
-              method,
-              commentId,
-              postId,
-              itemId,
-              replyContent
-            ).then(({ ok, responseBody, error }) => {
-              if (!ok) {
-                handleError({ error }); 
-            } else {
-              setParentComments((comments) => {
-                return {
-                  ...comments,
-                  [commentProp]: {
-                    ...comments[`comment${commentId}`],
-                    dataList: comments[`comment${commentId}`].dataList.filter(
-                      (comment) => comment.id !== itemId
-                    ),
-                  },
-                };
-              });
+            commentsCUD(method, commentId, postId, itemId, replyContent).then(
+              ({ ok, responseBody, error }) => {
+                if (!ok) {
+                  handleError({ error });
+                } else {
+                  setParentComments((comments) => {
+                    return {
+                      ...comments,
+                      [commentProp]: {
+                        ...comments[`comment${commentId}`],
+                        dataList: comments[
+                          `comment${commentId}`
+                        ].dataList.filter((comment) => comment.id !== itemId),
+                      },
+                    };
+                  });
 
-              adjustNoOfCommentsInParentPost(RestMethod.DELETE, comment.noOfReplies + 1);
-              adjustRepliesInHeirarchy(
-                method,
-                commentId,
-                comment.noOfReplies + 1
-              );
-            }
-            })
+                  if (parentCommentRepliesCount === (comment.noOfReplies + 1)) {
+                    handleMovingPartsOnClickParent(e, "DELETE_COMMENT");
+                  }
+
+                  adjustNoOfCommentsInParentPost(
+                    RestMethod.DELETE,
+                    comment.noOfReplies + 1
+                  );
+                  adjustRepliesInHeirarchy(
+                    method,
+                    commentId,
+                    comment.noOfReplies + 1
+                  );
+
+                  
+
+                }
+              }
+            );
 
             break;
 
@@ -472,71 +477,68 @@ const Comment = React.memo(
         adjustNoOfReplies,
         adjustRepliesInHeirarchy,
         comment.noOfReplies,
-        handleMovingPartsOnClick
+        parentCommentRepliesCount,
+        handleMovingPartsOnClickParent,
+        handleMovingPartsOnClick,
       ]
     );
 
-    const handleLikeUnlikeComment =  (e, comment, action) => {
+    const handleLikeUnlikeComment = (e, comment, action) => {
+      let prop = null;
 
-        let prop = null;
+      if (comment.parentComment !== null) {
+        prop = `comment${comment.parentComment.id}`;
+      } else {
+        prop = `post${comment.commentedOn.id}`;
+      }
 
-        if (comment.parentComment !== null) {
-          prop = `comment${comment.parentComment.id}`;
-        } else {
-          prop = `post${comment.commentedOn.id}`;
-        }
-
-        likeUnlikeCommentCUD(comment, action)
-          .then(({ok, responseBody, error}) => {
-              if (!ok) {
-                if (
-                  error.statusCode === 500 &&
-                  error.exceptionType === "API_SPECIFIC_EXCEPTION"
-                ) {
-                  let str = error.message;
-                  showAlertWithMessage(str.concat(error.details));
-                  // setParentComments(prevState);
-                } else {
-                  handleError({ error });
-                }
-              } else {
-                setParentComments((comments) => {
-                  let newDataList = comments[prop].dataList.map(
-                    (childReply) => {
-                      if (childReply.id === comment.id) {
-                        return {
-                          ...childReply,
-                          noOfLikes:
-                            action === "like"
-                              ? childReply.noOfLikes + 1
-                              : childReply.noOfLikes - 1,
-                          commentLikedByCurrentUser: action === "like",
-                        };
-                      }
-                      return childReply;
-                    }
-                  );
+      likeUnlikeCommentCUD(comment, action).then(
+        ({ ok, responseBody, error }) => {
+          if (!ok) {
+            if (
+              error.statusCode === 500 &&
+              error.exceptionType === "API_SPECIFIC_EXCEPTION"
+            ) {
+              let str = error.message;
+              showAlertWithMessage(str.concat(error.details));
+              // setParentComments(prevState);
+            } else {
+              handleError({ error });
+            }
+          } else {
+            setParentComments((comments) => {
+              let newDataList = comments[prop].dataList.map((childReply) => {
+                if (childReply.id === comment.id) {
                   return {
-                    ...comments,
-                    [prop]: {
-                      ...comments[prop],
-                      dataList: newDataList,
-                    },
+                    ...childReply,
+                    noOfLikes:
+                      action === "like"
+                        ? childReply.noOfLikes + 1
+                        : childReply.noOfLikes - 1,
+                    commentLikedByCurrentUser: action === "like",
                   };
-                });
-              }
-            
-          })
-
+                }
+                return childReply;
+              });
+              return {
+                ...comments,
+                [prop]: {
+                  ...comments[prop],
+                  dataList: newDataList,
+                },
+              };
+            });
+          }
+        }
+      );
     };
-
 
     const handleGetReplies = useCallback(
       (e, commentId, pageNo) => {
         const commentProp = `comment${commentId}`.trim();
-        handleMovingPartsOnClick(e, "PRE_GET_REPLIES", { pageNo: pageNo});
-        loadComments(null, commentId, pageNo)
-          .then(({ ok, responseBody, error }) => {
+        handleMovingPartsOnClick(e, "PRE_GET_REPLIES", { pageNo: pageNo });
+        loadComments(null, commentId, pageNo).then(
+          ({ ok, responseBody, error }) => {
             if (!ok) {
               handleError({ error });
             } else {
@@ -559,8 +561,8 @@ const Comment = React.memo(
                 pageNo: pageNo,
               });
             }
-          });
-
+          }
+        );
       },
       [replies, handleMovingPartsOnClick]
     );
@@ -825,11 +827,9 @@ const Comment = React.memo(
                       <button
                         className="toggle-button"
                         onClick={(e) => {
-
                           if (comment.noOfReplies > 0)
                             setRepliesAccordionOpen(
-                              (repliesAccordionOpen) =>
-                                !repliesAccordionOpen
+                              (repliesAccordionOpen) => !repliesAccordionOpen
                             );
                           if (
                             (!replies || !replies[`comment${comment.id}`]) &&
@@ -837,8 +837,6 @@ const Comment = React.memo(
                           ) {
                             handleGetReplies(e, comment.id, 0);
                           }
-                          
-
                         }}
                       >
                         <CustomToggle
@@ -893,74 +891,66 @@ const Comment = React.memo(
                     </Form.Group>
                   </div>
                 </Card.Header>
+                {showGetRepliesLoad === true && (
+                  <div className="spinner bg-light ">
+                    <div className="bounce1"></div>
+                    <div className="bounce2"></div>
+                    <div className="bounce3"></div>
+                  </div>
+                )}
 
-                {comment.noOfReplies > 0 ? (
-                  <Accordion.Collapse eventKey={`comment${comment.id}`}>
-                    <Card.Body className="p-0">
-                      {showGetRepliesLoad === true && (
-                        <div className="spinner bg-light">
-                          <div className="bounce1"></div>
-                          <div className="bounce2"></div>
-                          <div className="bounce3"></div>
+                <Accordion.Collapse eventKey={`comment${comment.id}`}>
+                  <Card.Body className="p-0">
+                    {comment.noOfReplies > 0  &&
+                      replies[`comment${comment.id}`.trim()] &&
+                      replies[`comment${comment.id}`].dataList.map(
+                        (reply, index2) => {
+                          return (
+                            <>
+                              <Comment
+                                key={`reply${reply.id}`}
+                                post={post}
+                                parentComment={comment}
+                                comment={reply}
+                                setParentComments={setReplies}
+                                adjustRepliesInHeirarchy={adjustNoOfReplies}
+                                adjustNoOfCommentsInParentPost={
+                                  adjustNoOfCommentsInParentPost
+                                }
+                                handleMovingPartsOnClickParent={handleMovingPartsOnClick}
+                              />
+                            </>
+                          );
+                        }
+                      )}
+
+                    {replies[`comment${comment.id}`.trim()] &&
+                      replies[`comment${comment.id}`].currentPageNo <
+                        replies[`comment${comment.id}`].noOfPages - 1 && (
+                        <div className="bg-light pl-4 pt-2" ref={paginationRef}>
+                          <button
+                            className="link-button"
+                            onClick={(e) =>
+                              handleGetReplies(
+                                e,
+                                comment.id,
+                                replies[`comment${comment.id}`].currentPageNo +
+                                  1
+                              )
+                            }
+                            style={{ display: "block" }}
+                          >
+                            load more replies
+                          </button>
+                          <div className="spinner" style={{ display: "none" }}>
+                            <div className="bounce1"></div>
+                            <div className="bounce2"></div>
+                            <div className="bounce3"></div>
+                          </div>
                         </div>
                       )}
-                      {replies[`comment${comment.id}`.trim()] &&
-                        replies[`comment${comment.id}`].dataList.map(
-                          (reply, index2) => {
-                            return (
-                              <>
-                                <Comment
-                                  key={`reply${reply.id}`}
-                                  postId={postId}
-                                  parentCommentId={comment.id}
-                                  comment={reply}
-                                  setParentComments={setReplies}
-                                  adjustRepliesInHeirarchy={adjustNoOfReplies}
-                                  adjustNoOfCommentsInParentPost={
-                                    adjustNoOfCommentsInParentPost
-                                  }
-                                />
-                              </>
-                            );
-                          }
-                        )}
-
-                      {replies[`comment${comment.id}`.trim()] &&
-                        replies[`comment${comment.id}`].currentPageNo <
-                          replies[`comment${comment.id}`].noOfPages - 1 && (
-                          <div
-                            className="bg-light pl-4 pt-2"
-                            ref={paginationRef}
-                          >
-                            <button
-                              className="link-button"
-                              onClick={(e) =>
-                                handleGetReplies(
-                                  e,
-                                  comment.id,
-                                  replies[`comment${comment.id}`]
-                                    .currentPageNo + 1
-                                )
-                              }
-                              style={{ display: "block" }}
-                            >
-                              load more replies
-                            </button>
-                            <div
-                              className="spinner"
-                              style={{ display: "none" }}
-                            >
-                              <div className="bounce1"></div>
-                              <div className="bounce2"></div>
-                              <div className="bounce3"></div>
-                            </div>
-                          </div>
-                        )}
-                    </Card.Body>
-                  </Accordion.Collapse>
-                ) : (
-                  <></>
-                )}
+                  </Card.Body>
+                </Accordion.Collapse>
               </Card>
             </Accordion>
           </div>

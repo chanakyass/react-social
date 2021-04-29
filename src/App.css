@@ -79,13 +79,26 @@ margin-right: 1rem;
 }
 
 /*Huge thanks to @tobiasahlin at http://tobiasahlin.com/spinkit/ */
+
+.card-accordion {
+max-width: 100%; 
+border-top: none !important;
+padding-bottom: 0.5rem;
+border-radius: 0rem  !important;
+}
+
+.spinner-container {
+padding-left: 20px;
+padding-right: 20px;
+}
+
 .spinner {
   /* height: 100%;
   max-height: 100%;
   width: 100%;
   max-width: 100%; */
   text-align: center;
-  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
 }
 
 .spinner > div {

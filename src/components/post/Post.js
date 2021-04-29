@@ -107,14 +107,16 @@ const Post = React.memo(({ post, setPosts }) => {
           setShowGetRepliesLoad(true);
           replyBarRef.current.style.display = "none";
           reactionBarRef.current.style.display = "inline-block";
-
           break;
 
         case "POST_REPLY_SUBMIT":
-          setShowGetRepliesLoad(false);
           if (commentsAccordianOpen === false) {
             commentsDotRef.current.click();
           }
+
+          setShowGetRepliesLoad(false);
+          
+
           break;
         
         case "PRE_GET_COMMENTS":
@@ -138,6 +140,13 @@ const Post = React.memo(({ post, setPosts }) => {
           }
           else {
             setShowGetRepliesLoad(false);
+          }
+          break;
+        
+        case "DELETE_COMMENT":
+          if (commentsAccordianOpen === true) {
+            commentsDotRef.current.click();
+            setCommentsAccordianOpen(false);
           }
           break;
 
@@ -356,7 +365,7 @@ const Post = React.memo(({ post, setPosts }) => {
       </Card>
 
       <Accordion>
-        <Card style={{ maxWidth: "100%", borderTop: "none" }}>
+        <Card className="card-accordion">
           <Card.Header
             style={{
               background: "none",
@@ -445,14 +454,12 @@ const Post = React.memo(({ post, setPosts }) => {
                     post.noOfComments > 0 &&
                     (!comments || !comments[`post${post.id}`])
                   ) {
-                    handleGetComments(e, post.id, 0)
+                    handleGetComments(e, post.id, 0);
                   }
                   if (post.noOfComments > 0)
                     setCommentsAccordianOpen(
-                      (commentsAccordianOpen) =>
-                        !commentsAccordianOpen
+                      (commentsAccordianOpen) => !commentsAccordianOpen
                     );
-
                 }}
               >
                 <CustomToggle
@@ -460,16 +467,12 @@ const Post = React.memo(({ post, setPosts }) => {
                   attachRef={commentsDotRef}
                   allowToggle={post.noOfComments}
                 >
-                  <>
-                    <FontAwesomeIcon icon={faCommentDots} color="#4A4A4A" />
-                    {post.noOfComments !== 0 && (
-                      <span style={{ color: "#4A4A4A", marginLeft: "0.4rem" }}>
-                        {post.noOfComments}
-                      </span>
-                    )}
-                  </>
-
-                  {/* </FontAwesomeIcon> */}
+                  <FontAwesomeIcon icon={faCommentDots} color="#4A4A4A" />
+                  {post.noOfComments !== 0 && (
+                    <span style={{ color: "#4A4A4A", marginLeft: "0.4rem" }}>
+                      {post.noOfComments}
+                    </span>
+                  )}
                 </CustomToggle>
               </button>
 
@@ -549,29 +552,34 @@ const Post = React.memo(({ post, setPosts }) => {
             </div>
           </Card.Header>
 
-          {post.noOfComments > 0 && (
+          {showGetRepliesLoad === true && (
+            <div className="bg-white spinner-container">
+              <div className="spinner bg-light ">
+                <div className="bounce1"></div>
+                <div className="bounce2"></div>
+                <div className="bounce3"></div>
+              </div>
+            </div>
+          )}
+
+          {
             <Accordion.Collapse eventKey={`post${post.id}`}>
               <Card.Body className="pt-0">
-                {showGetRepliesLoad === true && (
-                  <div className="spinner bg-light">
-                    <div className="bounce1"></div>
-                    <div className="bounce2"></div>
-                    <div className="bounce3"></div>
-                  </div>
-                )}
-                {comments[`post${post.id}`.trim()] &&
+                {post.noOfComments > 0 &&
+                  comments[`post${post.id}`.trim()] &&
                   comments[`post${post.id}`].dataList.map((comment, index2) => {
                     return (
                       <Comment
                         key={`comment${comment.id}`}
-                        postId={post.id}
-                        parentCommentId={null}
+                        post={post}
+                        parentComment={null}
                         comment={comment}
                         setParentComments={setComments}
                         adjustNoOfRepliesInHeirarchy={null}
                         adjustNoOfCommentsInParentPost={
                           adjustNoOfCommentsInParentPost
                         }
+                        handleMovingPartsOnClickPost={handleMovingPartsOnClick}
                       />
                     );
                   })}
@@ -601,7 +609,7 @@ const Post = React.memo(({ post, setPosts }) => {
                   )}
               </Card.Body>
             </Accordion.Collapse>
-          )}
+          }
         </Card>
       </Accordion>
     </div>

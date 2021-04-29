@@ -2,10 +2,9 @@ import { useAccordionToggle } from "react-bootstrap";
 
 function CustomToggle({ children, eventKey, attachRef, allowToggle }) {
     
-    const decoratedOnClick = useAccordionToggle(eventKey, () =>
+    const decoratedOnClick =  useAccordionToggle(eventKey, () =>
     {
 
-        // onClick();
     }
 );
 
@@ -20,7 +19,7 @@ function CustomToggle({ children, eventKey, attachRef, allowToggle }) {
 
         }
       }
-      onClick={ allowToggle > 0 ? decoratedOnClick : null}
+      onClick={ e => allowToggle > 0 ? decoratedOnClick() : null}
       ref = {attachRef}
     >
       {children}
