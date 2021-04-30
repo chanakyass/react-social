@@ -536,6 +536,7 @@ const Post = React.memo(({ post, setPosts }) => {
               <Form.Group>
                 <Button
                   type="submit"
+                  variant="secondary"
                   id={`submitCommentOn${post.id}`}
                   name={`submitCommentOn${post.id}`}
                   onClick={(e) =>

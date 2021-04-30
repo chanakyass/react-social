@@ -223,46 +223,32 @@ const Comment = React.memo(
             if (commentContent === "") {
               updateCommentRef.current.focus();
             } else {
+              setParentComments((comments) => {
+                let newDataList = comments[postProp].dataList.map(
+                        (comment) => {
+                          if (comment.id === itemId)
+                            return {
+                              ...comment,
+                              commentContent: commentContent,
+                              modifiedAtTime: moment.utc().toISOString(),
+                            };
+                          else return comment;
+                        }
+                      );
+                return {
+                  ...comments,
+                  [postProp]: {
+                    ...comments[postProp],
+                    dataList: newDataList,
+                  },
+                };
+              });
+              handleMovingPartsOnClick(e, "UPDATE_SUBMIT");
               commentsCUD(method, null, postId, itemId, commentContent).then(
                 ({ ok, responseBody, error }) => {
                   if (!ok) {
                     handleError({ error });
-                  } else {
-                    const { data } = responseBody;
-
-                    let newComment = {
-                      id: data.resourceId,
-                      commentedOn: { id: postId },
-                      commentContent: commentContent,
-                      owner: currentUser,
-                      commentLikedByCurrentUser: false,
-                      noOfLikes: 0,
-                      noOfReplies: 0,
-                    };
-
-                    newComment = {
-                      ...newComment,
-                      modifiedAtTime: moment.utc().toISOString(),
-                    };
-
-                    setParentComments((comments) => {
-                      let newDataList =
-                        method === RestMethod.POST
-                          ? [...comments[postProp].dataList, newComment]
-                          : comments[postProp].dataList.map((comment) => {
-                              if (comment.id === itemId) return newComment;
-                              else return comment;
-                            });
-                      return {
-                        ...comments,
-                        [postProp]: {
-                          ...comments[postProp],
-                          dataList: newDataList,
-                        },
-                      };
-                    });
-                    handleMovingPartsOnClick(e, "UPDATE_SUBMIT");
-                  }
+                  } 
                 }
               );
             }
@@ -310,7 +296,6 @@ const Comment = React.memo(
         setReplyContent("");
       },
       [
-        currentUser,
         setParentComments,
         adjustNoOfCommentsInParentPost,
         comment.noOfReplies,
@@ -391,33 +376,34 @@ const Comment = React.memo(
             ) {
               updateInputRef.current.focus();
             } else {
+              setParentComments((comments) => {
+                return {
+                  ...comments,
+                  [commentProp]: {
+                    ...comments[commentProp],
+                    dataList: comments[
+                      commentProp
+                    ].dataList.map((reply) => {
+                      if (reply.id === itemId)
+                        return {
+                          ...reply,
+                          commentContent: replyContent,
+                          modifiedAtTime: moment
+                            .utc()
+                            .toISOString(),
+                        };
+                      else return reply;
+                    }),
+                  },
+                };
+              });
+              handleMovingPartsOnClick(e, "UPDATE_SUBMIT");
               commentsCUD(method, commentId, postId, itemId, replyContent).then(
                 ({ ok, responseBody, error }) => {
                   if (!ok) {
                     handleError({ error });
-                  } else {
-                    setParentComments((comments) => {
-                      return {
-                        ...comments,
-                        [commentProp]: {
-                          ...comments[commentProp],
-                          dataList: comments[commentProp].dataList.map(
-                            (reply) => {
-                              if (reply.id === itemId)
-                                return {
-                                  ...reply,
-                                  commentContent: replyContent,
-                                  modifiedAtTime: moment.utc().toISOString(),
-                                };
-                              else return reply;
-                            }
-                          ),
-                        },
-                      };
-                    });
-
-                    handleMovingPartsOnClick(e, "UPDATE_SUBMIT");
-                  }
+                  } 
+                  
                 }
               );
             }
@@ -653,6 +639,7 @@ const Comment = React.memo(
                   <Form.Group>
                     <Button
                       type="button"
+                      variant="secondary"
                       id={`submitUpdateOn${comment.id}`}
                       name={`submitUpdateOn${comment.id}`}
                       onClick={(e) => {
@@ -875,6 +862,7 @@ const Comment = React.memo(
                     <Form.Group>
                       <Button
                         type="submit"
+                        variant="secondary"
                         id={`submitReplyOn${comment.id}`}
                         name={`submitReplyOn${comment.id}`}
                         onClick={(e) => {
