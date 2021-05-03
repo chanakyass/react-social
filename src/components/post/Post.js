@@ -92,6 +92,7 @@ const Post = React.memo(({ post, setPosts, setNoOfDeletedPostsInSession }) => {
           } else {
             setNoOfDeletedPostsInSession(noOfDeletedPosts => noOfDeletedPosts + 1);
             setPosts((posts) => {
+              console.log(posts);
               return {
                 ...posts,
                 dataList: posts.dataList.filter(
