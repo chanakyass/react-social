@@ -149,7 +149,6 @@ const Comment = React.memo(
             setShowGetRepliesLoad(true);
             replyBarRef.current.style.display = "none";
             reactionBarRef.current.style.display = "block";
-            console.log(showGetRepliesLoad);
             break;
 
           case "POST_REPLY_SUBMIT":
@@ -617,7 +616,7 @@ const Comment = React.memo(
                   </div>
                 </Card.Subtitle>
                 <Card.Text ref={commentContentRef} style={{ display: "block" }}>
-                  {`${comment.commentContent} ${comment.id}`}
+                  {comment.commentContent}
                 </Card.Text>
                 <div ref={updateCommentRef} style={{ display: "none" }}>
                   <Form.Group>

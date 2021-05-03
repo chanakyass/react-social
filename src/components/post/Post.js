@@ -341,7 +341,7 @@ const Post = React.memo(({ post, setPosts, setNoOfDeletedPostsInSession }) => {
 
         <Card.Body>
           <Card.Title className="border-bottom pb-3">
-            {`${post.postHeading} ${post.id}`}
+            {post.postHeading}
           </Card.Title>
           <Card.Subtitle>
             <div className="pb-4">
