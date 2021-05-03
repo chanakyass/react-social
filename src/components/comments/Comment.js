@@ -207,7 +207,7 @@ const Comment = React.memo(
             console.log("method not supported");
         }
       },
-      [repliesAccordionOpen, showGetRepliesLoad]
+      [repliesAccordionOpen]
     );
 
     const handleCommentCUD = useCallback(
