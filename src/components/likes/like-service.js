@@ -14,7 +14,7 @@ export const loadLikesOnPost = async (postId, pageNo) => {
 
   try {
     const response = await fetch(
-      `${baseURI}/api/v1/resource/post/${postId}/likes`,
+      `${baseURI}/resource/post/${postId}/likes`,
       requestOptions
     );
 
@@ -40,7 +40,7 @@ export const loadLikesOnComment = async (commentId, pageNo) => {
 
   try {
     const response = await fetch(
-      `${baseURI}/api/v1/resource/comment/${commentId}/likes`,
+      `${baseURI}/resource/comment/${commentId}/likes`,
       requestOptions
     );
 

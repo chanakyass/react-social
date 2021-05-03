@@ -70,7 +70,7 @@ const Login = () => {
       }
         if (isValid(creds, fieldErrors))  {
             fetch(
-              `${baseURI}/api/v1/public/login`,
+              `${baseURI}/public/login`,
               requestOptions
             ).then((response) => {
               response.json().then(body => {

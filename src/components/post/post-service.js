@@ -5,21 +5,22 @@ import baseURI from "../../api-config";
 
 
 
-export const loadUserFeed = async (pageNo) => {
+export const loadUserFeed = async (pageDetails) => {
 
+  const { pageNo, noOfDeletions } = pageDetails;
     const jwtToken = cookie.load("jwt");
   const requestOptions = {
     method: "GET",
     headers: {
       Authorization: `Bearer ${jwtToken}`,
       "Content-Type": "application/json",
-    },
+    }
     };
     
     try {
 
         const response = await fetch(
-            `${baseURI}/api/v1/resource/posts/${pageNo}`,
+            `${baseURI}/resource/posts?pageNo=${pageNo}&adjustments=${noOfDeletions}`,
             requestOptions
         );
 
@@ -64,17 +65,17 @@ export const postsCUD = async (
     case RestMethod.POST:
       
         requestOptions.body = JSON.stringify({ ...postForDispatch, postedAtTime: moment.utc().toISOString() });
-        url = `${baseURI}/api/v1/resource/post`;
+        url = `${baseURI}/resource/post`;
       
       break;
     case RestMethod.PUT:
       
         requestOptions.body = JSON.stringify({ ...postForDispatch, id: postId, modifiedAtTime: moment.utc().toISOString() });
-        url = `${baseURI}/api/v1/resource/post`;
+        url = `${baseURI}/resource/post`;
       
       break;
     case RestMethod.DELETE:
-      url = `${baseURI}/api/v1/resource/post/${postId}`;
+      url = `${baseURI}/resource/post/${postId}`;
     
       break;
     
@@ -116,7 +117,7 @@ export const likeUnlikeCUD = async (post, action) => {
     
     try {
         const response = await fetch(
-            `${baseURI}/api/v1/resource/post/${post.id}/${action}`,
+            `${baseURI}/resource/post/${post.id}/${action}`,
             requestOptions
         )
       const body = await response.json();

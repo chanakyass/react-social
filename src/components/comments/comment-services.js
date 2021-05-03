@@ -35,7 +35,7 @@ export const commentsCUD = async (method, commentId, postId, itemId, commentCont
       
 
         requestOptions.body = JSON.stringify({ ...commentForDispatch, commentedAtTime: moment.utc().toISOString() });
-        url = `${baseURI}/api/v1/resource/comment`;
+        url = `${baseURI}/resource/comment`;
         
       
       break;
@@ -43,14 +43,14 @@ export const commentsCUD = async (method, commentId, postId, itemId, commentCont
       
         commentForDispatch = { ...commentForDispatch, id: itemId, modifiedAtTime: moment.utc().toISOString() };
         requestOptions.body = JSON.stringify({ ...commentForDispatch });
-        url = `${baseURI}/api/v1/resource/comment`;
+        url = `${baseURI}/resource/comment`;
 
         
       
       break;
     case RestMethod.DELETE:
 
-      url = `${baseURI}/api/v1/resource/comment/${itemId}`;
+      url = `${baseURI}/resource/comment/${itemId}`;
       break;
     
     default:
@@ -74,8 +74,9 @@ export const commentsCUD = async (method, commentId, postId, itemId, commentCont
   }
 };
 
-export const loadComments = async (postId, commentId, pageNo) => {
+export const loadComments = async (postId, commentId, pageDetails) => {
 
+  const { pageNo, noOfDeletions } = pageDetails;
   const jwtToken = cookie.load("jwt");
     const requestOptions = {
       method: "GET",
@@ -86,9 +87,9 @@ export const loadComments = async (postId, commentId, pageNo) => {
   };
   let url = null;
   if(commentId)
-     url = `${baseURI}/api/v1/resource/comment/${commentId}/replies/${pageNo}`;
+     url = `${baseURI}/resource/comment/${commentId}/replies?pageNo=${pageNo}&adjustments=${noOfDeletions}`;
   else
-      url = `${baseURI}/api/v1/resource/post/${postId}/comments/${pageNo}`;
+      url = `${baseURI}/resource/post/${postId}/comments?pageNo=${pageNo}&adjustments=${noOfDeletions}`;
 
     try {
       const response = await fetch(
@@ -130,7 +131,7 @@ export const likeUnlikeCommentCUD = async (comment, action) => {
 
   try {
     const response = await fetch(
-      `${baseURI}/api/v1/resource/comment/${comment.id}/${action}`,
+      `${baseURI}/resource/comment/${comment.id}/${action}`,
       requestOptions
     );
     const body = await response.json();

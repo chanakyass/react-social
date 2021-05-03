@@ -27,7 +27,9 @@ const Comment = React.memo(
     adjustRepliesInHeirarchy,
     adjustNoOfCommentsInParentPost,
     handleMovingPartsOnClickPost,
-    handleMovingPartsOnClickParent
+    handleMovingPartsOnClickParent,
+    setNoOfCommentsDeletionsInSession,
+    setNoOfRepliesDeletionsInSession
   }) => {
     const currentUser = cookie.load("current_user");
 
@@ -41,6 +43,8 @@ const Comment = React.memo(
       noOfLikes: comment.noOfLikes,
     });
 
+    const [noOfCurrentRepliesDeletionInSession, setNoOfCurrentRepliesDeletionInSession] = useState(0);
+
     const showAlertWithMessage = useContext(AlertContext);
 
     let replyBarRef = useRef(null);
@@ -53,10 +57,9 @@ const Comment = React.memo(
     let paginationRef = useRef(null);
     let likeRef = useRef(comment.commentLikedByCurrentUser);
 
-    const parentCommentId = parentComment ? parentComment.id: null;
+    const parentCommentId = parentComment ? parentComment.id : null;
     const postId = post.id;
 
-    
     const parentCommentRepliesCount = parentComment
       ? parentComment.noOfReplies
       : null;
@@ -193,13 +196,13 @@ const Comment = React.memo(
               setShowGetRepliesLoad(false);
             }
             break;
-          
+
           case "DELETE_COMMENT":
             if (repliesAccordionOpen === true) {
-            repliesDotRef.current.click();
-            setRepliesAccordionOpen(false);
-          }
-          break;
+              repliesDotRef.current.click();
+              setRepliesAccordionOpen(false);
+            }
+            break;
 
           default:
             console.log("method not supported");
@@ -224,17 +227,15 @@ const Comment = React.memo(
               updateCommentRef.current.focus();
             } else {
               setParentComments((comments) => {
-                let newDataList = comments[postProp].dataList.map(
-                        (comment) => {
-                          if (comment.id === itemId)
-                            return {
-                              ...comment,
-                              commentContent: commentContent,
-                              modifiedAtTime: moment.utc().toISOString(),
-                            };
-                          else return comment;
-                        }
-                      );
+                let newDataList = comments[postProp].dataList.map((comment) => {
+                  if (comment.id === itemId)
+                    return {
+                      ...comment,
+                      commentContent: commentContent,
+                      modifiedAtTime: moment.utc().toISOString(),
+                    };
+                  else return comment;
+                });
                 return {
                   ...comments,
                   [postProp]: {
@@ -248,7 +249,7 @@ const Comment = React.memo(
                 ({ ok, responseBody, error }) => {
                   if (!ok) {
                     handleError({ error });
-                  } 
+                  }
                 }
               );
             }
@@ -273,12 +274,13 @@ const Comment = React.memo(
                     };
                   });
 
-                  if (
-                    post.noOfComments ===
-                    comment.noOfReplies + 1
-                  ) {
-                    handleMovingPartsOnClickPost(e, "DELETE_COMMENT")
+                  if (post.noOfComments === comment.noOfReplies + 1) {
+                    handleMovingPartsOnClickPost(e, "DELETE_COMMENT");
                   }
+
+                  setNoOfCommentsDeletionsInSession(
+                    (noOfDeletions) => noOfDeletions + 1
+                  );
 
                   adjustNoOfCommentsInParentPost(
                     RestMethod.DELETE,
@@ -302,6 +304,7 @@ const Comment = React.memo(
         post.noOfComments,
         handleMovingPartsOnClickPost,
         handleMovingPartsOnClick,
+        setNoOfCommentsDeletionsInSession
       ]
     );
 
@@ -381,16 +384,12 @@ const Comment = React.memo(
                   ...comments,
                   [commentProp]: {
                     ...comments[commentProp],
-                    dataList: comments[
-                      commentProp
-                    ].dataList.map((reply) => {
+                    dataList: comments[commentProp].dataList.map((reply) => {
                       if (reply.id === itemId)
                         return {
                           ...reply,
                           commentContent: replyContent,
-                          modifiedAtTime: moment
-                            .utc()
-                            .toISOString(),
+                          modifiedAtTime: moment.utc().toISOString(),
                         };
                       else return reply;
                     }),
@@ -402,8 +401,7 @@ const Comment = React.memo(
                 ({ ok, responseBody, error }) => {
                   if (!ok) {
                     handleError({ error });
-                  } 
-                  
+                  }
                 }
               );
             }
@@ -428,7 +426,7 @@ const Comment = React.memo(
                     };
                   });
 
-                  if (parentCommentRepliesCount === (comment.noOfReplies + 1)) {
+                  if (parentCommentRepliesCount === comment.noOfReplies + 1) {
                     handleMovingPartsOnClickParent(e, "DELETE_COMMENT");
                   }
 
@@ -442,8 +440,7 @@ const Comment = React.memo(
                     comment.noOfReplies + 1
                   );
 
-                  
-
+                  setNoOfRepliesDeletionsInSession(noOfDeletions => noOfDeletions + 1);
                 }
               }
             );
@@ -465,6 +462,7 @@ const Comment = React.memo(
         comment.noOfReplies,
         parentCommentRepliesCount,
         handleMovingPartsOnClickParent,
+        setNoOfRepliesDeletionsInSession,
         handleMovingPartsOnClick,
       ]
     );
@@ -523,34 +521,35 @@ const Comment = React.memo(
       (e, commentId, pageNo) => {
         const commentProp = `comment${commentId}`.trim();
         handleMovingPartsOnClick(e, "PRE_GET_REPLIES", { pageNo: pageNo });
-        loadComments(null, commentId, pageNo).then(
-          ({ ok, responseBody, error }) => {
-            if (!ok) {
-              handleError({ error });
-            } else {
-              if (!replies[commentProp]) {
-                setReplies({ ...replies, [commentProp]: responseBody });
-              } else if (replies[commentProp].currentPageNo !== pageNo) {
-                setReplies({
-                  ...replies,
-                  [commentProp]: {
-                    currentPageNo: responseBody.currentPageNo,
-                    noOfPages: responseBody.noOfPages,
-                    dataList: [
-                      ...replies[commentProp].dataList,
-                      ...responseBody.dataList,
-                    ],
-                  },
-                });
-              }
-              handleMovingPartsOnClick(e, "POST_GET_REPLIES", {
-                pageNo: pageNo,
+        loadComments(null, commentId, {
+          pageNo: pageNo,
+          noOfDeletions: noOfCurrentRepliesDeletionInSession,
+        }).then(({ ok, responseBody, error }) => {
+          if (!ok) {
+            handleError({ error });
+          } else {
+            if (!replies[commentProp]) {
+              setReplies({ ...replies, [commentProp]: responseBody });
+            } else if (replies[commentProp].currentPageNo !== pageNo) {
+              setReplies({
+                ...replies,
+                [commentProp]: {
+                  currentPageNo: responseBody.currentPageNo,
+                  noOfPages: responseBody.noOfPages,
+                  dataList: [
+                    ...replies[commentProp].dataList,
+                    ...responseBody.dataList,
+                  ],
+                },
               });
             }
+            handleMovingPartsOnClick(e, "POST_GET_REPLIES", {
+              pageNo: pageNo,
+            });
           }
-        );
+        });
       },
-      [replies, handleMovingPartsOnClick]
+      [replies, handleMovingPartsOnClick, noOfCurrentRepliesDeletionInSession]
     );
 
     const handleMovingPartsForKeys = (e, action) => {
@@ -618,7 +617,7 @@ const Comment = React.memo(
                   </div>
                 </Card.Subtitle>
                 <Card.Text ref={commentContentRef} style={{ display: "block" }}>
-                  {comment.commentContent}
+                  {`${comment.commentContent} ${comment.id}`}
                 </Card.Text>
                 <div ref={updateCommentRef} style={{ display: "none" }}>
                   <Form.Group>
@@ -889,7 +888,7 @@ const Comment = React.memo(
 
                 <Accordion.Collapse eventKey={`comment${comment.id}`}>
                   <Card.Body className="p-0">
-                    {comment.noOfReplies > 0  &&
+                    {comment.noOfReplies > 0 &&
                       replies[`comment${comment.id}`.trim()] &&
                       replies[`comment${comment.id}`].dataList.map(
                         (reply, index2) => {
@@ -905,7 +904,12 @@ const Comment = React.memo(
                                 adjustNoOfCommentsInParentPost={
                                   adjustNoOfCommentsInParentPost
                                 }
-                                handleMovingPartsOnClickParent={handleMovingPartsOnClick}
+                                handleMovingPartsOnClickParent={
+                                  handleMovingPartsOnClick
+                                }
+                                setNoOfRepliesDeletionsInSession={
+                                  setNoOfCurrentRepliesDeletionInSession
+                                }
                               />
                             </>
                           );

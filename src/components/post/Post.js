@@ -24,12 +24,12 @@ import  CustomToggle  from '../utility/CustomToggle';
 import { debounced } from "../utility/debouncer";
 import { AlertContext } from "../../App";
 
-const Post = React.memo(({ post, setPosts }) => {
+const Post = React.memo(({ post, setPosts, setNoOfDeletedPostsInSession }) => {
   const currentUser = cookie.load("current_user");
 
   const [comments, setComments] = useState({});
 
-  const [showPostModal, setShowPostModal] = useState(false)
+  const [showPostModal, setShowPostModal] = useState(false);
 
   const [commentContent, setCommentContent] = useState("");
 
@@ -39,10 +39,14 @@ const Post = React.memo(({ post, setPosts }) => {
 
   const [commentsAccordianOpen, setCommentsAccordianOpen] = useState(false);
 
-  const [localLike, setLocalLike] = useState({ postLikedByCurrentUser: post.postLikedByCurrentUser || false, noOfLikes: post.noOfLikes || 0 });
+  const [noOfCommentsDeletionsInSession, setNoOfCommentsDeletionsInSession] = useState(0);
+
+  const [localLike, setLocalLike] = useState({
+    postLikedByCurrentUser: post.postLikedByCurrentUser || false,
+    noOfLikes: post.noOfLikes || 0,
+  });
 
   const showAlertWithMessage = useContext(AlertContext);
-
 
   const replyBarRef = useRef(null);
   let reactionBarRef = useRef(null);
@@ -51,50 +55,58 @@ const Post = React.memo(({ post, setPosts }) => {
   let paginationRef = useRef(null);
   let likeRef = useRef(post.postLikedByCurrentUser);
 
-  const adjustNoOfCommentsInParentPost = useCallback((method, noOfRepliesAffected) => {
-    setPosts((posts) => {
-      let newDataList = posts.dataList.map((iterPost) => {
-        if (iterPost.id === post.id) {
-          return {
-            ...iterPost,
-            noOfComments: method === 'POST' ? (iterPost.noOfComments + noOfRepliesAffected): iterPost.noOfComments - noOfRepliesAffected,
-          };
-        }
-        return iterPost;
-      });
-
-      return {
-        ...posts,
-        dataList: newDataList,
-      };
-    });
-  }, [setPosts, post])
-
-
-  const handlePostDelete = (e, postId) => {
-    e.preventDefault();
-    postsCUD(
-      RestMethod.DELETE,
-      postId,
-      null,
-      null
-    ).then(({ ok, responseBody, error }) => {
-      if (!ok) {
-        handleError({ error });
-      } else {
-
-        setPosts((posts) => {
-          return {
-            ...posts,
-            dataList: posts.dataList.filter(iterPost => iterPost.id !== postId)
-          };
+  const adjustNoOfCommentsInParentPost = useCallback(
+    (method, noOfRepliesAffected) => {
+      setPosts((posts) => {
+        let newDataList = posts.dataList.map((iterPost) => {
+          if (iterPost.id === post.id) {
+            return {
+              ...iterPost,
+              noOfComments:
+                method === "POST"
+                  ? iterPost.noOfComments + noOfRepliesAffected
+                  : iterPost.noOfComments - noOfRepliesAffected,
+            };
+          }
+          return iterPost;
         });
-      }
-    });
-  }
 
-  const handleMovingPartsOnClick = useCallback((e, action, details) => {
-    const { pageNo } = details || {};
+        return {
+          ...posts,
+          dataList: newDataList,
+        };
+      });
+    },
+    [setPosts, post]
+  );
+
+  const handlePostDelete = useCallback(
+    (e, postId) => {
+      e.preventDefault();
+      postsCUD(RestMethod.DELETE, postId, null, null).then(
+        ({ ok, responseBody, error }) => {
+          if (!ok) {
+            handleError({ error });
+          } else {
+            setNoOfDeletedPostsInSession(noOfDeletedPosts => noOfDeletedPosts + 1);
+            setPosts((posts) => {
+              return {
+                ...posts,
+                dataList: posts.dataList.filter(
+                  (iterPost) => iterPost.id !== postId
+                ),
+              };
+            });
+          }
+        }
+      );
+    },
+    [setPosts, setNoOfDeletedPostsInSession]
+  );
+
+  const handleMovingPartsOnClick = useCallback(
+    (e, action, details) => {
+      const { pageNo } = details || {};
       switch (action) {
         case "REPLY":
           replyBarRef.current.style.display = "block";
@@ -115,34 +127,31 @@ const Post = React.memo(({ post, setPosts }) => {
           }
 
           setShowGetRepliesLoad(false);
-          
 
           break;
-        
+
         case "PRE_GET_COMMENTS":
           if (pageNo > 0) {
             if (paginationRef.current) {
               paginationRef.current.children[0].style.display = "none";
               paginationRef.current.children[1].style.display = "block";
             }
-          }
-          else {
+          } else {
             setShowGetRepliesLoad(true);
           }
           break;
-        
+
         case "POST_GET_COMMENTS":
           if (pageNo > 0) {
             if (paginationRef.current) {
               paginationRef.current.children[1].style.display = "none";
               paginationRef.current.children[0].style.display = "block";
             }
-          }
-          else {
+          } else {
             setShowGetRepliesLoad(false);
           }
           break;
-        
+
         case "DELETE_COMMENT":
           if (commentsAccordianOpen === true) {
             commentsDotRef.current.click();
@@ -150,14 +159,15 @@ const Post = React.memo(({ post, setPosts }) => {
           }
           break;
 
-
         default:
           console.log("action not supported");
       }
-    }, [commentsAccordianOpen]);
+    },
+    [commentsAccordianOpen]
+  );
 
   const handleCreateComment = useCallback(
-     (e, commentObj) => {
+    (e, commentObj) => {
       let postId = commentObj.postId;
       let commentContent = commentObj.commentContent;
 
@@ -170,16 +180,10 @@ const Post = React.memo(({ post, setPosts }) => {
       if (commentContent === "") {
         replyInputRef.current.focus();
       } else {
-
-          commentsCUD(
-            RestMethod.POST,
-            null,
-            postId,
-            null,
-            commentContent
-          ).then(({ ok, responseBody, error }) => {
+        commentsCUD(RestMethod.POST, null, postId, null, commentContent).then(
+          ({ ok, responseBody, error }) => {
             if (!ok) {
-              handleError({error})
+              handleError({ error });
             } else {
               const { data } = responseBody;
 
@@ -200,10 +204,7 @@ const Post = React.memo(({ post, setPosts }) => {
                   modifiedAtTime: null,
                 };
 
-                let newDataList = [
-                  newComment,
-                  ...comments[postProp].dataList,
-                ];
+                let newDataList = [newComment, ...comments[postProp].dataList];
 
                 setComments({
                   ...comments,
@@ -216,28 +217,31 @@ const Post = React.memo(({ post, setPosts }) => {
               adjustNoOfCommentsInParentPost(RestMethod.POST, 1);
               handleMovingPartsOnClick(e, "POST_REPLY_SUBMIT");
             }
-          })
-
+          }
+        );
       }
 
       setCommentContent("");
     },
-    [comments, currentUser, adjustNoOfCommentsInParentPost, handleMovingPartsOnClick]
+    [
+      comments,
+      currentUser,
+      adjustNoOfCommentsInParentPost,
+      handleMovingPartsOnClick,
+    ]
   );
 
-  
+  const handleGetComments = useCallback(
+    (e, postId, pageNo) => {
+      const postProp = `post${postId}`.trim();
 
-  const handleGetComments = useCallback( (e, postId, pageNo) => {
-    const postProp = `post${postId}`.trim();
+      if (postId) {
+        handleMovingPartsOnClick(e, "PRE_GET_COMMENTS", { pageNo: pageNo });
 
-    if (postId) {
-      
-      handleMovingPartsOnClick(e, "PRE_GET_COMMENTS", { pageNo: pageNo});
-      
-      loadComments(postId, null, pageNo)
-      
-        .then(({ ok, responseBody, error }) => {
-          
+        loadComments(postId, null, {
+          pageNo: pageNo,
+          noOfDeletions: noOfCommentsDeletionsInSession,
+        }).then(({ ok, responseBody, error }) => {
           if (!ok) {
             handleError({ error });
           } else {
@@ -260,60 +264,56 @@ const Post = React.memo(({ post, setPosts }) => {
               pageNo: pageNo,
             });
           }
-      })
-
-    }
-  }, [comments, handleMovingPartsOnClick]);
-
+        });
+      }
+    },
+    [comments, handleMovingPartsOnClick, noOfCommentsDeletionsInSession]
+  );
 
   const handleLikeUnlikePost = (e, post, action) => {
     likeUnlikeCUD(post, action)
-        .then(({ok, responseBody, error}) => {
-          if (!ok) {
-
-            if (
-              error.statusCode === 500 &&
-              error.exceptionType === "API_SPECIFIC_EXCEPTION"
-            ) {
-              let str = error.message;
-              showAlertWithMessage(str.concat(error.details));
-            } else {
-              throw error;
-            }
+      .then(({ ok, responseBody, error }) => {
+        if (!ok) {
+          if (
+            error.statusCode === 500 &&
+            error.exceptionType === "API_SPECIFIC_EXCEPTION"
+          ) {
+            let str = error.message;
+            showAlertWithMessage(str.concat(error.details));
           } else {
-            const postLikedByCurrentUser = action === "like" ? true : false;
-
-            setPosts((posts) => {
-              let dataList = posts.dataList.map((iterPost) => {
-                if (iterPost.id === post.id) {
-                  const noOfLikes = (action === 'like') ? iterPost.noOfLikes + 1 : iterPost.noOfLikes - 1;
-                  return { ...iterPost, postLikedByCurrentUser, noOfLikes };
-                } else {
-                  return iterPost;
-                }
-              });
-
-              return { ...posts, dataList: dataList };
-            });
+            throw error;
           }
-        })
-        .catch((error) => {
-          handleError({ error });
+        } else {
+          const postLikedByCurrentUser = action === "like" ? true : false;
+
+          setPosts((posts) => {
+            let dataList = posts.dataList.map((iterPost) => {
+              if (iterPost.id === post.id) {
+                const noOfLikes =
+                  action === "like"
+                    ? iterPost.noOfLikes + 1
+                    : iterPost.noOfLikes - 1;
+                return { ...iterPost, postLikedByCurrentUser, noOfLikes };
+              } else {
+                return iterPost;
+              }
+            });
+
+            return { ...posts, dataList: dataList };
+          });
+        }
       })
-    };
-  
+      .catch((error) => {
+        handleError({ error });
+      });
+  };
 
-
-  
   const handleMovingPartsForKeys = (e) => {
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       replyBarRef.current.style.display = "none";
       reactionBarRef.current.style.display = "inline-block";
     }
-  }
-
-  
-
+  };
 
   return (
     <div>
@@ -341,7 +341,7 @@ const Post = React.memo(({ post, setPosts }) => {
 
         <Card.Body>
           <Card.Title className="border-bottom pb-3">
-            {post.postHeading}
+            {`${post.postHeading} ${post.id}`}
           </Card.Title>
           <Card.Subtitle>
             <div className="pb-4">
@@ -581,6 +581,9 @@ const Post = React.memo(({ post, setPosts }) => {
                           adjustNoOfCommentsInParentPost
                         }
                         handleMovingPartsOnClickPost={handleMovingPartsOnClick}
+                        setNoOfCommentsDeletionsInSession={
+                          setNoOfCommentsDeletionsInSession
+                        }
                       />
                     );
                   })}

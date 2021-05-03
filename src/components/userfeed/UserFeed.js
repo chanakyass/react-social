@@ -21,29 +21,34 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
     dataList: [],
   });
 
+  const [noOfDeletedPostsInSession, setNoOfDeletedPostsInSession] = useState(0);
+
+  
+
   const lastScrollTopRef = useRef(window.pageYOffset || getDocScrollTop());
 
   const handlePagination = useCallback(() => {
       if (posts.currentPageNo < posts.noOfPages - 1) {
-        loadUserFeed(posts.currentPageNo + 1).then(
-          ({ ok, responseBody: body, error }) => {
-            if (!ok) {
-              handleError({ error });
-            } else {
-              const { dataList, currentPageNo, noOfPages } = body;
-              setPosts({
-                ...posts,
-                dataList: [...posts.dataList, ...dataList],
-                currentPageNo: currentPageNo,
-                noOfPages: noOfPages,
-                isLastPage: currentPageNo === (noOfPages - 1)
-              });
-            }
+        loadUserFeed({
+          pageNo: posts.currentPageNo + 1,
+          noOfDeletions: noOfDeletedPostsInSession,
+        }).then(({ ok, responseBody: body, error }) => {
+          if (!ok) {
+            handleError({ error });
+          } else {
+            const { dataList, currentPageNo, noOfPages } = body;
+            setPosts({
+              ...posts,
+              dataList: [...posts.dataList, ...dataList],
+              currentPageNo: currentPageNo,
+              noOfPages: noOfPages,
+              isLastPage: currentPageNo === noOfPages - 1,
+            });
           }
-        );
+        });
     }
 
-  }, [posts]);
+  }, [posts, noOfDeletedPostsInSession]);
 
 
   const handleScroll = useCallback(
@@ -80,7 +85,10 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
 
 
     if (posts.currentPageNo === -1) {      
-      loadUserFeed(0).then(({ ok, responseBody: body, error }) => {
+      loadUserFeed({
+          pageNo: 0,
+          noOfDeletions: 0,
+        }).then(({ ok, responseBody: body, error }) => {
         if (!ok) {
           handleError({ error });
         } else {
@@ -127,7 +135,12 @@ const UserFeed = React.memo(({ setAddPostButtonClicked, addPostButtonClicked }) 
         {posts.dataList && posts.dataList.length > 0 ? (
           posts.dataList.map((post, index) => {
             return (
-              <Post key={`post${post.id}`} post={post} setPosts={setPosts} />
+              <Post
+                key={`post${post.id}`}
+                post={post}
+                setPosts={setPosts}
+                setNoOfDeletedPostsInSession={setNoOfDeletedPostsInSession}
+              />
             );
           })
         ) : (

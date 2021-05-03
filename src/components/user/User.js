@@ -56,7 +56,7 @@ const User = () => {
         };
 
         fetch(
-          `${baseURI}/api/v1/profile/${id}`,
+          `${baseURI}/profile/${id}`,
           requestOptions
         ).then(response => response.json().then(body => {
           
@@ -118,7 +118,7 @@ const User = () => {
     if (isValid(user, fieldErrors, RestMethod.PUT)) {
       if (editSettings.editOtherTriggered === true) {
         
-        fetch(`${baseURI}/api/v1/profile/{profileId}`, requestOptions).then((response) => {
+        fetch(`${baseURI}/profile/{profileId}`, requestOptions).then((response) => {
           response.json().then(body => {
             if (response.status === 200) {
               const { data } = body;
@@ -189,7 +189,7 @@ const User = () => {
     };
 
     fetch(
-      `${baseURI}/api/v1/profile/${id}`,
+      `${baseURI}/profile/${id}`,
       requestOptions
     ).then((response) => {
       response.json().then(body => {
