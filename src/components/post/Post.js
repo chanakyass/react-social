@@ -84,7 +84,9 @@ const Post = React.memo(({ post, setPosts, setNoOfDeletedPostsInSession }) => {
     (e, postId) => {
       e.preventDefault();
       postsCUD(RestMethod.DELETE, postId, null, null).then(
-        ({ ok, responseBody, error }) => {
+        (res) => {
+          const ok = res.ok;
+          const error = res.error;
           if (!ok) {
             handleError({ error });
           } else {
