@@ -1,7 +1,7 @@
 import cookie from "react-cookies";
 import { handleError } from '../error/error-handling'
 import React, {  useState, useRef, useCallback, useContext } from "react";
-import { likeUnlikeCUD, postsCUD } from "./post-service";
+import { postService } from "./post-service";
 import { loadComments, commentsCUD } from "../comments/comment-services";
 import Parser from "html-react-parser";
 import {
@@ -83,7 +83,7 @@ const Post = React.memo(({ post, setPosts, setNoOfDeletedPostsInSession }) => {
   const handlePostDelete = useCallback(
     (e, postId) => {
       e.preventDefault();
-      postsCUD(RestMethod.DELETE, postId, null, null).then(
+      postService.postsCUD(RestMethod.DELETE, postId, null, null).then(
         (res) => {
           const ok = res.ok;
           const error = res.error;
@@ -92,11 +92,19 @@ const Post = React.memo(({ post, setPosts, setNoOfDeletedPostsInSession }) => {
           } else {
             setNoOfDeletedPostsInSession(noOfDeletedPosts => noOfDeletedPosts + 1);
             setPosts((posts) => {
-              return {
+              return (posts.dataList.length === 1) ? 
+              {
+                dataList: [], 
+                noOfPages: 0, 
+                currentPageNo: -1, 
+                isLastPage: false
+              }
+              :
+              {
                 ...posts,
                 dataList: posts.dataList.filter(
                   (iterPost) => iterPost.id !== postId
-                ),
+                )
               };
             });
           }
@@ -273,7 +281,7 @@ const Post = React.memo(({ post, setPosts, setNoOfDeletedPostsInSession }) => {
   );
 
   const handleLikeUnlikePost = (e, post, action) => {
-    likeUnlikeCUD(post, action)
+    postService.likeUnlikeCUD(post, action)
       .then(({ ok, responseBody, error }) => {
         if (!ok) {
           if (

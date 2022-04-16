@@ -1,7 +1,7 @@
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import { Button, Modal, InputGroup, FormControl } from "react-bootstrap";
-import { postsCUD } from "./post-service";
+import { postService } from "./post-service";
 import { RestMethod } from "../../enums";
 import cookie from "react-cookies";
 import moment from 'moment';
@@ -41,7 +41,7 @@ const CreatePost = React.memo(({
         //error
       } else {
     
-        postsCUD(
+        postService.postsCUD(
           method,
           postId,
           postHeading,
@@ -57,7 +57,6 @@ const CreatePost = React.memo(({
           
             switch (method) {
               case RestMethod.POST:
-                console.log('post getting executed');
                 setPosts((posts) => {
                   return {
                     ...posts,
@@ -75,6 +74,9 @@ const CreatePost = React.memo(({
                       },
                       ...posts.dataList,
                     ],
+                    currentPageNo: (posts.currentPageNo !== -1) ? posts.currentPageNo : 0,
+                    noOfPages: (posts.noOfPages !== 0) ? posts.noOfPages : 1,
+                    isLastPage: (posts.noOfPages !==0) ? posts.isLastPage: true
                   };
                 });
             

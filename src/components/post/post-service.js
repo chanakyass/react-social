@@ -3,10 +3,7 @@ import moment from 'moment'
 import { RestMethod } from '../../enums'
 import baseURI from "../../api-config";
 
-
-
-export const loadUserFeed = async (pageDetails) => {
-
+ const loadUserFeed = async (pageDetails) => {
   const { pageNo, noOfDeletions } = pageDetails;
     const jwtToken = cookie.load("jwt");
   const requestOptions = {
@@ -37,7 +34,7 @@ export const loadUserFeed = async (pageDetails) => {
 
 };
 
-export const postsCUD = async (
+ const postsCUD = async (
   method,
   postId,
   postHeading,
@@ -97,7 +94,7 @@ export const postsCUD = async (
   }
 };
 
-export const likeUnlikeCUD = async (post, action) => {
+ const likeUnlikeCUD = async (post, action) => {
       const jwtToken = cookie.load("jwt");
       const currentUser = cookie.load("current_user");
   const likePost = {
@@ -133,4 +130,10 @@ export const likeUnlikeCUD = async (post, action) => {
       return { ok: false, responseBody: null, error};
     }
 
+};
+
+export const postService = {
+    loadUserFeed: loadUserFeed,
+    postsCUD: postsCUD,
+    likeUnlikeCUD: likeUnlikeCUD
 };
