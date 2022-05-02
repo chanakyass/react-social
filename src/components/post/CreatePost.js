@@ -1,13 +1,10 @@
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import { Button, Modal, InputGroup, FormControl } from "react-bootstrap";
-import { postService } from "./post-service";
 import { RestMethod } from "../../enums";
-import cookie from "react-cookies";
-import moment from 'moment';
 
-import React, { useState, useEffect } from "react";
-import { handleError } from "../error/error-handling";
+import React from "react";
+import useCreatePostState from "./useCreatePostState";
 
 const CreatePost = React.memo(({
   setShow,
@@ -16,111 +13,11 @@ const CreatePost = React.memo(({
   setPosts,
   post
 }) => {
-  const [editorPost, setEditorPost] = useState({ id: null, postHeading: "", postBody: "" });
-  const currentUser = cookie.load("current_user");
-    
 
-    useEffect(() => {
-      if(post && show === true) {
-      setEditorPost({ id: post.id, postHeading: post.postHeading, postBody: post.postBody });
-    }
-  }, [show, post]);
+  const {stateInfo, funcs} = useCreatePostState({setShow, setPosts, post});
 
-
-
-  const handleClose = (e) => setShow(false);
-
-    const handlePostCU =  (e, method, editorPost) => {
-        const postId = editorPost.id;
-        const postHeading = editorPost.postHeading.trim();
-      const postBody = editorPost.postBody.trim();
-
-
-      
-      if (postBody === "") {
-        //error
-      } else {
-    
-        postService.postsCUD(
-          method,
-          postId,
-          postHeading,
-          postBody
-        ).then(({ ok, responseBody, error }) => {
-
-          if (!ok) {
-            handleClose(e);
-            handleError({ error });
-          
-          } else {
-            const { data } = responseBody;
-          
-            switch (method) {
-              case RestMethod.POST:
-                setPosts((posts) => {
-                  return {
-                    ...posts,
-                    dataList: [
-                      {
-                        id: data.resourceId,
-                        owner: currentUser,
-                        postHeading: postHeading,
-                        postBody: postBody,
-                        postedAtTime: moment.utc().toISOString(),
-                        modifiedAtTime: null,
-                        noOfComments: 0,
-                        postLikedByCurrentuser: false,
-                        noOfLikes: 0
-                      },
-                      ...posts.dataList,
-                    ],
-                    currentPageNo: (posts.currentPageNo !== -1) ? posts.currentPageNo : 0,
-                    noOfPages: (posts.noOfPages !== 0) ? posts.noOfPages : 1,
-                    isLastPage: (posts.noOfPages !==0) ? posts.isLastPage: true
-                  };
-                });
-            
-                break;
-              case RestMethod.PUT:
-                setPosts((posts) => {
-                  return {
-                    ...posts,
-                    dataList: posts.dataList.map(listPost => {
-                      let newPost = listPost;
-                      if (listPost.id === postId) {
-                        if (postHeading !== '') {
-                          newPost = { ...newPost, postHeading: postHeading };
-                        }
-                        if (postBody !== '') {
-                          newPost = { ...newPost, postBody: postBody };
-                        }
-
-                        newPost = { ...newPost, modifiedAtTime: moment.utc().toISOString() }
-                        return newPost;
-                      }
-                      else {
-                        return listPost;
-                      }
-                    })
-                  }
-                });
-                break;
-
-              default: console.log('Method not applicable');
-                break;
-          
-            
-            }
-
-
-          }
-          
-          handleClose(e);
-          setEditorPost({ id: null, postHeading: '', postBody: '' });
-        })
-      }
-     
-  };
+  const [editorPost, setEditorPost] = stateInfo;
+  const [handleClose, handlePostCU] = funcs;
 
   return (
     <>

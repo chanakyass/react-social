@@ -1,8 +1,5 @@
-import cookie from "react-cookies";
-import { handleError } from '../error/error-handling'
-import React, {  useState, useRef, useCallback, useContext } from "react";
-import { postService } from "./post-service";
-import { loadComments, commentsCUD } from "../comments/comment-services";
+
+import React from "react";
 import Parser from "html-react-parser";
 import {
   Card,
@@ -18,312 +15,20 @@ import  UserDetailsPopup  from '../utility/UserDetailsPopup'
 import  Comment  from '../comments/Comment'
 import  CreatePost  from "./CreatePost";
 import  LikesModal  from "../likes/LikesModal";
-import moment from 'moment';
 import { convertDateToReadableFormat } from '../utility/handle-dates'
 import  CustomToggle  from '../utility/CustomToggle';
 import { debounced } from "../utility/debouncer";
-import { AlertContext } from "../../App";
+import usePostState from "./usePostState";
 
 const Post = React.memo(({ post, setPosts, setNoOfDeletedPostsInSession }) => {
-  const currentUser = cookie.load("current_user");
 
-  const [comments, setComments] = useState({});
-
-  const [showPostModal, setShowPostModal] = useState(false);
-
-  const [commentContent, setCommentContent] = useState("");
-
-  let [showLikesModal, setShowLikesModal] = useState(false);
-
-  const [showGetRepliesLoad, setShowGetRepliesLoad] = useState(false);
-
-  const [commentsAccordianOpen, setCommentsAccordianOpen] = useState(false);
-
-  const [noOfCommentsDeletionsInSession, setNoOfCommentsDeletionsInSession] = useState(0);
-
-  const [localLike, setLocalLike] = useState({
-    postLikedByCurrentUser: post.postLikedByCurrentUser || false,
-    noOfLikes: post.noOfLikes || 0,
-  });
-
-  const showAlertWithMessage = useContext(AlertContext);
-
-  const replyBarRef = useRef(null);
-  let reactionBarRef = useRef(null);
-  const replyInputRef = useRef(null);
-  const commentsDotRef = useRef(null);
-  let paginationRef = useRef(null);
-  let likeRef = useRef(post.postLikedByCurrentUser);
-
-  const adjustNoOfCommentsInParentPost = useCallback(
-    (method, noOfRepliesAffected) => {
-      setPosts((posts) => {
-        let newDataList = posts.dataList.map((iterPost) => {
-          if (iterPost.id === post.id) {
-            return {
-              ...iterPost,
-              noOfComments:
-                method === "POST"
-                  ? iterPost.noOfComments + noOfRepliesAffected
-                  : iterPost.noOfComments - noOfRepliesAffected,
-            };
-          }
-          return iterPost;
-        });
-
-        return {
-          ...posts,
-          dataList: newDataList,
-        };
-      });
-    },
-    [setPosts, post]
-  );
-
-  const handlePostDelete = useCallback(
-    (e, postId) => {
-      e.preventDefault();
-      postService.postsCUD(RestMethod.DELETE, postId, null, null).then(
-        (res) => {
-          const ok = res.ok;
-          const error = res.error;
-          if (!ok) {
-            handleError({ error });
-          } else {
-            setNoOfDeletedPostsInSession(noOfDeletedPosts => noOfDeletedPosts + 1);
-            setPosts((posts) => {
-              return (posts.dataList.length === 1) ? 
-              {
-                dataList: [], 
-                noOfPages: 0, 
-                currentPageNo: -1, 
-                isLastPage: false
-              }
-              :
-              {
-                ...posts,
-                dataList: posts.dataList.filter(
-                  (iterPost) => iterPost.id !== postId
-                )
-              };
-            });
-          }
-        }
-      );
-    },
-    [setPosts, setNoOfDeletedPostsInSession]
-  );
-
-  const handleMovingPartsOnClick = useCallback(
-    (e, action, details) => {
-      const { pageNo } = details || {};
-      switch (action) {
-        case "REPLY":
-          replyBarRef.current.style.display = "block";
-          reactionBarRef.current.style.display = "none";
-          replyInputRef.current.value = "";
-          replyInputRef.current.focus();
-
-          break;
-        case "PRE_REPLY_SUBMIT":
-          setShowGetRepliesLoad(true);
-          replyBarRef.current.style.display = "none";
-          reactionBarRef.current.style.display = "inline-block";
-          break;
-
-        case "POST_REPLY_SUBMIT":
-          if (commentsAccordianOpen === false) {
-            commentsDotRef.current.click();
-          }
-
-          setShowGetRepliesLoad(false);
-
-          break;
-
-        case "PRE_GET_COMMENTS":
-          if (pageNo > 0) {
-            if (paginationRef.current) {
-              paginationRef.current.children[0].style.display = "none";
-              paginationRef.current.children[1].style.display = "block";
-            }
-          } else {
-            setShowGetRepliesLoad(true);
-          }
-          break;
-
-        case "POST_GET_COMMENTS":
-          if (pageNo > 0) {
-            if (paginationRef.current) {
-              paginationRef.current.children[1].style.display = "none";
-              paginationRef.current.children[0].style.display = "block";
-            }
-          } else {
-            setShowGetRepliesLoad(false);
-          }
-          break;
-
-        case "DELETE_COMMENT":
-          if (commentsAccordianOpen === true) {
-            commentsDotRef.current.click();
-            setCommentsAccordianOpen(false);
-          }
-          break;
-
-        default:
-          console.log("action not supported");
-      }
-    },
-    [commentsAccordianOpen]
-  );
-
-  const handleCreateComment = useCallback(
-    (e, commentObj) => {
-      let postId = commentObj.postId;
-      let commentContent = commentObj.commentContent;
-
-      const postProp = `post${postId}`.trim();
-
-      e.preventDefault();
-
-      handleMovingPartsOnClick(e, "PRE_REPLY_SUBMIT");
-
-      if (commentContent === "") {
-        replyInputRef.current.focus();
-      } else {
-        commentsCUD(RestMethod.POST, null, postId, null, commentContent).then(
-          ({ ok, responseBody, error }) => {
-            if (!ok) {
-              handleError({ error });
-            } else {
-              const { data } = responseBody;
-
-              if (comments && comments[postProp]) {
-                let newComment = {
-                  id: data.resourceId,
-                  commentedOn: { id: postId },
-                  commentContent: commentContent,
-                  owner: currentUser,
-                  commentLikedByCurrentUser: false,
-                  noOfLikes: 0,
-                  noOfReplies: 0,
-                };
-
-                newComment = {
-                  ...newComment,
-                  commentedAtTime: moment.utc().toISOString(),
-                  modifiedAtTime: null,
-                };
-
-                let newDataList = [newComment, ...comments[postProp].dataList];
-
-                setComments({
-                  ...comments,
-                  [postProp]: {
-                    ...comments[postProp],
-                    dataList: newDataList,
-                  },
-                });
-              }
-              adjustNoOfCommentsInParentPost(RestMethod.POST, 1);
-              handleMovingPartsOnClick(e, "POST_REPLY_SUBMIT");
-            }
-          }
-        );
-      }
-
-      setCommentContent("");
-    },
-    [
-      comments,
-      currentUser,
-      adjustNoOfCommentsInParentPost,
-      handleMovingPartsOnClick,
-    ]
-  );
-
-  const handleGetComments = useCallback(
-    (e, postId, pageNo) => {
-      const postProp = `post${postId}`.trim();
-
-      if (postId) {
-        handleMovingPartsOnClick(e, "PRE_GET_COMMENTS", { pageNo: pageNo });
-
-        loadComments(postId, null, {
-          pageNo: pageNo,
-          noOfDeletions: noOfCommentsDeletionsInSession,
-        }).then(({ ok, responseBody, error }) => {
-          if (!ok) {
-            handleError({ error });
-          } else {
-            if (!comments[postProp]) {
-              setComments({ ...comments, [postProp]: responseBody });
-            } else if (comments[postProp].currentPageNo !== pageNo) {
-              setComments({
-                ...comments,
-                [postProp]: {
-                  currentPageNo: responseBody.currentPageNo,
-                  noOfPages: responseBody.noOfPages,
-                  dataList: [
-                    ...comments[postProp].dataList,
-                    ...responseBody.dataList,
-                  ],
-                },
-              });
-            }
-            handleMovingPartsOnClick(e, "POST_GET_COMMENTS", {
-              pageNo: pageNo,
-            });
-          }
-        });
-      }
-    },
-    [comments, handleMovingPartsOnClick, noOfCommentsDeletionsInSession]
-  );
-
-  const handleLikeUnlikePost = (e, post, action) => {
-    postService.likeUnlikeCUD(post, action)
-      .then(({ ok, responseBody, error }) => {
-        if (!ok) {
-          if (
-            error.statusCode === 500 &&
-            error.exceptionType === "API_SPECIFIC_EXCEPTION"
-          ) {
-            let str = error.message;
-            showAlertWithMessage(str.concat(error.details));
-          } else {
-            throw error;
-          }
-        } else {
-          const postLikedByCurrentUser = action === "like" ? true : false;
-
-          setPosts((posts) => {
-            let dataList = posts.dataList.map((iterPost) => {
-              if (iterPost.id === post.id) {
-                const noOfLikes =
-                  action === "like"
-                    ? iterPost.noOfLikes + 1
-                    : iterPost.noOfLikes - 1;
-                return { ...iterPost, postLikedByCurrentUser, noOfLikes };
-              } else {
-                return iterPost;
-              }
-            });
-
-            return { ...posts, dataList: dataList };
-          });
-        }
-      })
-      .catch((error) => {
-        handleError({ error });
-      });
-  };
-
-  const handleMovingPartsForKeys = (e) => {
-    if (e.key === "Escape") {
-      replyBarRef.current.style.display = "none";
-      reactionBarRef.current.style.display = "inline-block";
-    }
-  };
+  const {stateInfo, funcs, refs} = usePostState({ post, setPosts, setNoOfDeletedPostsInSession });
+  
+  const [currentUser, comments, setComments, showPostModal, setShowPostModal, commentContent, setCommentContent, showLikesModal, setShowLikesModal,
+    showGetRepliesLoad, setCommentsAccordianOpen, setNoOfCommentsDeletionsInSession, localLike, setLocalLike] = stateInfo;
+  const [adjustNoOfCommentsInParentPost, handlePostDelete, handleMovingPartsOnClick, handleCreateComment, handleGetComments,
+    handleLikeUnlikePost, handleMovingPartsForKeys] = funcs;
+  const [replyBarRef, reactionBarRef, replyInputRef, commentsDotRef, paginationRef, likeRef, postHelperRef] = refs;
 
   return (
     <div>
@@ -412,7 +117,7 @@ const Post = React.memo(({ post, setPosts, setNoOfDeletedPostsInSession }) => {
                         noOfLikes: localLike.noOfLikes + 1,
                       });
                       likeRef.current = true;
-                      debounced(600, handleLikeUnlikePost, e, post, "like");
+                      debounced(600, handleLikeUnlikePost, postHelperRef.current, e, post, "like");
                     }}
                     icon={faRegularThumbsUp}
                     style={
@@ -443,7 +148,7 @@ const Post = React.memo(({ post, setPosts, setNoOfDeletedPostsInSession }) => {
                         noOfLikes: localLike.noOfLikes - 1,
                       });
                       likeRef.current = true;
-                      debounced(600, handleLikeUnlikePost, e, post, "unlike");
+                      debounced(600, handleLikeUnlikePost, postHelperRef.current, e, post, "unlike");
                     }}
                     icon={faThumbsUp}
                     style={{
@@ -488,7 +193,7 @@ const Post = React.memo(({ post, setPosts, setNoOfDeletedPostsInSession }) => {
 
               <FontAwesomeIcon
                 onClick={(e) => {
-                  handleMovingPartsOnClick(e, "REPLY");
+                  handleMovingPartsOnClick(e, "REPLY", null);
                 }}
                 color="#4A4A4A"
                 icon={faReply}
@@ -515,9 +220,9 @@ const Post = React.memo(({ post, setPosts, setNoOfDeletedPostsInSession }) => {
               )}
               {post.owner.id === currentUser.id && (
                 <FontAwesomeIcon
-                  onClick={(e) => {
-                    handlePostDelete(e, post.id);
-                  }}
+                onClick={(e) => {
+                  handlePostDelete(e, post.id);
+                }}
                   color="#4A4A4A"
                   icon={faWindowClose}
                   style={{

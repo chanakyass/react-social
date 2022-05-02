@@ -1,0 +1,186 @@
+{
+    "dataList": [
+        {
+            "id": 114,
+            "owner": {
+                "id": 1,
+                "name": "Chanakya",
+                "email": "chan@rest.com",
+                "userSummary": "I like react and now I have mastered it. Now I am the react slayer.",
+                "profileName": "react-slayer"
+            },
+            "postHeading": "Random post",
+            "postBody": "Hey this is a random post to test pagination",
+            "noOfLikes": 0,
+            "noOfComments": 0,
+            "isPostLikedByCurrentUser": false,
+            "postedAtTime": "2021-04-26T16:06:32",
+            "modifiedAtTime": null,
+            "postLikedByCurrentUser": false
+        },
+        {
+            "id": 113,
+            "owner": {
+                "id": 1,
+                "name": "Chanakya",
+                "email": "chan@rest.com",
+                "userSummary": "I like react and now I have mastered it. Now I am the react slayer.",
+                "profileName": "react-slayer"
+            },
+            "postHeading": "Random post",
+            "postBody": "Hey this is a random post to test pagination",
+            "noOfLikes": 0,
+            "noOfComments": 0,
+            "isPostLikedByCurrentUser": false,
+            "postedAtTime": "2021-04-26T16:06:32",
+            "modifiedAtTime": null,
+            "postLikedByCurrentUser": false
+        },
+        {
+            "id": 112,
+            "owner": {
+                "id": 1,
+                "name": "Chanakya",
+                "email": "chan@rest.com",
+                "userSummary": "I like react and now I have mastered it. Now I am the react slayer.",
+                "profileName": "react-slayer"
+            },
+            "postHeading": "Random post",
+            "postBody": "Hey this is a random post to test pagination",
+            "noOfLikes": 0,
+            "noOfComments": 0,
+            "isPostLikedByCurrentUser": false,
+            "postedAtTime": "2021-04-26T16:06:32",
+            "modifiedAtTime": null,
+            "postLikedByCurrentUser": false
+        },
+        {
+            "id": 111,
+            "owner": {
+                "id": 1,
+                "name": "Chanakya",
+                "email": "chan@rest.com",
+                "userSummary": "I like react and now I have mastered it. Now I am the react slayer.",
+                "profileName": "react-slayer"
+            },
+            "postHeading": "Random post",
+            "postBody": "Hey this is a random post to test pagination",
+            "noOfLikes": 0,
+            "noOfComments": 0,
+            "isPostLikedByCurrentUser": false,
+            "postedAtTime": "2021-04-26T16:06:32",
+            "modifiedAtTime": null,
+            "postLikedByCurrentUser": false
+        },
+        {
+            "id": 110,
+            "owner": {
+                "id": 1,
+                "name": "Chanakya",
+                "email": "chan@rest.com",
+                "userSummary": "I like react and now I have mastered it. Now I am the react slayer.",
+                "profileName": "react-slayer"
+            },
+            "postHeading": "Random post",
+            "postBody": "Hey this is a random post to test pagination",
+            "noOfLikes": 0,
+            "noOfComments": 0,
+            "isPostLikedByCurrentUser": false,
+            "postedAtTime": "2021-04-26T16:06:32",
+            "modifiedAtTime": null,
+            "postLikedByCurrentUser": false
+        },
+        {
+            "id": 109,
+            "owner": {
+                "id": 1,
+                "name": "Chanakya",
+                "email": "chan@rest.com",
+                "userSummary": "I like react and now I have mastered it. Now I am the react slayer.",
+                "profileName": "react-slayer"
+            },
+            "postHeading": "Random post",
+            "postBody": "Hey this is a random post to test pagination",
+            "noOfLikes": 0,
+            "noOfComments": 0,
+            "isPostLikedByCurrentUser": false,
+            "postedAtTime": "2021-04-26T16:06:32",
+            "modifiedAtTime": null,
+            "postLikedByCurrentUser": false
+        },
+        {
+            "id": 108,
+            "owner": {
+                "id": 1,
+                "name": "Chanakya",
+                "email": "chan@rest.com",
+                "userSummary": "I like react and now I have mastered it. Now I am the react slayer.",
+                "profileName": "react-slayer"
+            },
+            "postHeading": "Random post",
+            "postBody": "Hey this is a random post to test pagination",
+            "noOfLikes": 0,
+            "noOfComments": 0,
+            "isPostLikedByCurrentUser": false,
+            "postedAtTime": "2021-04-26T16:06:32",
+            "modifiedAtTime": null,
+            "postLikedByCurrentUser": false
+        },
+        {
+            "id": 107,
+            "owner": {
+                "id": 1,
+                "name": "Chanakya",
+                "email": "chan@rest.com",
+                "userSummary": "I like react and now I have mastered it. Now I am the react slayer.",
+                "profileName": "react-slayer"
+            },
+            "postHeading": "Random post",
+            "postBody": "Hey this is a random post to test pagination",
+            "noOfLikes": 0,
+            "noOfComments": 0,
+            "isPostLikedByCurrentUser": false,
+            "postedAtTime": "2021-04-26T16:06:32",
+            "modifiedAtTime": null,
+            "postLikedByCurrentUser": false
+        },
+        {
+            "id": 106,
+            "owner": {
+                "id": 1,
+                "name": "Chanakya",
+                "email": "chan@rest.com",
+                "userSummary": "I like react and now I have mastered it. Now I am the react slayer.",
+                "profileName": "react-slayer"
+            },
+            "postHeading": "Random post",
+            "postBody": "Hey this is a random post to test pagination",
+            "noOfLikes": 0,
+            "noOfComments": 0,
+            "isPostLikedByCurrentUser": false,
+            "postedAtTime": "2021-04-26T16:06:32",
+            "modifiedAtTime": null,
+            "postLikedByCurrentUser": false
+        },
+        {
+            "id": 105,
+            "owner": {
+                "id": 1,
+                "name": "Chanakya",
+                "email": "chan@rest.com",
+                "userSummary": "I like react and now I have mastered it. Now I am the react slayer.",
+                "profileName": "react-slayer"
+            },
+            "postHeading": "Random post",
+            "postBody": "Hey this is a random post to test pagination",
+            "noOfLikes": 0,
+            "noOfComments": 0,
+            "isPostLikedByCurrentUser": false,
+            "postedAtTime": "2021-04-26T16:06:32",
+            "modifiedAtTime": null,
+            "postLikedByCurrentUser": false
+        }
+    ],
+    "noOfPages": 2,
+    "currentPageNo": 1
+}

@@ -1,0 +1,153 @@
+{
+    "dataList": [
+        {
+            "id": 14,
+            "owner": {
+                "id": 3,
+                "name": "Vijaya",
+                "email": "vijju@rest.com",
+                "userSummary": "Hey there, I am using citizen sane and I love it.",
+                "profileName": "vijaya-the-mom"
+            },
+            "likedAtTime": "2021-04-26T10:14:14.221",
+            "likedPost": {
+                "id": 28,
+                "owner": {
+                    "id": 5,
+                    "name": "Swathy",
+                    "email": "swathy@rest.com",
+                    "userSummary": "Hey there I'm using Citizen Sane. The best social media app",
+                    "profileName": "Swathy27s"
+                }
+            }
+        },
+        {
+            "id": 16,
+            "owner": {
+                "id": 6,
+                "name": "Vishnu",
+                "email": "vishnu@gmail.com",
+                "userSummary": "Hi .. Im new here. Want to read some interesting content.",
+                "profileName": "spring-boot-slayer"
+            },
+            "likedAtTime": "2021-04-26T10:18:00.799",
+            "likedPost": {
+                "id": 28,
+                "owner": {
+                    "id": 5,
+                    "name": "Swathy",
+                    "email": "swathy@rest.com",
+                    "userSummary": "Hey there I'm using Citizen Sane. The best social media app",
+                    "profileName": "Swathy27s"
+                }
+            }
+        },
+        {
+            "id": 17,
+            "owner": {
+                "id": 7,
+                "name": "Jagadish",
+                "email": "jaggu@gmail.com",
+                "userSummary": "Hi all. I like Cricket and I am a big fan of MSD. Here to share my views on cricket",
+                "profileName": "jaggu"
+            },
+            "likedAtTime": "2021-04-26T10:20:53.572",
+            "likedPost": {
+                "id": 28,
+                "owner": {
+                    "id": 5,
+                    "name": "Swathy",
+                    "email": "swathy@rest.com",
+                    "userSummary": "Hey there I'm using Citizen Sane. The best social media app",
+                    "profileName": "Swathy27s"
+                }
+            }
+        },
+        {
+            "id": 27,
+            "owner": {
+                "id": 12,
+                "name": "Betting raj",
+                "email": "betraj@rest.com",
+                "userSummary": "i am good at betting",
+                "profileName": "bet_raj"
+            },
+            "likedAtTime": "2021-12-12T13:43:39.271",
+            "likedPost": {
+                "id": 28,
+                "owner": {
+                    "id": 5,
+                    "name": "Swathy",
+                    "email": "swathy@rest.com",
+                    "userSummary": "Hey there I'm using Citizen Sane. The best social media app",
+                    "profileName": "Swathy27s"
+                }
+            }
+        },
+        {
+            "id": 21,
+            "owner": {
+                "id": 8,
+                "name": "Ram",
+                "email": "ram@rest.com",
+                "userSummary": "I love full stack development",
+                "profileName": "ram_the_job_finder"
+            },
+            "likedAtTime": "2021-05-20T07:56:27.389",
+            "likedPost": {
+                "id": 28,
+                "owner": {
+                    "id": 5,
+                    "name": "Swathy",
+                    "email": "swathy@rest.com",
+                    "userSummary": "Hey there I'm using Citizen Sane. The best social media app",
+                    "profileName": "Swathy27s"
+                }
+            }
+        },
+        {
+            "id": 22,
+            "owner": {
+                "id": 1,
+                "name": "Chanakya",
+                "email": "chan@rest.com",
+                "userSummary": "I like react and now I have mastered it. Now I am the react slayer.",
+                "profileName": "react-slayer"
+            },
+            "likedAtTime": "2021-05-31T11:23:58.323",
+            "likedPost": {
+                "id": 28,
+                "owner": {
+                    "id": 5,
+                    "name": "Swathy",
+                    "email": "swathy@rest.com",
+                    "userSummary": "Hey there I'm using Citizen Sane. The best social media app",
+                    "profileName": "Swathy27s"
+                }
+            }
+        },
+        {
+            "id": 23,
+            "owner": {
+                "id": 9,
+                "name": "Rohan",
+                "email": "rohan@rest.com",
+                "userSummary": "I am very young",
+                "profileName": "rohan_rajjj"
+            },
+            "likedAtTime": "2021-06-03T12:19:48.081",
+            "likedPost": {
+                "id": 28,
+                "owner": {
+                    "id": 5,
+                    "name": "Swathy",
+                    "email": "swathy@rest.com",
+                    "userSummary": "Hey there I'm using Citizen Sane. The best social media app",
+                    "profileName": "Swathy27s"
+                }
+            }
+        }
+    ],
+    "noOfPages": 1,
+    "currentPageNo": 0
+}

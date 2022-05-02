@@ -1,9 +1,4 @@
-import cookie from "react-cookies";
-import moment from 'moment';
-import React, {  useState, useRef, useCallback, useContext } from "react";
-
-import { commentsCUD, likeUnlikeCommentCUD, loadComments } from './comment-services'
-
+import React from "react";
 import { Card, Button, Accordion, Form } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faThumbsUp, faReply, faLongArrowAltRight } from "@fortawesome/free-solid-svg-icons";
@@ -13,9 +8,8 @@ import  UserDetailsPopup  from "../utility/UserDetailsPopup";
 import  LikesModal  from '../likes/LikesModal'
 import { convertDateToReadableFormat } from '../utility/handle-dates';
 import  CustomToggle  from '../utility/CustomToggle';
-import { handleError } from "../error/error-handling";
-import { AlertContext } from "../../App";
 import { debounced } from "../utility/debouncer";
+import useCommentState from "./useCommentState";
 
 
 const Comment = React.memo(
@@ -31,548 +25,30 @@ const Comment = React.memo(
     setNoOfCommentsDeletionsInSession,
     setNoOfRepliesDeletionsInSession
   }) => {
-    const currentUser = cookie.load("current_user");
-
-    const [replies, setReplies] = useState({});
-    const [replyContent, setReplyContent] = useState("");
-    const [showLikesModal, setShowLikesModal] = useState(false);
-    const [showGetRepliesLoad, setShowGetRepliesLoad] = useState(false);
-    const [repliesAccordionOpen, setRepliesAccordionOpen] = useState(false);
-    const [localLike, setLocalLike] = useState({
-      commentLikedByCurrentUser: comment.commentLikedByCurrentUser,
-      noOfLikes: comment.noOfLikes,
+    const {stateInfo, funcs, refs} = useCommentState({
+      post,
+      parentComment,
+      comment,
+      setParentComments,
+      adjustRepliesInHeirarchy,
+      adjustNoOfCommentsInParentPost,
+      handleMovingPartsOnClickPost,
+      handleMovingPartsOnClickParent,
+      setNoOfCommentsDeletionsInSession,
+      setNoOfRepliesDeletionsInSession
     });
-
-    const [noOfCurrentRepliesDeletionInSession, setNoOfCurrentRepliesDeletionInSession] = useState(0);
-
-    const showAlertWithMessage = useContext(AlertContext);
-
-    let replyBarRef = useRef(null);
-    let reactionBarRef = useRef(null);
-    let updateCommentRef = useRef(null);
-    let commentContentRef = useRef(null);
-    let repliesDotRef = useRef(null);
-    let replyInputRef = useRef(null);
-    let updateInputRef = useRef(null);
-    let paginationRef = useRef(null);
-    let likeRef = useRef(comment.commentLikedByCurrentUser);
+    const [currentUser, replies, setReplies, replyContent, setReplyContent, showLikesModal, setShowLikesModal,
+      showGetRepliesLoad, repliesAccordionOpen, setRepliesAccordionOpen, localLike, setLocalLike, setNoOfCurrentRepliesDeletionInSession] = stateInfo;
+    const [adjustNoOfReplies, handleMovingPartsOnClick, handleCommentCUD, handleReplyCUD, handleLikeUnlikeComment, handleGetReplies, handleMovingPartsForKeys] = funcs;
+    const [replyBarRef, reactionBarRef, updateCommentRef, commentContentRef, repliesDotRef, 
+      replyInputRef, updateInputRef, paginationRef, likeRef, commentHelperRef] = refs;
 
     const parentCommentId = parentComment ? parentComment.id : null;
     const postId = post.id;
 
-    const parentCommentRepliesCount = parentComment
-      ? parentComment.noOfReplies
-      : null;
-
-    const adjustNoOfReplies = useCallback(
-      (method, childReplyId, noOfRepliesAffected) => {
-        const commentProp = `comment${parentCommentId}`;
-        const postProp = `post${comment.commentedOn.id}`;
-        let prop = null;
-        if (parentCommentId !== null) {
-          prop = commentProp;
-        } else {
-          prop = postProp;
-        }
-
-        if (RestMethod.POST === method) {
-          setParentComments((comments) => {
-            let newDataList = comments[prop].dataList.map((childReply) => {
-              if (childReply.id === childReplyId) {
-                return {
-                  ...childReply,
-                  noOfReplies: childReply.noOfReplies + noOfRepliesAffected,
-                };
-              }
-              return childReply;
-            });
-            return {
-              ...comments,
-              [prop]: {
-                ...comments[prop],
-                dataList: newDataList,
-              },
-            };
-          });
-
-          if (adjustRepliesInHeirarchy)
-            adjustRepliesInHeirarchy(
-              method,
-              parentCommentId,
-              noOfRepliesAffected
-            );
-        } else {
-          setParentComments((comments) => {
-            let newDataList = comments[prop].dataList.map((childReply) => {
-              if (childReply.id === childReplyId) {
-                return {
-                  ...childReply,
-                  noOfReplies: childReply.noOfReplies - noOfRepliesAffected,
-                };
-              }
-              return childReply;
-            });
-
-            return {
-              ...comments,
-              [prop]: {
-                ...comments[prop],
-                dataList: newDataList,
-              },
-            };
-          });
-
-          if (adjustRepliesInHeirarchy)
-            adjustRepliesInHeirarchy(
-              method,
-              parentCommentId,
-              noOfRepliesAffected
-            );
-        }
-      },
-      [adjustRepliesInHeirarchy, comment, setParentComments, parentCommentId]
-    );
-
-    const handleMovingPartsOnClick = useCallback(
-      (e, action, details) => {
-        const { pageNo } = details || {};
-        switch (action) {
-          case "REPLY":
-            replyBarRef.current.style.display = "block";
-            reactionBarRef.current.style.display = "none";
-            replyInputRef.current.value = "";
-            replyInputRef.current.focus();
-
-            break;
-
-          case "PRE_REPLY_SUBMIT":
-            setShowGetRepliesLoad(true);
-            replyBarRef.current.style.display = "none";
-            reactionBarRef.current.style.display = "block";
-            break;
-
-          case "POST_REPLY_SUBMIT":
-            if (repliesAccordionOpen === false) {
-              repliesDotRef.current.click();
-            }
-
-            setShowGetRepliesLoad(false);
-
-            break;
-
-          case "UPDATE":
-            commentContentRef.current.style.display = "none";
-            updateCommentRef.current.style.display = "block";
-            updateInputRef.current.focus();
-            reactionBarRef.current.style.display = "none";
-
-            break;
-
-          case "UPDATE_SUBMIT":
-            commentContentRef.current.style.display = "block";
-            updateCommentRef.current.style.display = "none";
-            reactionBarRef.current.style.display = "block";
-            break;
-
-          case "PRE_GET_REPLIES":
-            if (pageNo > 0) {
-              if (paginationRef.current) {
-                paginationRef.current.children[0].style.display = "none";
-                paginationRef.current.children[1].style.display = "block";
-              }
-            } else {
-              setShowGetRepliesLoad(true);
-            }
-            break;
-
-          case "POST_GET_REPLIES":
-            if (pageNo > 0) {
-              if (paginationRef.current) {
-                paginationRef.current.children[1].style.display = "none";
-                paginationRef.current.children[0].style.display = "block";
-              }
-            } else {
-              setShowGetRepliesLoad(false);
-            }
-            break;
-
-          case "DELETE_COMMENT":
-            if (repliesAccordionOpen === true) {
-              repliesDotRef.current.click();
-              setRepliesAccordionOpen(false);
-            }
-            break;
-
-          default:
-            console.log("method not supported");
-        }
-      },
-      [repliesAccordionOpen]
-    );
-
-    const handleCommentCUD = useCallback(
-      (e, method, commentObj) => {
-        let postId = commentObj.postId;
-        let itemId = commentObj.commentId;
-        let commentContent = commentObj.commentContent;
-
-        const postProp = `post${postId}`.trim();
-
-        e.preventDefault();
-
-        switch (method) {
-          case RestMethod.PUT:
-            if (commentContent === "") {
-              updateCommentRef.current.focus();
-            } else {
-              setParentComments((comments) => {
-                let newDataList = comments[postProp].dataList.map((comment) => {
-                  if (comment.id === itemId)
-                    return {
-                      ...comment,
-                      commentContent: commentContent,
-                      modifiedAtTime: moment.utc().toISOString(),
-                    };
-                  else return comment;
-                });
-                return {
-                  ...comments,
-                  [postProp]: {
-                    ...comments[postProp],
-                    dataList: newDataList,
-                  },
-                };
-              });
-              handleMovingPartsOnClick(e, "UPDATE_SUBMIT");
-              commentsCUD(method, null, postId, itemId, commentContent).then(
-                ({ ok, responseBody, error }) => {
-                  if (!ok) {
-                    handleError({ error });
-                  }
-                }
-              );
-            }
-
-            break;
-
-          case RestMethod.DELETE:
-            commentsCUD(method, null, postId, itemId, null).then(
-              ({ ok, responseBody, error }) => {
-                if (!ok) {
-                  handleError({ error });
-                } else {
-                  setParentComments((comments) => {
-                    return {
-                      ...comments,
-                      [postProp]: {
-                        ...comments[`post${postId}`],
-                        dataList: comments[`post${postId}`].dataList.filter(
-                          (comment) => comment.id !== itemId
-                        ),
-                      },
-                    };
-                  });
-
-                  if (post.noOfComments === comment.noOfReplies + 1) {
-                    handleMovingPartsOnClickPost(e, "DELETE_COMMENT");
-                  }
-
-                  setNoOfCommentsDeletionsInSession(
-                    (noOfDeletions) => noOfDeletions + 1
-                  );
-
-                  adjustNoOfCommentsInParentPost(
-                    RestMethod.DELETE,
-                    comment.noOfReplies + 1
-                  );
-                }
-              }
-            );
-
-            break;
-          //can do something more here
-          default:
-            alert("Wrong rest method");
-        }
-        setReplyContent("");
-      },
-      [
-        setParentComments,
-        adjustNoOfCommentsInParentPost,
-        comment.noOfReplies,
-        post.noOfComments,
-        handleMovingPartsOnClickPost,
-        handleMovingPartsOnClick,
-        setNoOfCommentsDeletionsInSession
-      ]
-    );
-
-    const handleReplyCUD = useCallback(
-      (e, method, replyObj) => {
-        let commentId = replyObj.parentCommentId;
-        let postId = replyObj.postId;
-        let itemId = replyObj.commentId;
-
-        let replyContent = replyObj.replyContent;
-
-        const commentProp = `comment${commentId}`.trim();
-
-        e.preventDefault();
-
-        switch (method) {
-          case RestMethod.POST:
-            if (
-              !replyContent ||
-              replyContent === undefined ||
-              replyContent === ""
-            ) {
-              replyInputRef.current.focus();
-            } else {
-              handleMovingPartsOnClick(e, "PRE_REPLY_SUBMIT");
-              commentsCUD(method, commentId, postId, itemId, replyContent).then(
-                ({ ok, responseBody, error }) => {
-                  if (!ok) {
-                    handleError({ error });
-                  } else {
-                    const { data } = responseBody;
-
-                    if (replies && replies[commentProp]) {
-                      let newComment = {
-                        id: data.resourceId,
-                        commentedOn: { id: postId },
-                        parentComment: { id: commentId },
-                        commentedAtTime: moment.utc().toISOString(),
-                        commentContent: replyContent,
-                        owner: currentUser,
-                        commentLikedByCurrentUser: false,
-                        noOfLikes: 0,
-                        noOfReplies: 0,
-                      };
-
-                      let newDataList = [
-                        newComment,
-                        ...replies[commentProp].dataList,
-                      ];
-                      setReplies({
-                        ...replies,
-                        [commentProp]: {
-                          ...replies[commentProp],
-                          dataList: newDataList,
-                        },
-                      });
-                    }
-                    adjustNoOfCommentsInParentPost(RestMethod.POST, 1);
-                    adjustNoOfReplies(method, commentId, 1);
-                    handleMovingPartsOnClick(e, "POST_REPLY_SUBMIT");
-                  }
-                }
-              );
-            }
-
-            break;
-          case RestMethod.PUT:
-            if (
-              replyContent === "" ||
-              replyContent === undefined ||
-              replyContent === null
-            ) {
-              updateInputRef.current.focus();
-            } else {
-              setParentComments((comments) => {
-                return {
-                  ...comments,
-                  [commentProp]: {
-                    ...comments[commentProp],
-                    dataList: comments[commentProp].dataList.map((reply) => {
-                      if (reply.id === itemId)
-                        return {
-                          ...reply,
-                          commentContent: replyContent,
-                          modifiedAtTime: moment.utc().toISOString(),
-                        };
-                      else return reply;
-                    }),
-                  },
-                };
-              });
-              handleMovingPartsOnClick(e, "UPDATE_SUBMIT");
-              commentsCUD(method, commentId, postId, itemId, replyContent).then(
-                ({ ok, responseBody, error }) => {
-                  if (!ok) {
-                    handleError({ error });
-                  }
-                }
-              );
-            }
-
-            break;
-
-          case RestMethod.DELETE:
-            commentsCUD(method, commentId, postId, itemId, replyContent).then(
-              ({ ok, responseBody, error }) => {
-                if (!ok) {
-                  handleError({ error });
-                } else {
-                  setParentComments((comments) => {
-                    return {
-                      ...comments,
-                      [commentProp]: {
-                        ...comments[`comment${commentId}`],
-                        dataList: comments[
-                          `comment${commentId}`
-                        ].dataList.filter((comment) => comment.id !== itemId),
-                      },
-                    };
-                  });
-
-                  if (parentCommentRepliesCount === comment.noOfReplies + 1) {
-                    handleMovingPartsOnClickParent(e, "DELETE_COMMENT");
-                  }
-
-                  adjustNoOfCommentsInParentPost(
-                    RestMethod.DELETE,
-                    comment.noOfReplies + 1
-                  );
-                  adjustRepliesInHeirarchy(
-                    method,
-                    commentId,
-                    comment.noOfReplies + 1
-                  );
-
-                  setNoOfRepliesDeletionsInSession(noOfDeletions => noOfDeletions + 1);
-                }
-              }
-            );
-
-            break;
-
-          default:
-            alert("Only Post, Update or delete");
-        }
-        setReplyContent("");
-      },
-      [
-        replies,
-        currentUser,
-        setParentComments,
-        adjustNoOfCommentsInParentPost,
-        adjustNoOfReplies,
-        adjustRepliesInHeirarchy,
-        comment.noOfReplies,
-        parentCommentRepliesCount,
-        handleMovingPartsOnClickParent,
-        setNoOfRepliesDeletionsInSession,
-        handleMovingPartsOnClick,
-      ]
-    );
-
-    const handleLikeUnlikeComment = (e, comment, action) => {
-      let prop = null;
-
-      if (comment.parentComment !== null) {
-        prop = `comment${comment.parentComment.id}`;
-      } else {
-        prop = `post${comment.commentedOn.id}`;
-      }
-
-      likeUnlikeCommentCUD(comment, action).then(
-        ({ ok, responseBody, error }) => {
-          if (!ok) {
-            if (
-              error.statusCode === 500 &&
-              error.exceptionType === "API_SPECIFIC_EXCEPTION"
-            ) {
-              let str = error.message;
-              showAlertWithMessage(str.concat(error.details));
-              // setParentComments(prevState);
-            } else {
-              handleError({ error });
-            }
-          } else {
-            setParentComments((comments) => {
-              let newDataList = comments[prop].dataList.map((childReply) => {
-                if (childReply.id === comment.id) {
-                  return {
-                    ...childReply,
-                    noOfLikes:
-                      action === "like"
-                        ? childReply.noOfLikes + 1
-                        : childReply.noOfLikes - 1,
-                    commentLikedByCurrentUser: action === "like",
-                  };
-                }
-                return childReply;
-              });
-              return {
-                ...comments,
-                [prop]: {
-                  ...comments[prop],
-                  dataList: newDataList,
-                },
-              };
-            });
-          }
-        }
-      );
-    };
-
-    const handleGetReplies = useCallback(
-      (e, commentId, pageNo) => {
-        const commentProp = `comment${commentId}`.trim();
-        handleMovingPartsOnClick(e, "PRE_GET_REPLIES", { pageNo: pageNo });
-        loadComments(null, commentId, {
-          pageNo: pageNo,
-          noOfDeletions: noOfCurrentRepliesDeletionInSession,
-        }).then(({ ok, responseBody, error }) => {
-          if (!ok) {
-            handleError({ error });
-          } else {
-            if (!replies[commentProp]) {
-              setReplies({ ...replies, [commentProp]: responseBody });
-            } else if (replies[commentProp].currentPageNo !== pageNo) {
-              setReplies({
-                ...replies,
-                [commentProp]: {
-                  currentPageNo: responseBody.currentPageNo,
-                  noOfPages: responseBody.noOfPages,
-                  dataList: [
-                    ...replies[commentProp].dataList,
-                    ...responseBody.dataList,
-                  ],
-                },
-              });
-            }
-            handleMovingPartsOnClick(e, "POST_GET_REPLIES", {
-              pageNo: pageNo,
-            });
-          }
-        });
-      },
-      [replies, handleMovingPartsOnClick, noOfCurrentRepliesDeletionInSession]
-    );
-
-    const handleMovingPartsForKeys = (e, action) => {
-      switch (action) {
-        case "REPLY_SUBMIT":
-          if (e.key === "Escape") {
-            replyBarRef.current.style.display = "none";
-            reactionBarRef.current.style.display = "inline-block";
-          }
-
-          break;
-
-        case "UPDATE_SUBMIT":
-          if (e.key === "Escape") {
-            updateCommentRef.current.style.display = "none";
-            commentContentRef.current.style.display = "inline-block";
-            reactionBarRef.current.style.display = "inline-block";
-          }
-          break;
-
-        default:
-          console.log("action not supported");
-      }
-    };
+    // const parentCommentRepliesCount = parentComment
+    //   ? parentComment.noOfReplies
+    //   : null;
 
     return (
       <>
@@ -700,6 +176,7 @@ const Comment = React.memo(
                               debounced(
                                 500,
                                 handleLikeUnlikeComment,
+                                commentHelperRef.current,
                                 e,
                                 comment,
                                 "like"
@@ -736,6 +213,7 @@ const Comment = React.memo(
                               debounced(
                                 500,
                                 handleLikeUnlikeComment,
+                                commentHelperRef.current,
                                 e,
                                 comment,
                                 "unlike"
@@ -892,7 +370,6 @@ const Comment = React.memo(
                       replies[`comment${comment.id}`].dataList.map(
                         (reply, index2) => {
                           return (
-                            <>
                               <Comment
                                 key={`reply${reply.id}`}
                                 post={post}
@@ -910,7 +387,6 @@ const Comment = React.memo(
                                   setNoOfCurrentRepliesDeletionInSession
                                 }
                               />
-                            </>
                           );
                         }
                       )}

@@ -1,12 +1,11 @@
-
 import cookie from "react-cookies";
 import moment from 'moment';
-import { RestMethod } from '../../enums'
-import baseURI from '../../api-config'
+import { RestMethod } from '../../enums';
+import baseURI from '../../api-config';
 
     
 
-export const commentsCUD = async (method, commentId, postId, itemId, commentContent) => {
+const commentsCUD = async (method, commentId, postId, itemId, commentContent) => {
 
   const jwtToken = cookie.load("jwt");
   const currentUser = cookie.load("current_user");
@@ -32,30 +31,19 @@ export const commentsCUD = async (method, commentId, postId, itemId, commentCont
   
   switch (method) {
     case RestMethod.POST:
-      
-
         requestOptions.body = JSON.stringify({ ...commentForDispatch, commentedAtTime: moment.utc().toISOString() });
-        url = `${baseURI}/resource/comment`;
-        
-      
+        url = `${baseURI}/resource/comment`;  
       break;
-    case RestMethod.PUT:
-      
+    case RestMethod.PUT:     
         commentForDispatch = { ...commentForDispatch, id: itemId, modifiedAtTime: moment.utc().toISOString() };
         requestOptions.body = JSON.stringify({ ...commentForDispatch });
-        url = `${baseURI}/resource/comment`;
-
-        
-      
+        url = `${baseURI}/resource/comment`; 
       break;
     case RestMethod.DELETE:
-
       url = `${baseURI}/resource/comment/${itemId}`;
       break;
-    
     default:
-
-    
+      console.log("Not such method");
   }
   try {
     let response = await fetch(
@@ -74,7 +62,7 @@ export const commentsCUD = async (method, commentId, postId, itemId, commentCont
   }
 };
 
-export const loadComments = async (postId, commentId, pageDetails) => {
+const loadComments = async (postId, commentId, pageDetails) => {
 
   const { pageNo, noOfDeletions } = pageDetails;
   const jwtToken = cookie.load("jwt");
@@ -111,7 +99,7 @@ export const loadComments = async (postId, commentId, pageDetails) => {
   
 };
 
-export const likeUnlikeCommentCUD = async (comment, action) => {
+const likeUnlikeCommentCUD = async (comment, action) => {
   const jwtToken = cookie.load("jwt");
   const currentUser = cookie.load("current_user");
   const likeComment = {
@@ -145,4 +133,10 @@ export const likeUnlikeCommentCUD = async (comment, action) => {
     return { ok: false, responseBody: null, error: error };
 
   }
+};
+
+export const commentService = {
+  commentsCUD: commentsCUD,
+  loadComments: loadComments,
+  likeUnlikeCommentCUD: likeUnlikeCommentCUD
 };

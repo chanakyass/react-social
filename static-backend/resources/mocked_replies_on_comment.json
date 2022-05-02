@@ -1,0 +1,61 @@
+{
+    "dataList": [
+        {
+            "id": 50,
+            "owner": {
+                "id": 1,
+                "name": "Chanakya",
+                "email": "chan@rest.com",
+                "userSummary": "I like react and now I have mastered it. Now I am the react slayer.",
+                "profileName": "react-slayer"
+            },
+            "commentedAtTime": "2021-04-30T05:13:07.691",
+            "modifiedAtTime": null,
+            "commentedOn": {
+                "id": 28,
+                "owner": {
+                    "id": 5,
+                    "name": "Swathy",
+                    "email": "swathy@rest.com",
+                    "userSummary": "Hey there I'm using Citizen Sane. The best social media app",
+                    "profileName": "Swathy27s"
+                }
+            },
+            "parentComment": {
+                "id": 19,
+                "owner": {
+                    "id": 7,
+                    "name": "Jagadish",
+                    "email": "jaggu@gmail.com",
+                    "userSummary": "Hi all. I like Cricket and I am a big fan of MSD. Here to share my views on cricket",
+                    "profileName": "jaggu"
+                },
+                "commentedAtTime": "2021-04-26T10:21:27.369",
+                "modifiedAtTime": null,
+                "commentedOn": {
+                    "id": 28,
+                    "owner": {
+                        "id": 5,
+                        "name": "Swathy",
+                        "email": "swathy@rest.com",
+                        "userSummary": "Hey there I'm using Citizen Sane. The best social media app",
+                        "profileName": "Swathy27s"
+                    }
+                },
+                "parentComment": null,
+                "commentContent": "I have only started using the website and I think it is pretty neat.",
+                "noOfLikes": null,
+                "noOfReplies": 0,
+                "isCommentLikedByCurrentUser": null,
+                "commentLikedByCurrentUser": null
+            },
+            "commentContent": "good to hear",
+            "noOfLikes": 0,
+            "noOfReplies": 0,
+            "isCommentLikedByCurrentUser": false,
+            "commentLikedByCurrentUser": false
+        }
+    ],
+    "noOfPages": 1,
+    "currentPageNo": 0
+}

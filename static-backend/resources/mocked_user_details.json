@@ -1,0 +1,11 @@
+{
+    "data": {
+        "id": 15,
+        "name": "Dummy",
+        "email": "dummy@rest.com",
+        "userSummary": "I am dummy",
+        "profileName": "dummy",
+        "age": 34,
+        "dob": "1987-06-19"
+    }
+}

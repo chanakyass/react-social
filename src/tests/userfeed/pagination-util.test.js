@@ -5,24 +5,7 @@ describe("test paginationHelper class", () => {
     let paginationHelper;
 
     beforeEach(() => {
-        const posts = {};
-        const noOfDeletedPostsInSession = 0;
-        const setNoOfDeletedPostsInSession = jest.fn();
-        const setPosts = jest.fn();
-        paginationHelper = new PaginationHelper(posts, setPosts, noOfDeletedPostsInSession, setNoOfDeletedPostsInSession);
-    });
-
-    test("test setStateInfo", () => {
-        jest.spyOn(paginationHelper, "setStateInfo");
-        const posts = {};
-        const noOfDeletedPostsInSession = 0;
-        const setNoOfDeletedPostsInSession = jest.fn();
-        const setPosts = jest.fn();
-        paginationHelper.setStateInfo(posts, setPosts, noOfDeletedPostsInSession, setNoOfDeletedPostsInSession);
-        expect(paginationHelper.posts).toBe(posts);
-        expect(paginationHelper.setPosts).toBe(setPosts);
-        expect(paginationHelper.noOfDeletedPostsInSession).toBe(noOfDeletedPostsInSession);
-        expect(paginationHelper.setNoOfDeletedPostsInSession).toBe(setNoOfDeletedPostsInSession);
+        paginationHelper = new PaginationHelper();
     });
 
     test("test getDocHeight", () => {
@@ -50,7 +33,9 @@ describe("test paginationHelper class", () => {
     });
 
     test("test handlePagination", async () => {
-        paginationHelper.posts = {
+        const noOfDeletedPostsInSession = 0;
+        const setPosts = jest.fn();
+        const posts = {
             currentPageNo: 2,
             noOfPages: 4,
             dataList: [
@@ -80,20 +65,12 @@ describe("test paginationHelper class", () => {
         const promiseToWait = Promise.resolve(response);
         jest.spyOn(paginationHelper, "handlePagination");
         jest.spyOn(postService, "loadUserFeed").mockImplementation(() => promiseToWait);
-        const combinedPosts = {
-            ...paginationHelper.posts,
-            dataList: [...paginationHelper.posts.dataList, ...extraPosts.dataList],
-            currentPageNo: extraPosts.currentPageNo,
-            isLastPage: extraPosts.currentPageNo === extraPosts.noOfPages - 1,
-        };
-        paginationHelper.handlePagination();
+        paginationHelper.handlePagination({posts, setPosts, noOfDeletedPostsInSession});
         expect(postService.loadUserFeed).toHaveBeenCalled();
-
-        const spySetPosts = paginationHelper.setPosts;
 
         await promiseToWait;
 
-        const args = spySetPosts.mock.calls[0][0];
+        const args = setPosts.mock.calls[0][0];
 
         expect(args.currentPageNo).toBe(3);
         expect(args.dataList.length).toBe(4);

@@ -1,0 +1,61 @@
+{
+    "dataList": [
+        {
+            "id": 15,
+            "owner": {
+                "id": 6,
+                "name": "Vishnu",
+                "email": "vishnu@gmail.com",
+                "userSummary": "Hi .. Im new here. Want to read some interesting content.",
+                "profileName": "spring-boot-slayer"
+            },
+            "likedAtTime": "2021-04-26T10:31:50.755"
+        },
+        {
+            "id": 16,
+            "owner": {
+                "id": 5,
+                "name": "Swathy",
+                "email": "swathy@rest.com",
+                "userSummary": "Hey there I'm using Citizen Sane. The best social media app",
+                "profileName": "Swathy27s"
+            },
+            "likedAtTime": "2021-04-26T10:32:27.317"
+        },
+        {
+            "id": 18,
+            "owner": {
+                "id": 3,
+                "name": "Vijaya",
+                "email": "vijju@rest.com",
+                "userSummary": "Hey there, I am using citizen sane and I love it.",
+                "profileName": "vijaya-the-mom"
+            },
+            "likedAtTime": "2021-04-26T10:33:55.203"
+        },
+        {
+            "id": 19,
+            "owner": {
+                "id": 7,
+                "name": "Jagadish",
+                "email": "jaggu@gmail.com",
+                "userSummary": "Hi all. I like Cricket and I am a big fan of MSD. Here to share my views on cricket",
+                "profileName": "jaggu"
+            },
+            "likedAtTime": "2021-04-26T10:34:22.575"
+        },
+        {
+            "id": 21,
+            "owner": {
+                "id": 12,
+                "name": "Betting raj",
+                "email": "betraj@rest.com",
+                "userSummary": "i am good at betting",
+                "profileName": "bet_raj"
+            },
+            "likedAtTime": "2021-12-12T13:43:56.854"
+        }
+    ],
+    "noOfPages": 1,
+    "currentPageNo": 0
+}

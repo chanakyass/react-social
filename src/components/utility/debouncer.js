@@ -4,12 +4,12 @@ export const debounced =  (function () {
     return (delay, fn, ...args) => {
       if (counter === undefined) {
         counter = 1;
-          fn(...args);
+          fn.call(...args);
           timer = setTimeout(() => counter = undefined, delay);
       } else {
         clearTimeout(timer);
         timer = setTimeout(() => {
-          fn(...args);
+          fn.call(...args);
           counter = undefined;
         }, delay);
       }

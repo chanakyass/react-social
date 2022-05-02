@@ -4,20 +4,9 @@ import { numOrDefault } from '../utility/math-helper';
 
 
 class PaginationHelper {
-    constructor(posts, setPosts, noOfDeletedPostsInSession, setNoOfDeletedPostsInSession) {
-        this.posts = posts;
-        this.setPosts = setPosts;
-        this.noOfDeletedPostsInSession = noOfDeletedPostsInSession;
-        this.setNoOfDeletedPostsInSession = setNoOfDeletedPostsInSession;
+    constructor() {
         this.postService = postService;
         this.handleError = handleError;
-    }
-
-    setStateInfo(posts, setPosts, noOfDeletedPostsInSession, setNoOfDeletedPostsInSession) {
-        this.posts = posts;
-        this.setPosts = setPosts;
-        this.noOfDeletedPostsInSession = noOfDeletedPostsInSession;
-        this.setNoOfDeletedPostsInSession = setNoOfDeletedPostsInSession;
     }
 
     getDocHeight() {
@@ -44,37 +33,39 @@ class PaginationHelper {
         );
     }
 
-    handlePagination() {
-        if (this.posts.currentPageNo < this.posts.noOfPages - 1) {
+    handlePagination(stateInfo) {
+        const {posts, setPosts, noOfDeletedPostsInSession} = stateInfo;
+        if (posts.currentPageNo < posts.noOfPages - 1) {
             this.postService.loadUserFeed({
-                pageNo: this.posts.currentPageNo + 1,
-                noOfDeletions: this.noOfDeletedPostsInSession,
+                pageNo: posts.currentPageNo + 1,
+                noOfDeletions: noOfDeletedPostsInSession,
             }).then(({ ok, responseBody: body, error }) => {
                 if (!ok) {
-                this.handleError({ error });
+                    this.handleError({ error });
                 } else {
-                const { dataList, currentPageNo, noOfPages } = body;
-                this.setPosts({
-                    ...this.posts,
-                    dataList: [...this.posts.dataList, ...dataList],
-                    currentPageNo: currentPageNo,
-                    noOfPages: noOfPages,
-                    isLastPage: currentPageNo === noOfPages - 1,
-                });
+                    const { dataList, currentPageNo, noOfPages } = body;
+                    setPosts({
+                        ...posts,
+                        dataList: [...posts.dataList, ...dataList],
+                        currentPageNo: currentPageNo,
+                        noOfPages: noOfPages,
+                        isLastPage: currentPageNo === noOfPages - 1,
+                    });
                 }
             });
         }
     }
 
-    handleScroll(e, lastScrollTopRef, prevDocHeightRef) {
-        var st = window.pageYOffset || getDocScrollTop();
+    handleScroll(e, stateInfo, funcs, refs) {
+        const {lastScrollTopRef, prevDocHeightRef} = refs;
+        var st = window.pageYOffset || this.getDocScrollTop();
         if (st > lastScrollTopRef.current) {
         const scrollPos = window.scrollY + window.innerHeight;
-        const docHeight = getDocHeight();
+        const docHeight = this.getDocHeight();
         if (scrollPos > 0.65 * docHeight
             && docHeight !== prevDocHeightRef.current
         ) {
-            handlePagination();
+            this.handlePagination(stateInfo);
             prevDocHeightRef.current = docHeight;
         }
         }

@@ -2,7 +2,7 @@ import cookie from "react-cookies";
 import baseURI from "../../api-config";
 
 
-export const loadLikesOnPost = async (postId, pageNo) => {
+const loadLikesOnPost = async (postId, pageNo) => {
   const jwtToken = cookie.load("jwt");
   const requestOptions = {
     method: "GET",
@@ -28,7 +28,7 @@ export const loadLikesOnPost = async (postId, pageNo) => {
 };
 
 
-export const loadLikesOnComment = async (commentId, pageNo) => {
+const loadLikesOnComment = async (commentId, pageNo) => {
   const jwtToken = cookie.load("jwt");
   const requestOptions = {
     method: "GET",
@@ -46,9 +46,14 @@ export const loadLikesOnComment = async (commentId, pageNo) => {
 
     const body = await response.json();
     if ("error" in body)
-      return body.error;
+      throw body.error;
     return {ok: true, responseBody: body, error: null};
   } catch (error) {
-      return {ok: false, responseBody: null, error: error}
+       return {ok: false, responseBody: null, error: error};
   }
+};
+
+export const likeService = {
+  loadLikesOnPost: loadLikesOnPost,
+  loadLikesOnComment: loadLikesOnComment
 };

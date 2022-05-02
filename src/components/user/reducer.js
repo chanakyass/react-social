@@ -9,11 +9,7 @@ export function reducer(state, action)
   else {
   
     if (preprocessed === false) {
-
-      console.log('entering switch')
-      console.log('not preprocessed')
       const fieldErrors = payload;
-      console.log(fieldErrors)
       return {
         ...state,
         hasError: true,

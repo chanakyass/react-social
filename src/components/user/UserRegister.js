@@ -63,11 +63,7 @@ const UserRegister = () => {
             ).then((response) => {
               response.json().then(body => {
                 if (response.status === 200) {
-
-                  const { data } = body
-                  console.log(data)
-
-                  history.push('/login')
+                  history.push('/login');
                 }
                 else {
                   const { error } = body

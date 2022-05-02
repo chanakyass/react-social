@@ -3,9 +3,7 @@ import cookie from 'react-cookies';
 import moment from 'moment';
 
 
-export const handleError = ({ error }) => {
-    console.log(error);
-    
+export const handleError = ({ error }) => {    
     if (!error.statusCode && error.toString().match(/TypeError: Failed to fetch/gi)) {
       history.push("/conn_error", {
         statusCode: 522,
