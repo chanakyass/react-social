@@ -21,6 +21,7 @@
     "history": "^4.10.1",
     "html-react-parser": "^1.2.4",
     "moment": "^2.29.1",
+    "npm-run-all": "^4.1.5",
     "react": "^17.0.2",
     "react-app-polyfill": "^2.0.0",
     "react-bootstrap": "^1.5.2",
@@ -36,6 +37,8 @@
   },
   "scripts": {
     "start": "react-scripts start",
+    "start-backend": "node ./static-backend/react-backend.js",
+    "dev": "npm-run-all --parallel start-backend start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"

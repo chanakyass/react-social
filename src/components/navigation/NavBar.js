@@ -15,7 +15,6 @@ const NavBar = React.memo(({ setAddPostButtonClicked }) => {
   setIsCurrentUserUpdated(false);
 
   const loggedInUser = cookie.load("current_user");
-  console.log(loggedInUser);
 
   const logout = (e) => {
     cookie.remove("jwt", { path: "/" });
